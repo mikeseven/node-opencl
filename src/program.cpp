@@ -238,7 +238,7 @@ NAN_METHOD(GetProgramInfo) {
       CHECK_ERR(::clGetProgramInfo(prog, param_name, nsizes*sizeof(size_t), sizes.get(), NULL));
       Local<Array> arr = Array::New(nsizes);
       for(cl_uint i=0;i<nsizes;i++)
-        arr->Set(i,JS_INT(sizes[i]));
+        arr->Set(i,JS_INT(uint32_t(sizes[i])));
 
       NanReturnValue(arr);
     }
@@ -263,7 +263,7 @@ NAN_METHOD(GetProgramInfo) {
     {
       size_t val;
       CHECK_ERR(::clGetProgramInfo(prog,param_name,sizeof(size_t), &val, NULL))
-      NanReturnValue(JS_INT(val));
+      NanReturnValue(JS_INT(uint32_t(val)));
     }
     case CL_PROGRAM_SOURCE:
     case CL_PROGRAM_KERNEL_NAMES:

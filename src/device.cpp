@@ -129,7 +129,7 @@ NAN_METHOD(GetDeviceInfo) {
 
     Local<Array> arr = Array::New(max_work_item_dimensions);
     for(cl_uint i=0;i<max_work_item_dimensions;i++)
-      arr->Set(i,JS_INT(param_value[i]));
+      arr->Set(i,JS_INT(uint32_t(param_value[i])));
 
     NanReturnValue(arr);
   }
