@@ -57,7 +57,7 @@ using namespace v8;
 
 namespace {
 #define JS_STR(...) NanNew<v8::String>(__VA_ARGS__)
-#define JS_INT(val) NanNew<v8::Integer>(val)
+#define JS_INT(val) NanNew<v8::Integer>(static_cast<unsigned int>(val))
 #define JS_NUM(val) NanNew<v8::Number>(val)
 #define JS_BOOL(val) NanNew<v8::Boolean>(val)
 #define JS_RETHROW(tc) NanNew<v8::Local<v8::Value> >(tc.Exception());

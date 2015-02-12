@@ -35,7 +35,9 @@
           },
           'libraries': ['-framework OpenGL', '-framework OpenCL'],
         }],
-        ['OS=="linux"', {'libraries': ['-lGL', '-lOpenCL']}],
+        ['OS=="linux"', {
+          'cflags': ['-std=c++11'],
+          'libraries': ['-lGL', '-lOpenCL']}],
         ['OS=="win"', {
           'variables' :
             {
