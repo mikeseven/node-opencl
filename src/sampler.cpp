@@ -39,6 +39,49 @@ NAN_METHOD(CreateSampler) {
 // clCreateSamplerWithProperties(cl_context                     /* context */,
 //                               const cl_sampler_properties *  /* normalized_coords */,
 //                               cl_int *                       /* errcode_ret */) CL_API_SUFFIX__VERSION_2_0;
+//                               
+NAN_METHOD(CreateSamplerWithProperties) {
+  NanScope();
+  REQ_ARGS(2);
+
+  if(!isOpenCLObj(args[0])) {
+    return NanThrowError(JS_INT(CL_INVALID_CONTEXT));
+  }
+
+  cl_context context=Unwrap<cl_context>(args[0]);
+
+  Local<Array> properties = Local<Array>::Cast(args[1]);
+  vector<cl_sampler_properties> cl_properties;
+
+  for (uint32_t i=0; i < properties->Length(); i++) {
+    cl_uint prop_id = properties->Get(i)->Uint32Value();
+    cl_properties.push_back(prop_id);
+    if(prop_id == CL_SAMPLER_NORMALIZED_COORDS) {
+      cl_bool * norm = Unwrap<cl_bool *>(properties->Get(++i));
+      cl_properties.push_back((cl_context_properties) * norm);
+    } else if (prop_id == CL_SAMPLER_ADDRESSING_MODE) {
+      cl_addressing_mode * addr = Unwrap<cl_addressing_mode *>(properties->Get(++i));
+      cl_properties.push_back((cl_context_properties) * addr);
+    } else if (prop_id == CL_SAMPLER_FILTER_MODE) {
+      cl_addressing_mode * fil = Unwrap<cl_filter_mode *>(properties->Get(++i));
+      cl_properties.push_back((cl_context_properties) * fil);
+    } else {
+      // TODO Throw good exception
+      return NanThrowError(JS_INT(CL_INVALID_SAMPLER));
+    }
+  }
+  cl_properties.push_back(0);
+
+  cl_int err = CL_SUCCESS;
+  cl_sampler sw = ::clCreateSamplerWithProperties(
+              context,
+              NULL,
+              &err);
+  CHECK_ERR(err);
+
+  NanReturnValue(Wrap(sw));
+
+}
 #endif
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -68,9 +111,11 @@ NAN_METHOD(ReleaseSampler) {
   }
 
   cl_sampler sampler = Unwrap<cl_sampler>(args[0]);
-  cl_int count=clReleaseSampler(sampler);
+  cl_int ret = ::clReleaseSampler(sampler);
 
-  NanReturnValue(JS_INT(count));
+  CHECK_ERR(ret);
+
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
