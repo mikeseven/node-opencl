@@ -51,18 +51,6 @@ void getPtrAndLen(const Local<Value> value, void* &ptr, int &len)
   }
 }
 
-template<typename CL_TYPE>
-void getValuesFromArray(const Local<Array>& arr, std::vector<CL_TYPE>& vals)
-{
-  size_t num=arr->Length();
-  if(!num) {
-    vals.clear();
-    return;
-  }
-
-  vals.reserve(num);
-  for(size_t i=0;i<num;i++)
-    vals.push_back(Unwrap<CL_TYPE>(arr->Get(i)));
 }
 
-} // namespace opencl
+// namespace opencl
