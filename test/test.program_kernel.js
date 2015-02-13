@@ -8,12 +8,6 @@ var cl=require('../lib/opencl'),
 
 
 var squareKern = fs.readFileSync(__dirname + "/kernels/square.cl").toString();
-var bind = function() {
-    var args = Array.prototype.slice.call(arguments);
-    return function(){
-        return Function.apply.call(args);
-    };
-};
 
 describe("Program", function() {
 
@@ -31,7 +25,7 @@ describe("Program", function() {
     });
 
     it("should throw as context is invalid", function () {
-        bind(cl.createProgramWithSource, null, squareKern)
+        testUtils.bind(cl.createProgramWithSource, null, squareKern)
             .should.throw(cl.INVALID_CONTEXT);
     });
 
@@ -72,7 +66,7 @@ describe("Program", function() {
 
     it("should throw if program is NULL", function() {
       testUtils.withContext(function(ctx){
-        bind(cl.buildProgram, null)
+        testUtils.bind(cl.buildProgram, null)
             .should.throw(cl.INVALID_PROGRAM);
       });
     });
@@ -80,7 +74,7 @@ describe("Program", function() {
     it("should throw if program is INVALID", function() {
       testUtils.withContext(function(ctx){
         var prg = cl.createProgramWithSource(ctx, squareKern + "$bad_inst");
-        bind(cl.buildProgram, prg)
+        testUtils.bind(cl.buildProgram, prg)
             .should.throw(cl.INVALID_PROGRAM);
         cl.releaseProgram(prg);
       });
