@@ -84,17 +84,39 @@ describe("Program", function() {
 
 
   describe("#createProgramWithBinary", function() {
-
+      // TODO
   });
   describe("#createProgramWithBuiltInKernels", function() {
       // TODO
   });
+
   describe("#retainProgram", function() {
-
+    it("should increment the reference count", function() {
+      testUtils.withContext(function(ctx){
+        var prg = cl.createProgramWithSource(ctx, squareKern);
+        var before = cl.getProgramInfo(prg, cl.PROGRAM_REFERENCE_COUNT);
+        cl.retainProgram(prg);
+        var after = cl.getProgramInfo(prg, cl.PROGRAM_REFERENCE_COUNT);
+        assert(before + 1 == after);
+        cl.releaseProgram(prg);
+      });
+    });
   });
+
   describe("#releaseProgram", function() {
-
+    it("should decrement the reference count", function() {
+      testUtils.withContext(function(ctx){
+        var prg = cl.createProgramWithSource(ctx, squareKern);
+        var before = cl.getProgramInfo(prg, cl.PROGRAM_REFERENCE_COUNT);
+        cl.retainProgram(prg);
+        cl.releaseProgram(prg);
+        var after = cl.getProgramInfo(prg, cl.PROGRAM_REFERENCE_COUNT);
+        assert(before == after);
+        cl.releaseProgram(prg);
+      });
+    });
   });
+
   describe("#compileProgram", function() {
 
   });
