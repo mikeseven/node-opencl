@@ -135,14 +135,26 @@ NAN_METHOD(BuildProgram) {
 
   cl_program p = Unwrap<cl_program>(args[0]);
   std::vector<cl_device_id> devices;
-  getValuesFromArray(Local<Array>::Cast(args[1]),devices);
-  REQ_STR_ARG(2,options);
+
+  if (!args[1]->IsNull() && !args[1]->IsUndefined()){
+    getValuesFromArray(Local<Array>::Cast(args[1]),devices);
+  }
+
+  unique_ptr<String::Utf8Value> options = NULL;
+
+  if (!args[2]->IsNull() && !args[2]->IsUndefined()){
+    if (!args[2]->IsString())
+      NanThrowTypeError("Argument 2 must be a string");
+    options = unique_ptr<String::Utf8Value>( new String::Utf8Value(args[2]->ToString()));
+  }
+
+  //REQ_STR_ARG(2,options);
 
   // TODO callback + userdata
 
   CHECK_ERR(::clBuildProgram(p,
     devices.size(), devices.size() ? &devices.front() : nullptr,
-    *options,
+    options != NULL ? **options : nullptr,
     nullptr, nullptr)); // TODO CB
 
   NanReturnValue(JS_INT(CL_SUCCESS));
