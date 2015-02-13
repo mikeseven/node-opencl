@@ -12,10 +12,7 @@ describe("Context", function() {
 
   var device=null;
   for(var i=0;i<devices.length;i++) {
-    if(cl.getDeviceInfo(devices[i],cl.DEVICE_VENDOR) != 'Intel') {
       device=devices[i];
-      break;
-    }
   }
   log('using device '+cl.getDeviceInfo(device,cl.DEVICE_VENDOR)+" "+cl.getDeviceInfo(device,cl.DEVICE_NAME));
 
