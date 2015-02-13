@@ -9,6 +9,7 @@ describe("Context", function() {
   var platforms=cl.getPlatformIDs();
   var platform=platforms[0];
   var devices=cl.getDeviceIDs(platform);
+
   var device=null;
   for(var i=0;i<devices.length;i++) {
     if(cl.getDeviceInfo(devices[i],cl.DEVICE_VENDOR) != 'Intel') {

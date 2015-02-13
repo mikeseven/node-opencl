@@ -64,7 +64,7 @@ namespace {
 
 #define CHECK_ERR(ret)  { cl_int _err=(ret); \
   if ((_err) != CL_SUCCESS) { \
-    return NanThrowError(JS_INT(_err)); \
+    return NanThrowError(getExceptionMessage(_err).c_str(), _err); \
   } \
 }
 
@@ -91,8 +91,6 @@ namespace {
 } // namespace
 
 namespace opencl {
-
-const char* ErrorDesc(cl_int err);
 
 inline bool isOpenCLObj(Local<Value> val) {
     return !(val->IsNull() || !val->IsObject() || val->IsArray() || val->ToObject()->InternalFieldCount()<1);
@@ -129,6 +127,7 @@ void getValuesFromArray(const Local<Array>& arr, std::vector<CL_TYPE>& vals)
     vals.push_back(Unwrap<CL_TYPE>(arr->Get(i)));
 }
 
+const std::string getExceptionMessage(const cl_int code);
 
 } // namespace opencl
 
