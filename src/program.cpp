@@ -113,7 +113,7 @@ NAN_METHOD(ReleaseProgram) {
   }
 
   cl_program p = Unwrap<cl_program>(args[0]);
-  cl_int count=clRetainProgram(p);
+  cl_int count=clReleaseProgram(p);
 
   NanReturnValue(JS_INT(count));
 }
