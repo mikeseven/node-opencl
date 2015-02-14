@@ -376,14 +376,153 @@ describe("Kernel", function () {
 
   describe("#setKernelArg", function () {
 
+    it("should be implemented", function () {
+      // TODO
+      assert(false);
+    });
+
   });
+
   describe("#getKernelInfo", function () {
 
-  });
-  describe("#getKernelArgInfo", function () {
+    it("should have valid types for properties", function () {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          var k = cl.createKernel(prg, "square");
+
+          cl.getKernelInfo(k, cl.KERNEL_ATTRIBUTES).should.be.a.string;
+          cl.getKernelInfo(k, cl.KERNEL_FUNCTION_NAME).should.be.a.string;
+          cl.getKernelInfo(k, cl.KERNEL_REFERENCE_COUNT).should.be.a.integer;
+          cl.getKernelInfo(k, cl.KERNEL_NUM_ARGS).should.be.a.integer;
+
+          var c = cl.getKernelInfo(k, cl.KERNEL_CONTEXT);
+          var p = cl.getKernelInfo(k, cl.KERNEL_PROGRAM);
+
+          assert.isNotNull(c);
+          assert.isDefined(c);
+
+          assert.isNotNull(p);
+          assert.isDefined(c);
+        });
+      });
+    });
+
+    it("should return the corresponding number of arguments", function () {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          var k = cl.createKernel(prg, "square");
+          var nb_args = cl.getKernelInfo(k, cl.KERNEL_NUM_ARGS);
+
+          if (nb_args != 3) {
+            assert.fail(nb_args, 3);
+          }
+        });
+      });
+    });
+
+    it("should return the corresponding kernel name", function () {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          var k = cl.createKernel(prg, "square");
+          var name = cl.getKernelInfo(k, cl.KERNEL_FUNCTION_NAME);
+
+          if (name != "square") {
+            assert.fail(name, "square");
+          }
+        });
+      });
+    });
+
+    it("should return the corresponding context", function () {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          var k = cl.createKernel(prg, "square");
+          var c = cl.getKernelInfo(k, cl.KERNEL_CONTEXT);
+
+          assert(c == ctx);
+        });
+      });
+    });
+
+    it("should return the corresponding program", function () {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          var k = cl.createKernel(prg, "square");
+          var p = cl.getKernelInfo(k, cl.KERNEL_PROGRAM);
+
+          assert(p == prg);
+        });
+      });
+    });
 
   });
+
+  describe("#getKernelArgInfo", function () {
+    it("should have valid types for properties", function(){
+      testUtils.withContext(function (ctx, device) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          var k = cl.createKernel(prg, "square");
+
+          cl.getKernelArgInfo(k, 0, cl.KERNEL_ARG_ADDRESS_QUALIFIER).should.be.a.integer;
+          cl.getKernelArgInfo(k, 0, cl.KERNEL_ARG_ACCESS_QUALIFIER).should.be.a.integer;
+          cl.getKernelArgInfo(k, 0, cl.KERNEL_ARG_TYPE_QUALIFIER).should.be.a.integer;
+
+          cl.getKernelArgInfo(k, 0, cl.KERNEL_ARG_TYPE_NAME).should.be.a.string;
+          cl.getKernelArgInfo(k, 0, cl.KERNEL_ARG_NAME).should.be.a.string;
+        });
+      });
+    })
+
+    it("should return the corresponding names", function(){
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          var k = cl.createKernel(prg, "square");
+          var n1 = cl.getKernelArgInfo(k, 0, cl.KERNEL_ARG_TYPE_NAME);
+          var n2 = cl.getKernelArgInfo(k, 1, cl.KERNEL_ARG_TYPE_NAME);
+          var n3 = cl.getKernelArgInfo(k, 2, cl.KERNEL_ARG_TYPE_NAME);
+
+          assert.equal(n1, "input");
+          assert.equal(n2, "output");
+          assert.equal(n3, "count");
+        });
+      });
+    });
+
+
+    it("should return the corresponding types", function(){
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          var k = cl.createKernel(prg, "square");
+          var n1 = cl.getKernelArgInfo(k, 0, cl.KERNEL_ARG_TYPE_NAME);
+          var n2 = cl.getKernelArgInfo(k, 1, cl.KERNEL_ARG_TYPE_NAME);
+          var n3 = cl.getKernelArgInfo(k, 2, cl.KERNEL_ARG_TYPE_NAME);
+
+          assert.equal(n1, "float*");
+          assert.equal(n2, "float*");
+          assert.equal(n3, "int");
+        });
+      });
+    });
+  });
+
   describe("#getKernelWorkGroupInfo", function () {
 
+    it("should have valid types for properties", function(){
+      testUtils.withContext(function (ctx, device) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          var k = cl.createKernel(prg, "square");
+
+          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_COMPILE_WORK_GROUP_SIZE).should.be.a.array;
+          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_GLOBAL_WORK_SIZE).should.be.a.array;
+
+          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE).should.be.a.integer;
+          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_WORK_GROUP_SIZE).should.be.a.integer;
+
+          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_LOCAL_MEM_SIZE).should.be.a.integer;
+          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_PRIVATE_MEM_SIZE).should.be.a.integer;
+        });
+      });
+    })
   });
-})
+
+});
