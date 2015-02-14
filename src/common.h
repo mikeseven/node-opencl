@@ -96,6 +96,10 @@ inline bool isOpenCLObj(Local<Value> val) {
     return !(val->IsNull() || !val->IsObject() || val->IsArray() || val->ToObject()->InternalFieldCount()<1);
 }
 
+inline bool argExists(const Arguments & args, int nth) {
+ return args.Length() >= nth + 1 && !args[nth]->IsNull() && !args[nth]->IsUndefined();
+}
+
 template<typename CL_TYPE>
 inline CL_TYPE Unwrap(Local<Value> val) {
   Local<External> wrap = Local<External>::Cast(val->ToObject()->GetInternalField(0));
