@@ -8,6 +8,7 @@ var cl = require('../lib/opencl'),
 
 
 var squareKern = fs.readFileSync(__dirname + "/kernels/square.cl").toString();
+var squareCpyKern = fs.readFileSync(__dirname + "/kernels/square_cpy.cl").toString();
 
 describe("Program", function () {
 
@@ -281,19 +282,98 @@ describe("Program", function () {
 
 })
 
+
+// -------------------------
+
 describe("Kernel", function () {
+
   describe("#createKernel", function () {
 
+    it("should return a valid kernel", function () {
+      testUtils.withContext(function(ctx){
+        testUtils.withProgram(ctx, squareKern, function(prg){
+          var k = cl.createKernel(prg, "square");
+
+          assert.isNotNull(k);
+          assert.isDefined(k);
+          cl.releaseKernel(k);
+        });
+      });
+    });
+
+    it("should fail as kernel does not exists", function () {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          testUtils.bind(cl.createKernel, prg, "i_do_not_exist").should.throw();
+        });
+      });
+    });
+
   });
+
+
   describe("#createKernelsInProgram", function () {
 
+    it("should return two valid kernels", function() {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, [squareKern, squareCpyKern].join("\n"), function (prg) {
+          var kerns = cl.createKernelsInProgram(prg, 2);
+
+          assert.isNotNull(kerns);
+          assert.isDefined(kerns);
+          assert(kerns.length == 2);
+          assert.isNotNull(kerns[0]);
+          assert.isDefined(kerns[0]);
+          assert.isNotNull(kerns[1]);
+          assert.isDefined(kerns[1]);
+
+          cl.releaseKernel(kerns[0]);
+          cl.releaseKernel(kerns[1]);
+        });
+      });
+    });
+
   });
+
+
   describe("#retainKernel", function () {
 
-  });
-  describe("#releaseKernel", function () {
+    it("should increment reference count", function () {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          var k = cl.createKernel(prg, "square");
+
+          var before = cl.getKernelInfo(k, cl.KERNEL_REFERENCE_COUNT);
+          cl.retainKernel(k);
+          var after = cl.getKernelInfo(k, cl.KERNEL_REFERENCE_COUNT);
+          assert(before + 1 == after);
+          cl.releaseKernel(k);
+        });
+      });
+    });
 
   });
+
+  describe("#releaseKernel", function () {
+
+    it("should decrement reference count", function () {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          var k = cl.createKernel(prg, "square");
+          var before = cl.getKernelInfo(k, cl.KERNEL_REFERENCE_COUNT);
+
+          cl.retainKernel(k);
+          cl.releaseKernel(k);
+          var after = cl.getKernelInfo(k, cl.KERNEL_REFERENCE_COUNT);
+
+          //assert(before == after);
+          cl.releaseKernel(k);
+        });
+      });
+    })
+
+  });
+
   describe("#setKernelArg", function () {
 
   });
