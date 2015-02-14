@@ -144,8 +144,9 @@ NAN_METHOD(BuildProgram) {
   String::Utf8Value * options = nullptr;
 
   if (argExists(args, 2)){
-    if (!args[2]->IsString())
-      NanThrowTypeError("Argument 3 must be a string");
+    if (!args[2]->IsString()) {
+      throwTypeMismatch(2, "options", "string");
+    }
     options = new String::Utf8Value(args[2]);
   }
 
@@ -198,8 +199,9 @@ NAN_METHOD(CompileProgram) {
   String::Utf8Value * options = nullptr;
 
   if (argExists(args, 2)){
-    if (!args[2]->IsString())
-      NanThrowTypeError("Argument 3 must be a string");
+    if (!args[2]->IsString()) {
+      throwTypeMismatch(2, "options", "string");
+    }
     options = new String::Utf8Value(args[2]);
   }
 
@@ -212,7 +214,7 @@ NAN_METHOD(CompileProgram) {
   // Checking correct mapping
   if (argExists(args, 3)){
     if (!args[3]->IsArray()) {
-      NanThrowTypeError("Argument 4 must be an array");
+      throwTypeMismatch(3, "program headers", "array");
     } else {
       getValuesFromArray(Local<Array>::Cast(args[3]), program_headers);
     }
