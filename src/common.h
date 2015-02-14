@@ -96,9 +96,8 @@ inline bool isOpenCLObj(Local<Value> val) {
     return !(val->IsNull() || !val->IsObject() || val->IsArray() || val->ToObject()->InternalFieldCount()<1);
 }
 
-inline bool argExists(const Arguments & args, int nth) {
- return args.Length() >= nth + 1 && !args[nth]->IsNull() && !args[nth]->IsUndefined();
-}
+#define ARG_EXISTS(nth) \
+  args.Length() >= nth + 1 && !args[nth]->IsNull() && !args[nth]->IsUndefined()
 
 inline void throwTypeMismatch(int nth, std::string name, std::string type) {
   printf("%s (arg %d) : expected %s", name.c_str(), nth + 1, type.c_str());
