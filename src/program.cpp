@@ -1,5 +1,6 @@
 #include "program.h"
 #include <vector>
+#include <Python/Python.h>
 
 namespace opencl {
 
@@ -136,26 +137,30 @@ NAN_METHOD(BuildProgram) {
   cl_program p = Unwrap<cl_program>(args[0]);
   std::vector<cl_device_id> devices;
 
-  if (!args[1]->IsNull() && !args[1]->IsUndefined()){
+  if (argExists(args, 1)){
     getValuesFromArray(Local<Array>::Cast(args[1]),devices);
   }
 
-  unique_ptr<String::Utf8Value> options = NULL;
+  String::Utf8Value * options = nullptr;
 
-  if (!args[2]->IsNull() && !args[2]->IsUndefined()){
+  if (argExists(args, 2)){
     if (!args[2]->IsString())
-      NanThrowTypeError("Argument 2 must be a string");
-    options = unique_ptr<String::Utf8Value>( new String::Utf8Value(args[2]->ToString()));
+      NanThrowTypeError("Argument 3 must be a string");
+    options = new String::Utf8Value(args[2]);
   }
 
   //REQ_STR_ARG(2,options);
 
   // TODO callback + userdata
 
-  CHECK_ERR(::clBuildProgram(p,
+  int err = ::clBuildProgram(p,
     devices.size(), devices.size() ? &devices.front() : nullptr,
     options != NULL ? **options : nullptr,
-    nullptr, nullptr)); // TODO CB
+    nullptr, nullptr);
+
+  delete options;
+
+  CHECK_ERR(err); // TODO CB
 
   NanReturnValue(JS_INT(CL_SUCCESS));
 }
@@ -172,9 +177,76 @@ NAN_METHOD(BuildProgram) {
 //                  void *               /* user_data */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(CompileProgram) {
   NanScope();
-  // TODO
-  NanReturnUndefined();
+  REQ_ARGS(1);
 
+  // Arg 1 : program
+  if(!isOpenCLObj(args[0])) {
+    return NanThrowError(JS_INT(CL_INVALID_PROGRAM));
+  }
+
+  cl_program p = Unwrap<cl_program>(args[0]);
+
+  // Arg 2 : devices
+  std::vector<cl_device_id> devices;
+
+  if (argExists(args, 1)){
+    getValuesFromArray(Local<Array>::Cast(args[1]),devices);
+  }
+
+
+  // Arg 3 : Options
+  String::Utf8Value * options = nullptr;
+
+  if (argExists(args, 2)){
+    if (!args[2]->IsString())
+      NanThrowTypeError("Argument 3 must be a string");
+    options = new String::Utf8Value(args[2]);
+  }
+
+  // Arg 4 : programs included
+  // Arg 5 : headers names
+  std::vector<cl_program> program_headers;
+  std::vector<const char *> names;
+
+
+  // Checking correct mapping
+  if (argExists(args, 3)){
+    if (!args[3]->IsArray()) {
+      NanThrowTypeError("Argument 4 must be an array");
+    } else {
+      getValuesFromArray(Local<Array>::Cast(args[3]), program_headers);
+    }
+  }
+
+  if (argExists(args, 4)){
+    Local<Array> arr = Local<Array>::Cast(args[4]);
+    for (int i = 0; i < arr->Length(); ++ i) {
+      String::Utf8Value str(arr->Get(i));
+      names.push_back(str.operator*());
+    }
+  }
+
+  // Arg 4 and 5 mapping
+  if (program_headers.size() != names.size()) {
+    NanThrowError("Program headers and names should be of the same size");
+  }
+
+  // CL CALL
+  // TODO Callbacks
+
+  int err = ::clCompileProgram(
+    p,
+    devices.size(), devices.size() ? &devices.front() : nullptr,
+    options != NULL ? **options : nullptr,
+    program_headers.size(), program_headers.size() ? &program_headers.front() : nullptr,
+    &names.front(),
+    nullptr, nullptr);
+
+  delete options;
+
+  CHECK_ERR(err);
+
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_program CL_API_CALL
