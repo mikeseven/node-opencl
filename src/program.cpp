@@ -137,13 +137,13 @@ NAN_METHOD(BuildProgram) {
   cl_program p = Unwrap<cl_program>(args[0]);
   std::vector<cl_device_id> devices;
 
-  if (argExists(args, 1)){
+  if (ARG_EXISTS(1)){
     getValuesFromArray(Local<Array>::Cast(args[1]),devices);
   }
 
   String::Utf8Value * options = nullptr;
 
-  if (argExists(args, 2)){
+  if (ARG_EXISTS(2)){
     if (!args[2]->IsString()) {
       throwTypeMismatch(2, "options", "string");
     }
@@ -190,7 +190,7 @@ NAN_METHOD(CompileProgram) {
   // Arg 2 : devices
   std::vector<cl_device_id> devices;
 
-  if (argExists(args, 1)){
+  if (ARG_EXISTS(1)){
     getValuesFromArray(Local<Array>::Cast(args[1]),devices);
   }
 
@@ -198,7 +198,7 @@ NAN_METHOD(CompileProgram) {
   // Arg 3 : Options
   String::Utf8Value * options = nullptr;
 
-  if (argExists(args, 2)){
+  if (ARG_EXISTS(2)){
     if (!args[2]->IsString()) {
       throwTypeMismatch(2, "options", "string");
     }
@@ -212,7 +212,7 @@ NAN_METHOD(CompileProgram) {
 
 
   // Checking correct mapping
-  if (argExists(args, 3)){
+  if (ARG_EXISTS(3)){
     if (!args[3]->IsArray()) {
       throwTypeMismatch(3, "program headers", "array");
     } else {
@@ -220,7 +220,7 @@ NAN_METHOD(CompileProgram) {
     }
   }
 
-  if (argExists(args, 4)){
+  if (ARG_EXISTS(4)){
     Local<Array> arr = Local<Array>::Cast(args[4]);
     for (int i = 0; i < arr->Length(); ++ i) {
       String::Utf8Value str(arr->Get(i));
