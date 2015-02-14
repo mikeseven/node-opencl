@@ -215,7 +215,11 @@ describe("Program", function () {
   });
 
   describe("#unloadPlatformCompiler", function () {
-    // TODO
+    it("should work when using a valid platform", function() {
+      testUtils.withContext(function (ctx, device, platform) {
+        cl.unloadPlatformCompiler(platform);
+      })
+    });
   });
 
   describe("#getProgramInfo", function () {

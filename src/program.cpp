@@ -271,9 +271,19 @@ NAN_METHOD(LinkProgram) {
 // clUnloadPlatformCompiler(cl_platform_id /* platform */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(UnloadPlatformCompiler) {
   NanScope();
-  // TODO
-  NanReturnUndefined();
+  REQ_ARGS(1);
 
+
+  // Arg 1
+
+  if(!isOpenCLObj(args[0])) {
+    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
+  }
+  cl_platform_id platform = Unwrap<cl_platform_id>(args[0]);
+
+  CHECK_ERR(::clUnloadPlatformCompiler(platform));
+
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
