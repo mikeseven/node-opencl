@@ -223,7 +223,7 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
   switch(param_name) {
     case CL_KERNEL_COMPILE_WORK_GROUP_SIZE:
     case CL_KERNEL_GLOBAL_WORK_SIZE: {
-      size_t sz[3]{0,0,0};
+      size_t sz[3] = {0,0,0};
       CHECK_ERR(::clGetKernelWorkGroupInfo(k,d,param_name,3*sizeof(size_t),sz, NULL));
       Local<Array> szarr = Array::New();
       szarr->Set(0,JS_INT(sz[0]));
