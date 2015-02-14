@@ -168,12 +168,16 @@ describe("Program", function () {
       });
     });
 
-    it("should fail as program is invalid", function () {
+    it("should fail as ain't no name for header", function () {
       testUtils.withContext(function (ctx) {
-        var prg = cl.createProgramWithSource(ctx, squareKern + "$bad_inst");
-        testUtils.bind(cl.compileProgram, prg)
-          .should.throw(cl.INVALID_PROGRAM);
+        var prg = cl.createProgramWithSource(ctx, squareKern);
+        var prg2 = cl.createProgramWithSource(ctx, squareKern);
+
+        testUtils.bind(cl.compileProgram, prg, null, null, [prg2], [])
+          .should.throw();
+
         cl.releaseProgram(prg);
+        cl.releaseProgram(prg2);
       });
     });
   });
