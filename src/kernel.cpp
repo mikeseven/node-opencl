@@ -31,16 +31,27 @@ NAN_METHOD(CreateKernel) {
 //                          cl_uint *      /* num_kernels_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(CreateKernelsInProgram) {
   NanScope();
-  REQ_ARGS(1);
+  REQ_ARGS(2);
+
+  // Arg 1 - Program
 
   if(!isOpenCLObj(args[0])) {
     return NanThrowError(JS_INT(CL_INVALID_PROGRAM));
   }
   cl_program prog=Unwrap<cl_program>(args[0]);
 
-  cl_uint nkernels=0;
-  CHECK_ERR(::clCreateKernelsInProgram(prog, 0, NULL, &nkernels));
+  // Arg 2 - Number of kernels
+
+  cl_uint nkernels = 0;
+  if (args[1]->IsUint32()) {
+    nkernels = args[1]->Uint32Value();
+  } else {
+    throwTypeMismatch(1, "number of kernels", "unsigned int");
+  }
+
+
   unique_ptr<cl_kernel[]> kernels(new cl_kernel[nkernels]);
+
   CHECK_ERR(::clCreateKernelsInProgram(prog, nkernels, kernels.get(), NULL));
 
   Local<Array> karr = Array::New();
