@@ -37,6 +37,9 @@ NAN_METHOD(CreateCommandQueue) {
 //                                    cl_device_id              /* device */,
 //                                    const cl_queue_properties *    /* properties */,
 //                                    cl_int *                 /* errcode_ret */) CL_API_SUFFIX__VERSION_2_0;
+NAN_METHOD(CreateCommandQueueWithProperties) {
+  NanScope();
+}
 #endif
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -947,7 +950,8 @@ NAN_METHOD(EnqueueMapBuffer) {
 
   CHECK_ERR(ret);
 
-  NanReturnValue(Wrap(ptr));
+  // TODO Fix me
+  // NanReturnValue(Wrap(ptr));
 }
 
 // extern CL_API_ENTRY void * CL_API_CALL
@@ -1021,7 +1025,8 @@ NAN_METHOD(EnqueueMapImage) {
 
   CHECK_ERR(ret);
 
-  NanReturnValue(Wrap(ptr));
+  // TODO Fix me
+  //NanReturnValue(Wrap(ptr));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
