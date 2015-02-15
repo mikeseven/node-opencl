@@ -47,7 +47,7 @@ NAN_METHOD(GetDeviceInfo) {
   REQ_ARGS(2);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_DEVICE));
+    THROW_ERR(CL_INVALID_DEVICE);
   }
 
   cl_device_id device_id = Unwrap<cl_device_id>(args[0]);
@@ -227,7 +227,7 @@ NAN_METHOD(GetDeviceInfo) {
   }
   break;
   default: {
-    NanThrowError(JS_INT(CL_INVALID_VALUE));
+    THROW_ERR(CL_INVALID_VALUE);
   }
   }
   NanReturnUndefined();
@@ -253,7 +253,7 @@ NAN_METHOD(RetainDevice) {
   REQ_ARGS(1);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_DEVICE));
+    THROW_ERR(CL_INVALID_DEVICE);
   }
 
   // TODO make sure device_id is a sub-device
@@ -272,7 +272,7 @@ NAN_METHOD(ReleaseDevice) {
   REQ_ARGS(1);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_DEVICE));
+    THROW_ERR(CL_INVALID_DEVICE);
   }
 
   // TODO make sure device_id is a sub-device

@@ -19,7 +19,7 @@ describe("Context", function() {
   describe("#createContext", function() {
 
     it("should throw if devices = null",function() {
-      cl.createContext.bind(cl.createContext,null, null, null, null).should.throw(cl.INVALID_DEVICE);
+      cl.createContext.bind(cl.createContext,null, null, null, null).should.throw(cl.INVALID_DEVICE.message);
     });
 
     it("should create a context with default properties for a platform",function() {
@@ -42,11 +42,11 @@ describe("Context", function() {
 
   describe("#createContextFromType", function() {
 
-    it("should throw if type is unknown", function () {
+    it("should throw cl.INVALID_VALUE if type is unknown", function () {
       var properties= [
         cl.CONTEXT_PLATFORM, platform
       ];
-      cl.createContextFromType.bind(cl.createContextFromType, properties, 0, null, null).should.throw(cl.INVALID_DEVICE);
+      cl.createContextFromType.bind(cl.createContextFromType, properties, 0, null, null).should.throw(cl.INVALID_VALUE.message);
     });
 
     it("should create a context with a wildcard type", function () {
@@ -74,9 +74,9 @@ describe("Context", function() {
       cl.getContextInfo(ctx, cl.CONTEXT_PROPERTIES).should.be.a.array;
     });
 
-    it("should throw if an unknown param is given", function () {
-      cl.getContextInfo.bind(cl.getContextInfo, ctx, 0)
-        .should.throw(cl.INVALID_VALUE);
+    it("should throw cl.INVALID_VALUE if an unknown param is given", function () {
+      cl.getContextInfo.bind(cl.getContextInfo, ctx, -1)
+        .should.throw(cl.INVALID_VALUE.message);
     });
 
     it("should have a reference count of 1", function () {

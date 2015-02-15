@@ -16,7 +16,7 @@ NAN_METHOD(CreateProgramWithSource) {
   REQ_ARGS(2);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_CONTEXT));
+    THROW_ERR(CL_INVALID_CONTEXT);
   }
   cl_context context=Unwrap<cl_context>(args[0]);
   REQ_STR_ARG(1, str);
@@ -43,7 +43,7 @@ NAN_METHOD(CreateProgramWithBinary) {
   REQ_ARGS(3);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_CONTEXT));
+    THROW_ERR(CL_INVALID_CONTEXT);
   }
   cl_context context=Unwrap<cl_context>(args[0]);
 
@@ -94,7 +94,7 @@ NAN_METHOD(RetainProgram) {
   REQ_ARGS(1);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_PROGRAM));
+    THROW_ERR(CL_INVALID_PROGRAM);
   }
 
   cl_program p = Unwrap<cl_program>(args[0]);
@@ -110,7 +110,7 @@ NAN_METHOD(ReleaseProgram) {
   REQ_ARGS(1);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_PROGRAM));
+    THROW_ERR(CL_INVALID_PROGRAM);
   }
 
   cl_program p = Unwrap<cl_program>(args[0]);
@@ -131,7 +131,7 @@ NAN_METHOD(BuildProgram) {
   REQ_ARGS(1);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_PROGRAM));
+    THROW_ERR(CL_INVALID_PROGRAM);
   }
 
   cl_program p = Unwrap<cl_program>(args[0]);
@@ -182,7 +182,7 @@ NAN_METHOD(CompileProgram) {
 
   // Arg 1 : program
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_PROGRAM));
+    THROW_ERR(CL_INVALID_PROGRAM);
   }
 
   cl_program p = Unwrap<cl_program>(args[0]);
@@ -222,7 +222,7 @@ NAN_METHOD(CompileProgram) {
 
   if (argExists(args, 4)){
     Local<Array> arr = Local<Array>::Cast(args[4]);
-    for (int i = 0; i < arr->Length(); ++ i) {
+    for (unsigned int i = 0; i < arr->Length(); ++ i) {
       String::Utf8Value str(arr->Get(i));
       names.push_back(str.operator*());
     }
@@ -299,7 +299,7 @@ NAN_METHOD(GetProgramInfo) {
   REQ_ARGS(2);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
+    THROW_ERR(CL_INVALID_MEM_OBJECT);
   }
   cl_program prog=Unwrap<cl_program>(args[0]);
   cl_program_info param_name = args[1]->Uint32Value();
@@ -371,7 +371,7 @@ NAN_METHOD(GetProgramInfo) {
       NanReturnValue(JS_STR(names.get()));
     }
   }
-  return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  THROW_ERR(CL_INVALID_VALUE);
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -386,11 +386,11 @@ NAN_METHOD(GetProgramBuildInfo) {
   REQ_ARGS(3);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
+    THROW_ERR(CL_INVALID_MEM_OBJECT);
   }
   cl_program prog=Unwrap<cl_program>(args[0]);
   if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_DEVICE));
+    THROW_ERR(CL_INVALID_DEVICE);
   }
   cl_device_id device=Unwrap<cl_device_id>(args[1]);
   cl_program_build_info param_name = args[2]->Uint32Value();
@@ -418,7 +418,7 @@ NAN_METHOD(GetProgramBuildInfo) {
       NanReturnValue(JS_INT(val));
     }
   }
-  return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  THROW_ERR(CL_INVALID_VALUE);
 }
 
 namespace Program {

@@ -1,57 +1,68 @@
-var cl = require('../lib/opencl'),
-  should = require('chai').should(),
-  util = require('util'),
-  withContext = require("../lib/test_utils").withContext,
-  assert = require("chai").assert,
-  chai = require("chai"),
-  log = console.log;
+var cl=require('../lib/opencl'),
+    should=require('chai').should(),
+    assert=require('chai').assert,
+    util=require('util'),
+    log=console.log;
 
-var testString = function(code) {
-  var info = cl.getPlatformInfo(cl.getPlatformIDs()[0], code);
-  assert.isString(info);
-};
+describe("Platform", function() {
+  var platforms=cl.getPlatformIDs();
 
-describe("Platform", function () {
-  describe("#getPlatformIDs", function () {
-
-    var f = cl.getPlatformIDs;
-
-    it("should return platform ids", function () {
-      var ids = f();
-      assert.isArray(ids);
-      assert.isAbove(ids.length, 0);
-    });
-
+  describe("#getPlatformIDs()",function() {
+    it("should return an array",function() {
+      var devices = cl.getPlatformIDs();
+      assert.isArray(devices);
+      assert.isAbove(devices.length, 0);
+    })
   });
 
+  function testString(platform, name) {
+    it(name+" should return a string",function(done) {
+      var val=cl.getPlatformInfo(platform,eval("cl."+name));
+      assert.isString(val);
+      done(log(name+" = " + val))
+    })
+  }
 
-  describe("#getPlatformInfo", function () {
+  function testPlatform(p) {
+    describe("#getPlatformInfo() for "+cl.getPlatformInfo(p,cl.PLATFORM_VENDOR)+" "+cl.getPlatformInfo(p,cl.PLATFORM_NAME),function() {
+      testString(p, "PLATFORM_VERSION");
+      testString(p, "PLATFORM_PROFILE");
+      testString(p, "PLATFORM_NAME");
+      testString(p, "PLATFORM_VENDOR");
+      testString(p, "PLATFORM_EXTENSIONS");
 
-    it("should return CL_PLATFORM_PROFILE", function () {
-      testString(cl.PLATFORM_PROFILE);
-    });
+      // negative test cases
+      it("should throw cl.INVALID_VALUE with name=cl.DEVICE_TYPE_CPU",function() {
+        cl.getPlatformInfo.bind(cl.getPlatformInfo,p,cl.DEVICE_TYPE_CPU).should.throw(cl.INVALID_VALUE.message);
+      });
+      it("should throw cl.INVALID_VALUE with name=0x2000",function() {
+        cl.getPlatformInfo.bind(cl.getPlatformInfo,p,0x2000).should.throw(cl.INVALID_VALUE.message);
+      });
+      it("should throw cl.INVALID_VALUE with name='a string'",function() {
+        cl.getPlatformInfo.bind(cl.getPlatformInfo,p,'a string').should.throw(cl.INVALID_VALUE.message);
+      });
+      it("should throw cl.INVALID_VALUE with name=-123.56",function() {
+        cl.getPlatformInfo.bind(cl.getPlatformInfo,p,-123.56).should.throw(cl.INVALID_VALUE.message);
+      });
+      it("should throw cl.INVALID_PLATFORM with platform = null",function() {
+        cl.getPlatformInfo.bind(cl.getPlatformInfo,null,123).should.throw(cl.INVALID_PLATFORM.message);
+      });
+      it("should throw cl.INVALID_PLATFORM with platform = 'a string'",function() {
+        cl.getPlatformInfo.bind(cl.getPlatformInfo,'a string',123).should.throw(cl.INVALID_PLATFORM.message);
+      });
+      it("should throw cl.INVALID_PLATFORM with platform = 123",function() {
+        cl.getPlatformInfo.bind(cl.getPlatformInfo,123,123).should.throw(cl.INVALID_PLATFORM.message);
+      });
+      it("should throw cl.INVALID_PLATFORM with platform = [1,2,3]",function() {
+        cl.getPlatformInfo.bind(cl.getPlatformInfo,[1,2,3],123).should.throw(cl.INVALID_PLATFORM.message);
+      });
+      it("should throw cl.INVALID_PLATFORM with platform = new Array()",function() {
+        cl.getPlatformInfo.bind(cl.getPlatformInfo,[],123).should.throw(cl.INVALID_PLATFORM.message);
+      })
+    })
+  }
 
-    it("should return CL_PLATFORM_VERSION", function () {
-      testString(cl.PLATFORM_VERSION);
-    });
-
-    it("should return CL_PLATFORM_NAME", function () {
-      testString(cl.PLATFORM_NAME);
-    });
-
-    it("should return CL_PLATFORM_VENDOR", function () {
-      testString(cl.PLATFORM_VENDOR);
-    });
-
-    it("should return CL_PLATFORM_EXTENSIONS", function () {
-      testString(cl.PLATFORM_EXTENSIONS);
-    });
-
-    it("should throw cl.INVALID_VALUE when passed an invalid platform attribute", function () {
-      cl.getPlatformInfo.bind(cl.getPlatformInfo, cl.getPlatformIDs()[0], -1)
-        .should.throw(cl.INVALID_VALUE.message);
-    });
-
-  });
-
+  for(var i=0;i<platforms.length;i++)
+    testPlatform(platforms[i]);
 });
+

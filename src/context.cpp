@@ -155,7 +155,7 @@ NAN_METHOD(GetContextInfo) {
   NanScope();
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_CONTEXT));
+    THROW_ERR(CL_INVALID_CONTEXT);
   }
   cl_context context = Unwrap<cl_context>(args[0]);
   cl_context_info param_name = args[1]->Uint32Value();
@@ -203,7 +203,7 @@ NAN_METHOD(GetContextInfo) {
     NanReturnValue(arr);
   }
   default: {
-    NanThrowError(JS_INT(CL_INVALID_VALUE));
+    THROW_ERR(CL_INVALID_VALUE);
   }
   }
 

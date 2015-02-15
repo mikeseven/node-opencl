@@ -149,14 +149,12 @@ NAN_METHOD(GetKernelInfo) {
     case CL_KERNEL_CONTEXT: {
       cl_context ctx=0;
       CHECK_ERR(::clGetKernelInfo(k,param_name,sizeof(cl_context),&ctx, NULL));
-      // TODO
-      NanReturnUndefined();
+      NanReturnValue(Wrap(ctx));
     }
     case CL_KERNEL_PROGRAM: {
       cl_program p=0;
       CHECK_ERR(::clGetKernelInfo(k,param_name,sizeof(cl_program),&p, NULL));
-      // TODO
-      NanReturnUndefined();
+      NanReturnValue(Wrap(p));
     }
   }
 
@@ -175,7 +173,7 @@ NAN_METHOD(GetKernelArgInfo) {
   REQ_ARGS(3);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_KERNEL));
+    THROW_ERR(CL_INVALID_KERNEL);
   }
   cl_kernel k=Unwrap<cl_kernel>(args[0]);
   cl_uint arg_idx = args[1]->Uint32Value();
@@ -207,7 +205,7 @@ NAN_METHOD(GetKernelArgInfo) {
     }
   }
 
-  return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  THROW_ERR(CL_INVALID_VALUE);
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
