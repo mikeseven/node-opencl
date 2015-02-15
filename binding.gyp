@@ -7,16 +7,16 @@
       ],
       'sources': [
         'src/addon.cpp',
-        'src/commandqueue.cpp',
         'src/common.cpp',
         'src/context.cpp',
         'src/device.cpp',
-        'src/event.cpp',
+        'src/platform.cpp',
+        'src/types.cpp',
+        'src/program.cpp',
         'src/kernel.cpp',
         'src/memobj.cpp',
-        'src/platform.cpp',
-        'src/program.cpp',
         'src/sampler.cpp',
+        'src/commandqueue.cpp',
         'src/manager.cpp'
       ],
       'include_dirs' : [
