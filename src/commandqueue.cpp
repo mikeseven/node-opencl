@@ -14,12 +14,12 @@ NAN_METHOD(CreateCommandQueue) {
   REQ_ARGS(3);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_CONTEXT));
+    THROW_ERR(CL_INVALID_CONTEXT);
   }
   cl_context context=Unwrap<cl_context>(args[0]);
 
   if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_DEVICE));
+    THROW_ERR(CL_INVALID_DEVICE);
   }
   cl_device_id device=Unwrap<cl_device_id>(args[1]);
   cl_command_queue_properties properties = args[2]->Uint32Value();

@@ -182,17 +182,17 @@ NAN_METHOD(GetKernelArgInfo) {
   switch(param_name) {
     case CL_KERNEL_ARG_ADDRESS_QUALIFIER: {
       cl_kernel_arg_address_qualifier num=0;
-      CHECK_ERR(::clGetKernelInfo(k,param_name,sizeof(cl_kernel_arg_address_qualifier),&num, NULL));
+      CHECK_ERR(::clGetKernelArgInfo(k,arg_idx,param_name,sizeof(cl_kernel_arg_address_qualifier),&num, NULL));
       NanReturnValue(JS_INT(num));
     }
     case CL_KERNEL_ARG_ACCESS_QUALIFIER: {
       cl_kernel_arg_access_qualifier num=0;
-      CHECK_ERR(::clGetKernelInfo(k,param_name,sizeof(cl_kernel_arg_access_qualifier),&num, NULL));
+      CHECK_ERR(::clGetKernelArgInfo(k,arg_idx,param_name,sizeof(cl_kernel_arg_access_qualifier),&num, NULL));
       NanReturnValue(JS_INT(num));
     }
     case CL_KERNEL_ARG_TYPE_QUALIFIER: {
       cl_kernel_arg_type_qualifier num=0;
-      CHECK_ERR(::clGetKernelInfo(k,param_name,sizeof(cl_kernel_arg_type_qualifier),&num, NULL));
+      CHECK_ERR(::clGetKernelArgInfo(k,arg_idx,param_name,sizeof(cl_kernel_arg_type_qualifier),&num, NULL));
       NanReturnValue(JS_INT(num));
     }
     case CL_KERNEL_ARG_TYPE_NAME:
@@ -220,11 +220,11 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
   REQ_ARGS(3);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_KERNEL));
+    THROW_ERR(CL_INVALID_KERNEL);
   }
   cl_kernel k=Unwrap<cl_kernel>(args[0]);
   if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_DEVICE));
+    THROW_ERR(CL_INVALID_DEVICE);
   }
   cl_device_id d=Unwrap<cl_device_id>(args[1]);
   cl_kernel_work_group_info param_name = args[2]->Uint32Value();
@@ -254,7 +254,7 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
     }
   }
 
-  return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  THROW_ERR(CL_INVALID_VALUE);
 }
 
 #ifdef CL_VERSION_2_0

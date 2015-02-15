@@ -228,7 +228,7 @@ describe("Kernel", function () {
 
           assert.equal(n1, "float*");
           assert.equal(n2, "float*");
-          assert.equal(n3, "int");
+          assert.equal(n3, "uint");
         });
       });
     });
@@ -241,14 +241,15 @@ describe("Kernel", function () {
         testUtils.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
 
-          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_COMPILE_WORK_GROUP_SIZE).should.be.a.array;
-          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_GLOBAL_WORK_SIZE).should.be.a.array;
+          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_COMPILE_WORK_GROUP_SIZE).should.be.an.array;
+          cl.getKernelWorkGroupInfo.bind(cl.getKernelWorkGroupInfo,k, device, cl.KERNEL_GLOBAL_WORK_SIZE)
+            .should.throw(cl.INVALID_VALUE.message);
 
-          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE).should.be.a.integer;
-          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_WORK_GROUP_SIZE).should.be.a.integer;
+          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE).should.be.an.integer;
+          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_WORK_GROUP_SIZE).should.be.an.integer;
 
-          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_LOCAL_MEM_SIZE).should.be.a.integer;
-          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_PRIVATE_MEM_SIZE).should.be.a.integer;
+          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_LOCAL_MEM_SIZE).should.be.an.integer;
+          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_PRIVATE_MEM_SIZE).should.be.an.integer;
         });
       });
     })

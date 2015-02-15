@@ -140,7 +140,6 @@ NAN_METHOD(BuildProgram) {
   if (argExists(args, 1)){
     getValuesFromArray(Local<Array>::Cast(args[1]),devices);
   }
-
   String::Utf8Value * options = nullptr;
 
   if (argExists(args, 2)){
@@ -149,7 +148,6 @@ NAN_METHOD(BuildProgram) {
     }
     options = new String::Utf8Value(args[2]);
   }
-
   //REQ_STR_ARG(2,options);
 
   // TODO callback + userdata
@@ -316,7 +314,7 @@ NAN_METHOD(GetProgramInfo) {
     {
       cl_context val;
       CHECK_ERR(::clGetProgramInfo(prog,param_name,sizeof(cl_context), &val, NULL))
-      // TODO NanReturnValue(JS_INT(val));
+      NanReturnValue(Wrap<cl_context>(val));
       break;
     }
     case CL_PROGRAM_DEVICES:
