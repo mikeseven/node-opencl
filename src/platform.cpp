@@ -35,7 +35,7 @@ NAN_METHOD(GetPlatformInfo) {
   REQ_ARGS(2);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_PLATFORM));
+    THROW_ERR(CL_INVALID_PLATFORM);
   }
 
   cl_platform_id platform_id=Unwrap<cl_platform_id>(args[0]);
