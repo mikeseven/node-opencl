@@ -119,7 +119,7 @@ public:
 };
 
 #define NOCL_TO_ARRAY(TO, FROM, TYPE) \
-  if (!TYPE::fromJSArray(TO, FROM)) { \
+  if (!TYPE::fromJSArray<TYPE>(TO, FROM)) { \
     return NanThrowTypeError("Bad type of NoCL object in array"); \
   }
 
@@ -158,6 +158,41 @@ class NoCLKernel : public NoCLObject<cl_kernel, 4> {
 
 public:
   NoCLKernel(cl_kernel raw) : NoCLObject(raw) {
+  }
+};
+
+class NoCLMem : public NoCLObject<cl_mem, 5> {
+
+public:
+  NoCLMem(cl_mem raw) : NoCLObject(raw) {
+  }
+};
+
+class NoCLSampler : public NoCLObject<cl_sampler, 6> {
+
+public:
+  NoCLSampler(cl_sampler raw) : NoCLObject(raw) {
+  }
+};
+
+class NoCLCommandQueue : public NoCLObject<cl_command_queue, 7> {
+
+public:
+  NoCLCommandQueue(cl_command_queue raw) : NoCLObject(raw) {
+  }
+};
+
+class NoCLEvent : public NoCLObject<cl_event, 8> {
+
+public:
+  NoCLEvent(cl_event raw) : NoCLObject(raw) {
+  }
+};
+
+class NoCLMappedPtr : public NoCLObject<void *, 9> {
+
+public:
+  NoCLMappedPtr(void * raw) : NoCLObject(raw) {
   }
 };
 
