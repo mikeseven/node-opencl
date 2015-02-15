@@ -11,32 +11,19 @@
 
 #if defined (__APPLE__) || defined(MACOSX)
 #ifdef __ECLIPSE__
-    #include <gltypes.h>
-    #include <gl3.h>
     #include <cl_platform.h>
     #include <cl.h>
-    #include <cl_gl.h>
-    #include <cl_gl_ext.h>
     #include <cl_ext.h>
   #else
-#include <OpenGL/gl3.h>
-#include <OpenGL/gl3ext.h>
-#include <OpenGL/OpenGL.h>
 #include <OpenCL/opencl.h>
-#define CL_GL_CONTEXT_KHR 0x2008
-#define CL_EGL_DISPLAY_KHR 0x2009
-#define CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR CL_INVALID_GL_CONTEXT_APPLE
 #endif
 #define HAS_clGetContextInfo
 #elif defined(_WIN32)
-    #include <GL/gl.h>
     #include <CL/opencl.h>
     #define strcasecmp _stricmp
     #define strncasecmp _strnicmp
     char *strcasestr(const char *s, char *find);
 #else
-    #include <GL/gl.h>
-    #include <GL/glx.h>
     #include <CL/opencl.h>
 #endif
 

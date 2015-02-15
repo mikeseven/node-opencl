@@ -33,11 +33,11 @@
              'OTHER_LDFLAGS': ['-stdlib=libc++'],
               'MACOSX_DEPLOYMENT_TARGET': '10.9'
           },
-          'libraries': ['-framework OpenGL', '-framework OpenCL'],
+          'libraries': ['-framework OpenCL'],
         }],
         ['OS=="linux"', {
           'cflags': ['-std=c++11'],
-          'libraries': ['-lGL', '-lOpenCL']}],
+          'libraries': ['-lOpenCL']}],
         ['OS=="win"', {
           'variables' :
             {
@@ -75,7 +75,7 @@
             'ldflags' : [
               '/OPT:REF','/OPT:ICF','/LTCG'
             ],
-            'libraries': ['opengl32.lib', 'OpenCL.lib'],
+            'libraries': ['OpenCL.lib'],
           },
        ],
     ]
