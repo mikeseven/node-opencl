@@ -38,7 +38,7 @@ void getPtrAndLen(const Local<Value> value, void* &ptr, int &len)
     }
     else if(value->IsObject()) {
       Local<Object> obj=value->ToObject();
-      String::AsciiValue name(obj->GetConstructorName());
+      String::Utf8Value name(obj->GetConstructorName());
       if(!strcmp("Buffer",*name)) {
         ptr=node::Buffer::Data(obj);
         len=(int) node::Buffer::Length(obj);

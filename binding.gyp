@@ -10,7 +10,8 @@
         'src/common.cpp',
         'src/context.cpp',
         'src/device.cpp',
-        'src/platform.cpp'
+        'src/platform.cpp',
+        'src/types.cpp'
       ],
       'include_dirs' : [
         "<!(node -e \"require('nan')\")",

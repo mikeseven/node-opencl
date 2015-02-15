@@ -33,7 +33,7 @@ describe("Context", function() {
     });
 
     it("should return a device even if properties are null", function () {
-      var ctx=cl.createContext(null, devices, null, null);
+      var ctx = cl.createContext(null, devices, null, null);
       assert.isNotNull(ctx);
       assert.isDefined(ctx);
       cl.releaseContext(ctx);

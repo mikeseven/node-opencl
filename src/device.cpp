@@ -1,4 +1,5 @@
 #include "device.h"
+#include "types.h"
 
 namespace opencl {
 
@@ -13,24 +14,21 @@ NAN_METHOD(GetDeviceIDs) {
   NanScope();
   REQ_ARGS(1);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_DEVICE));
-  }
+  NOCL_UNWRAP(platform_id, NoCLPlatformId, args[0]);
 
-  cl_platform_id platform_id = Unwrap<cl_platform_id>(args[0]);
   cl_device_type type = CL_DEVICE_TYPE_ALL;
   if(!args[1]->IsUndefined() && !args[1]->IsNull())
     type=args[1]->Uint32Value();
 
   cl_uint n = 0;
-  CHECK_ERR(::clGetDeviceIDs(platform_id, type, 0, NULL, &n));
+  CHECK_ERR(::clGetDeviceIDs(platform_id->getRaw(), type, 0, NULL, &n));
 
   unique_ptr<cl_device_id[]> devices(new cl_device_id[n]);
-  CHECK_ERR(::clGetDeviceIDs(platform_id, type, n, devices.get(), NULL));
+  CHECK_ERR(::clGetDeviceIDs(platform_id->getRaw(), type, n, devices.get(), NULL));
 
-  Local<Array> deviceArray = Array::New(n);
+  Local<Array> deviceArray = NanNew<Array>(n);
   for (uint32_t i=0; i<n; i++) {
-    deviceArray->Set(i, Wrap(devices[i]));
+    deviceArray->Set(i, NOCL_WRAP(NoCLDeviceId, devices[i]));
   }
 
   NanReturnValue(deviceArray);
@@ -46,11 +44,9 @@ NAN_METHOD(GetDeviceInfo) {
   NanScope();
   REQ_ARGS(2);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_DEVICE));
-  }
+  NOCL_UNWRAP(deviceId, NoCLDeviceId, args[0]);
 
-  cl_device_id device_id = Unwrap<cl_device_id>(args[0]);
+  cl_device_id device_id = deviceId->getRaw();
   cl_device_info param_name = args[1]->Uint32Value();
 
   switch (param_name) {
@@ -75,7 +71,7 @@ NAN_METHOD(GetDeviceInfo) {
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_platform_id), &param_value, NULL));
 
     if(param_value) {
-      NanReturnValue(Wrap(param_value));
+      NanReturnValue(NOCL_WRAP(NoCLPlatformId, param_value));
     }
     NanReturnUndefined();
   }
@@ -83,7 +79,7 @@ NAN_METHOD(GetDeviceInfo) {
   case CL_DEVICE_TYPE: {
     cl_device_type param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_device_type), &param_value, NULL));
-    NanReturnValue(Integer::NewFromUnsigned((unsigned long)param_value));
+    NanReturnValue(JS_INT(param_value));
   }
   break;
   case CL_DEVICE_LOCAL_MEM_TYPE: {
@@ -101,13 +97,13 @@ NAN_METHOD(GetDeviceInfo) {
   case CL_DEVICE_EXECUTION_CAPABILITIES: {
     cl_device_exec_capabilities param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_device_exec_capabilities), &param_value, NULL));
-    NanReturnValue(Integer::NewFromUnsigned((int)param_value));
+    NanReturnValue(JS_INT((int)param_value));
   }
   break;
   case CL_DEVICE_QUEUE_PROPERTIES: {
     cl_command_queue_properties param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_command_queue_properties), &param_value, NULL));
-    NanReturnValue(Integer::NewFromUnsigned((int)param_value));
+    JS_INT((int)param_value);
   }
   break;
   case CL_DEVICE_HALF_FP_CONFIG:
@@ -115,7 +111,8 @@ NAN_METHOD(GetDeviceInfo) {
   case CL_DEVICE_DOUBLE_FP_CONFIG: {
     cl_device_fp_config param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_device_fp_config), &param_value, NULL));
-    NanReturnValue(Integer::NewFromUnsigned((int)param_value));
+
+    NanReturnValue(JS_INT((int)param_value));
   }
   break;
   case CL_DEVICE_MAX_WORK_ITEM_SIZES: {
@@ -127,7 +124,7 @@ NAN_METHOD(GetDeviceInfo) {
     unique_ptr<size_t[]> param_value(new size_t[max_work_item_dimensions]);
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, max_work_item_dimensions*sizeof(size_t), param_value.get(), NULL));
 
-    Local<Array> arr = Array::New(max_work_item_dimensions);
+    Local<Array> arr = NanNew<Array>(max_work_item_dimensions);
     for(cl_uint i=0;i<max_work_item_dimensions;i++)
       arr->Set(i,JS_INT(param_value[i]));
 
@@ -184,7 +181,7 @@ NAN_METHOD(GetDeviceInfo) {
   {
     cl_uint param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_uint), &param_value, NULL));
-    NanReturnValue(Integer::NewFromUnsigned(param_value));
+    NanReturnValue(JS_INT((int)param_value));
   }
   break;
   // cl_ulong params
@@ -199,7 +196,7 @@ NAN_METHOD(GetDeviceInfo) {
     // FIXME: handle uint64 somehow
     // JS only supports doubles, v8 has ints, CL params can be uint64
     // the memory params can certainly overflow uint32 size
-    NanReturnValue(Integer::NewFromUnsigned((unsigned int)param_value));
+    NanReturnValue(JS_INT((int)param_value));
   }
   break;
   // size_t params
@@ -223,7 +220,7 @@ NAN_METHOD(GetDeviceInfo) {
 
     // FIXME: handle 64 bit size_t somehow
     // assume for these params it will fit in an int
-    NanReturnValue(Integer::New((int)param_value));
+    NanReturnValue(NanNew<Integer>((int)param_value));
   }
   break;
   default: {
@@ -252,10 +249,6 @@ NAN_METHOD(RetainDevice) {
   NanScope();
   REQ_ARGS(1);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_DEVICE));
-  }
-
   // TODO make sure device_id is a sub-device
   NanReturnValue(JS_INT(0));
 
@@ -270,10 +263,6 @@ NAN_METHOD(RetainDevice) {
 NAN_METHOD(ReleaseDevice) {
   NanScope();
   REQ_ARGS(1);
-
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_DEVICE));
-  }
 
   // TODO make sure device_id is a sub-device
   NanReturnValue(JS_INT(0));

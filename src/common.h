@@ -78,6 +78,12 @@ namespace {
     NanThrowTypeError("Argument " #I " must be a string");              \
   String::Utf8Value VAR(args[I]->ToString());
 
+#define REQ_ARRAY_ARG(I, VAR) \
+  if (!args[I]->IsArray()) { \
+    NanThrowTypeError("Argument " #I " must be an array");              \
+      } \
+    VAR = Local<Array>::Cast(args[I])                                  \
+
 #define REQ_EXT_ARG(I, VAR)                                             \
   if (args.Length() <= (I) || !args[I]->IsExternal())                   \
     NanThrowTypeError("Argument " #I " invalid");                       \
@@ -92,10 +98,6 @@ namespace {
 
 namespace opencl {
 
-inline bool isOpenCLObj(Local<Value> val) {
-    return !(val->IsNull() || !val->IsObject() || val->IsArray() || val->ToObject()->InternalFieldCount()<1);
-}
-
 #define ARG_EXISTS(nth) \
   args.Length() >= nth + 1 && !args[nth]->IsNull() && !args[nth]->IsUndefined()
 
@@ -103,36 +105,22 @@ inline void throwTypeMismatch(int nth, std::string name, std::string type) {
   printf("%s (arg %d) : expected %s", name.c_str(), nth + 1, type.c_str());
 }
 
-template<typename CL_TYPE>
-inline CL_TYPE Unwrap(Local<Value> val) {
-  Local<External> wrap = Local<External>::Cast(val->ToObject()->GetInternalField(0));
-  return static_cast<CL_TYPE>(wrap->Value());
-}
-
-template<typename CL_TYPE>
-inline Local<Object> Wrap(CL_TYPE param_value) {
-  Local<ObjectTemplate> tpl = ObjectTemplate::New();
-  tpl->SetInternalFieldCount(1);
-  Local<Object> obj = tpl->NewInstance();
-  obj->SetInternalField(0, External::New(param_value));
-  return obj;
-}
-
 void getPtrAndLen(const Local<Value> value, void* &ptr, int &len);
 
-template<typename CL_TYPE>
-void getValuesFromArray(const Local<Array>& arr, std::vector<CL_TYPE>& vals)
-{
-  size_t num=arr->Length();
-  if(!num) {
-    vals.clear();
-    return;
-  }
-
-  vals.reserve(num);
-  for(size_t i=0;i<num;i++)
-    vals.push_back(Unwrap<CL_TYPE>(arr->Get(i)));
-}
+//template<typename CL_TYPE>
+//void getValuesFromArray(const Local<Array>& arr, std::vector<CL_TYPE>& vals)
+//{
+//  size_t num=arr->Length();
+//  if(!num) {
+//    vals.clear();
+//    return;
+//  }
+//
+//  vals.reserve(num);
+//  for(size_t i=0;i<num;i++)
+//    vals.push_back()
+//    vals.push_back(Unwrap<CL_TYPE>(arr->Get(i)));
+//}
 
 const std::string getExceptionMessage(const cl_int code);
 

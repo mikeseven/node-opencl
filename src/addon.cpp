@@ -85,11 +85,11 @@ void init(Handle<Object> exports)
   // OpenCL 1.x methods
 //  opencl::CommandQueue::init(exports);
   opencl::Context::init(exports);
-//  opencl::Device::init(exports);
+  opencl::Device::init(exports);
 //  opencl::Event::init(exports);
 //  opencl::Kernel::init(exports);
 //  opencl::MemObj::init(exports);
-//  opencl::Platform::init(exports);
+  opencl::Platform::init(exports);
 //  opencl::Program::init(exports);
 //  opencl::Sampler::init(exports);
 
