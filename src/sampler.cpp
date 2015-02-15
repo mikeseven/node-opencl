@@ -15,7 +15,7 @@ NAN_METHOD(CreateSampler) {
   REQ_ARGS(4);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_CONTEXT));
+    THROW_ERR(CL_INVALID_CONTEXT);
   }
   cl_context context=Unwrap<cl_context>(args[0]);
   cl_bool normalized_coords = args[1]->BooleanValue() ? CL_TRUE : CL_FALSE;
@@ -84,7 +84,7 @@ NAN_METHOD(GetSamplerInfo) {
   REQ_ARGS(2);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_SAMPLER));
+    THROW_ERR(CL_INVALID_SAMPLER);
   }
   cl_sampler sampler=Unwrap<cl_sampler>(args[0]);
   cl_sampler_info param_name = args[1]->Uint32Value();
@@ -122,7 +122,7 @@ NAN_METHOD(GetSamplerInfo) {
       NanReturnValue(JS_INT(val));
     }
   }
-  return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  THROW_ERR(CL_INVALID_VALUE);
 }
 
 namespace Sampler {
