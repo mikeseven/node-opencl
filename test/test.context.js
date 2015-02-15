@@ -20,7 +20,7 @@ describe("Context", function() {
 
     it("should throw if devices = null",function() {
       cl.createContext.bind(cl.createContext,null, null, null, null).should.throw(cl.INVALID_DEVICE);
-    })
+    });
 
     it("should create a context with default properties for a platform",function() {
       var properties= [
@@ -94,7 +94,7 @@ describe("Context", function() {
     it("should have incremented ref count after call", function () {
       var before = cl.getContextInfo(ctx, cl.CONTEXT_REFERENCE_COUNT);
       cl.retainContext(ctx);
-      var after = cl.getContextInfo(ctx, cl.CONTEXT_REFERENCE_COUNT);;
+      var after = cl.getContextInfo(ctx, cl.CONTEXT_REFERENCE_COUNT);
       assert(before + 1 == after);
     });
   });
@@ -110,8 +110,8 @@ describe("Context", function() {
       var before = cl.getContextInfo(ctx, cl.CONTEXT_REFERENCE_COUNT);
       cl.retainContext(ctx);
       cl.releaseContext(ctx);
-      var after = cl.getContextInfo(ctx, cl.CONTEXT_REFERENCE_COUNT);;
+      var after = cl.getContextInfo(ctx, cl.CONTEXT_REFERENCE_COUNT);
       assert(before  == after);
     });
   });
-})
+});

@@ -280,7 +280,7 @@ describe("Program", function () {
 
   });
 
-})
+});
 
 
 // -------------------------
@@ -471,7 +471,7 @@ describe("Kernel", function () {
           cl.getKernelArgInfo(k, 0, cl.KERNEL_ARG_NAME).should.be.a.string;
         });
       });
-    })
+    });
 
     it("should return the corresponding names", function(){
       testUtils.withContext(function (ctx) {

@@ -10,7 +10,7 @@ describe("Platform", function() {
     it("should return an array",function() {
       cl.getPlatformIDs().should.be.an.array;
     })
-  })
+  });
 
   function testString(platform, name) {
     it(name+" should return a string",function(done) {
@@ -31,37 +31,37 @@ describe("Platform", function() {
       // negative test cases
       it("should throw cl.INVALID_VALUE with name=cl.DEVICE_TYPE_CPU",function() {
         cl.getPlatformInfo.bind(cl.getPlatformInfo,p,cl.DEVICE_TYPE_CPU).should.throw(cl.INVALID_VALUE);
-      })
+      });
       it("should throw cl.INVALID_VALUE with name=0x2000",function() {
         cl.getPlatformInfo.bind(cl.getPlatformInfo,p,0x2000).should.throw(cl.INVALID_VALUE);
-      })
+      });
       it("should throw cl.INVALID_VALUE with name='a string'",function() {
         cl.getPlatformInfo.bind(cl.getPlatformInfo,p,'a string').should.throw(cl.INVALID_VALUE);
-      })
+      });
       it("should throw cl.INVALID_VALUE with name=-123.56",function() {
         cl.getPlatformInfo.bind(cl.getPlatformInfo,p,-123.56).should.throw(cl.INVALID_VALUE);
-      })
+      });
       it("should throw cl.INVALID_PLATFORM with platform = null",function() {
         cl.getPlatformInfo.bind(cl.getPlatformInfo,null,123).should.throw(cl.INVALID_PLATFORM);
-      })
+      });
       it("should throw cl.INVALID_PLATFORM with platform = 'a string'",function() {
         cl.getPlatformInfo.bind(cl.getPlatformInfo,'a string',123).should.throw(cl.INVALID_PLATFORM);
-      })
+      });
       it("should throw cl.INVALID_PLATFORM with platform = 123",function() {
         cl.getPlatformInfo.bind(cl.getPlatformInfo,123,123).should.throw(cl.INVALID_PLATFORM);
-      })
+      });
       it("should throw cl.INVALID_PLATFORM with platform = [1,2,3]",function() {
         cl.getPlatformInfo.bind(cl.getPlatformInfo,[1,2,3],123).should.throw(cl.INVALID_PLATFORM);
-      })
+      });
       it("should throw cl.INVALID_PLATFORM with platform = new Array()",function() {
-        cl.getPlatformInfo.bind(cl.getPlatformInfo,new Array(),123).should.throw(cl.INVALID_PLATFORM);
+        cl.getPlatformInfo.bind(cl.getPlatformInfo,[],123).should.throw(cl.INVALID_PLATFORM);
       })
     })
   }
 
   for(var i=0;i<platforms.length;i++)
     testPlatform(platforms[i]);
-})
+});
 
 describe("Device", function() {
   var platforms=cl.getPlatformIDs();
@@ -72,7 +72,7 @@ describe("Device", function() {
     it("should return an array",function() {
       cl.getDeviceIDs(platform).should.be.an.array;
     })
-  })
+  });
 
   function testBoolean(device, name) {
     it(name+" should return a boolean",function(done) {
@@ -193,37 +193,37 @@ describe("Device", function() {
       // negative test cases
       it("should throw cl.INVALID_VALUE with name=-123.56",function() {
         cl.getDeviceInfo.bind(cl.getDeviceInfo,device,-123.56).should.throw(cl.INVALID_VALUE);
-      })
+      });
       it("should throw cl.INVALID_VALUE with name='a string'",function() {
         cl.getDeviceInfo.bind(cl.getDeviceInfo,device,'a string').should.throw(cl.INVALID_VALUE);
-      })
+      });
       it("should throw cl.INVALID_VALUE with name=123456",function() {
         cl.getDeviceInfo.bind(cl.getDeviceInfo,device,123456).should.throw(cl.INVALID_VALUE);
-      })
+      });
       it("should throw cl.INVALID_DEVICE with device = null",function() {
         cl.getDeviceInfo.bind(cl.getDeviceInfo,null,123).should.throw(cl.INVALID_DEVICE);
-      })
+      });
       it("should throw cl.INVALID_DEVICE with device = 'a string'",function() {
         cl.getDeviceInfo.bind(cl.getDeviceInfo,'a string',123).should.throw(cl.INVALID_DEVICE);
-      })
+      });
       it("should throw cl.INVALID_DEVICE with device = 123",function() {
         cl.getDeviceInfo.bind(cl.getDeviceInfo,123,123).should.throw(cl.INVALID_DEVICE);
-      })
+      });
       it("should throw cl.INVALID_DEVICE with device = [1,2,3]",function() {
         cl.getDeviceInfo.bind(cl.getDeviceInfo,[1,2,3],123).should.throw(cl.INVALID_DEVICE);
-      })
+      });
       it("should throw cl.INVALID_DEVICE with device = new Array()",function() {
-        cl.getDeviceInfo.bind(cl.getDeviceInfo,new Array(),123).should.throw(cl.INVALID_DEVICE);
+        cl.getDeviceInfo.bind(cl.getDeviceInfo,[],123).should.throw(cl.INVALID_DEVICE);
       })
 
-    })
+    });
     describe("#createSubDevices() for "+device_vendor+" "+device_name,function() {
-    })
+    });
     describe("#retainDevice() for "+device_vendor+" "+device_name,function() {
       it("should increase device reference count",function() {
         cl.retainDevice(device).should.equal(0);
       })
-    })
+    });
     describe("#releaseDevice() for "+device_vendor+" "+device_name,function() {
       it("should decrease device reference count",function() {
         cl.releaseDevice(device).should.equal(0);
@@ -234,4 +234,4 @@ describe("Device", function() {
   for(var i=0;i<devices.length;i++)
     testDevice(devices[i]);
 
-})
+});
