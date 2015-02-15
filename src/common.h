@@ -82,7 +82,7 @@ namespace {
   if (!args[I]->IsArray()) { \
     NanThrowTypeError("Argument " #I " must be an array");              \
       } \
-    VAR = Local<Array>::Cast(args[I])                                  \
+    Local<Array> VAR = Local<Array>::Cast(args[I])
 
 #define REQ_EXT_ARG(I, VAR)                                             \
   if (args.Length() <= (I) || !args[I]->IsExternal())                   \

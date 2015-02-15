@@ -76,7 +76,7 @@ Local<ObjectTemplate> & GetNodeOpenCLObjectGenericTemplate();
   V = NoCLUnwrap<T>(VAL);\
   if (V == NULL) return NanThrowTypeError("Bad type of NoCL object")
 
-template <typename T, uint id>
+template <typename T, uint elid>
 class NoCLObject {
 private:
   T raw;
@@ -90,12 +90,41 @@ public:
   }
 
   static uint GetId() {
-    return id;
+    return elid;
+  }
+
+  template <typename A>
+  static bool fromJSArray(std::vector<A> outArr, Local<Array> &arr) {
+    for (uint i = 0; i < arr->Length(); ++i) {
+      A * v = NoCLUnwrap<A>(arr->Get(i));
+      if (v == NULL) {
+        return false;
+      }
+      outArr.push_back(*v);
+    }
+
+    return true;
+  }
+
+  template <typename U>
+  static std::vector<T> toCLArray(std::vector<U> outArr) {
+    std::vector<T> out;
+    for (uint i = 0; i < outArr.size(); ++i) {
+      out.push_back(outArr[i].getRaw());
+    }
+
+    return out;
   }
 
 };
 
+#define NOCL_TO_ARRAY(TO, FROM, TYPE) \
+  if (!TYPE::fromJSArray(TO, FROM)) { \
+    return NanThrowTypeError("Bad type of NoCL object in array"); \
+  }
 
+#define TO_CL_ARRAY(FROM, TYPE) \
+  FROM.size() ? &TYPE::toCLArray<TYPE>(FROM).front() : nullptr
 
 class NoCLPlatformId : public NoCLObject<cl_platform_id, 0> {
 
@@ -117,6 +146,20 @@ public:
   NoCLContext(cl_context raw) : NoCLObject(raw) {
   }
 };;
+
+class NoCLProgram : public NoCLObject<cl_program, 3> {
+
+public:
+  NoCLProgram(cl_program raw) : NoCLObject(raw) {
+  }
+};
+
+class NoCLKernel : public NoCLObject<cl_kernel, 4> {
+
+public:
+  NoCLKernel(cl_kernel raw) : NoCLObject(raw) {
+  }
+};
 
 // FIXME static does not seem to work great with V8 (random segfaults)
 // But we should not create a template each time we create an object
