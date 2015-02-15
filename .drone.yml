@@ -1,0 +1,4 @@
+image: ioweb/opencl
+script:
+    - npm install
+    - npm test
