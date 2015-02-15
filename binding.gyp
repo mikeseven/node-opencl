@@ -11,7 +11,9 @@
         'src/context.cpp',
         'src/device.cpp',
         'src/platform.cpp',
-        'src/types.cpp'
+        'src/types.cpp',
+        'src/program.cpp',
+        'src/kernel.cpp'
       ],
       'include_dirs' : [
         "<!(node -e \"require('nan')\")",
