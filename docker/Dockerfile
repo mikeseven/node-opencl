@@ -20,7 +20,13 @@ RUN /tmp/AMD-APP-SDK-*.sh -- --acceptEULA 'yes' -s
 RUN rm -rf /opt/AMDAPPSDK-*/samples/{aparapi,bolt,opencv}
 
 # Put the includes and library where they are expected to be
-RUN ln -s /opt/AMDAPPSDK-*/include/CL /usr/include/ && ln -s /opt/AMDAPPSDK-*/lib/x86_64/libOpenCL.so.1 /usr/lib/libOpenCL.so
+RUN mkdir -p /usr/lib64/OpenCL/vendors/amd/
+RUN mv /opt/AMD*/lib/x86_64/* /usr/lib64/OpenCL/vendors/amd/
+RUN echo "/usr/lib64/OpenCL/vendors/amd" > /etc/ld.so.conf.d/opencl-vendor-amd.conf
+RUN ldconfig
+RUN ln -s /usr/lib64/OpenCL/vendors/amd/libOpenCL.so /usr/lib64/libOpenCL.so
+RUN cp /etc/OpenCL/amdocl64.icd /etc/OpenCL/vendors
+RUN ln -s /opt/AMDAPPSDK-*/include/CL /usr/include/ 
 
 # Provide easy access to root if needed
 RUN echo "root:root" | chpasswd
