@@ -1,4 +1,5 @@
 #include "memobj.h"
+#include "common.h"
 #include <node_buffer.h>
 
 using namespace node;
@@ -17,7 +18,7 @@ NAN_METHOD(CreateBuffer) {
   REQ_ARGS(4);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_CONTEXT));
+    CHECK_ERR(CL_INVALID_CONTEXT);
   }
   cl_context context=Unwrap<cl_context>(args[0]);
   cl_mem_flags flags = args[1]->Uint32Value();
@@ -26,24 +27,23 @@ NAN_METHOD(CreateBuffer) {
 
   if(!args[3]->IsNull() && !args[3]->IsUndefined()) {
     if(args[3]->IsArray()) {
-      // JS Array
-      Local<Array> arr=Local<Array>::Cast(args[3]);
-      host_ptr=arr->GetIndexedPropertiesExternalArrayData();
+      CHECK_ERR(CL_INVALID_MEM_OBJECT);
     }
-    else if(args[3]->IsObject()) {
+    if(args[3]->IsObject()) {
       Local<Object> obj=args[3]->ToObject();
       String::AsciiValue name(obj->GetConstructorName());
-      if(!strcmp("Buffer",*name))
+      if(strcmp("Buffer",*name))
         host_ptr=Buffer::Data(obj);
-      else {
+      else if(strcmp("Array",*name)) {
         // TypedArray
         assert(obj->HasIndexedPropertiesInExternalArrayData());
         host_ptr=obj->GetIndexedPropertiesExternalArrayData();
-        // printf("external array data type %d\n",obj->GetIndexedPropertiesExternalArrayDataType());
+      } else {
+        CHECK_ERR(CL_INVALID_MEM_OBJECT);
       }
     }
     else
-      NanThrowError("Invalid memory object");
+      CHECK_ERR(CL_INVALID_MEM_OBJECT);
   }
 
   cl_int ret=CL_SUCCESS;
@@ -64,7 +64,7 @@ NAN_METHOD(CreateSubBuffer) {
   REQ_ARGS(4);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
+    CHECK_ERR(CL_INVALID_MEM_OBJECT);
   }
   cl_mem buffer=Unwrap<cl_mem>(args[0]);
   cl_mem_flags flags = args[1]->Uint32Value();
@@ -83,7 +83,8 @@ NAN_METHOD(CreateSubBuffer) {
     NanReturnValue(Wrap(mem));
   }
 
-  return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  CHECK_ERR(CL_INVALID_VALUE);
+  return JS_INT(CL_SUCCESS);
 }
 
 // extern CL_API_ENTRY cl_mem CL_API_CALL
@@ -98,7 +99,7 @@ NAN_METHOD(CreateImage) {
   REQ_ARGS(5);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_CONTEXT));
+    CHECK_ERR(CL_INVALID_CONTEXT);
   }
   cl_context context=Unwrap<cl_context>(args[0]);
   cl_mem_flags flags = args[1]->Uint32Value();
@@ -162,13 +163,14 @@ NAN_METHOD(RetainMemObject) {
   REQ_ARGS(1);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
+    CHECK_ERR(CL_INVALID_MEM_OBJECT)
   }
 
   cl_mem mem = Unwrap<cl_mem>(args[0]);
-  cl_int count=clRetainMemObject(mem);
+  cl_int ret=clRetainMemObject(mem);
 
-  NanReturnValue(JS_INT(count));
+  CHECK_ERR(ret);
+  return JS_INT(CL_SUCCESS);
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -178,13 +180,14 @@ NAN_METHOD(ReleaseMemObject) {
   REQ_ARGS(1);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
+    CHECK_ERR(CL_INVALID_MEM_OBJECT);
   }
 
   cl_mem mem = Unwrap<cl_mem>(args[0]);
-  cl_int count=clReleaseMemObject(mem);
+  cl_int ret=clReleaseMemObject(mem);
 
-  NanReturnValue(JS_INT(count));
+  CHECK_ERR(ret);
+  return JS_INT(CL_SUCCESS);
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -199,7 +202,7 @@ NAN_METHOD(GetSupportedImageFormats) {
   REQ_ARGS(3);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_CONTEXT));
+    CHECK_ERR(CL_INVALID_CONTEXT)
   }
   cl_context context=Unwrap<cl_context>(args[0]);
   cl_mem_flags flags = args[1]->Uint32Value();
@@ -233,7 +236,7 @@ NAN_METHOD(GetMemObjectInfo) {
   REQ_ARGS(2);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
+    CHECK_ERR(CL_INVALID_MEM_OBJECT);
   }
   cl_mem mem=Unwrap<cl_mem>(args[0]);
   cl_mem_info param_name = args[1]->Uint32Value();
@@ -293,7 +296,7 @@ NAN_METHOD(GetImageInfo) {
   REQ_ARGS(2);
 
   if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
+    CHECK_ERR(CL_INVALID_MEM_OBJECT);
   }
   cl_mem mem=Unwrap<cl_mem>(args[0]);
   cl_image_info param_name = args[1]->Uint32Value();
