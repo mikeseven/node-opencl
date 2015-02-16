@@ -39,7 +39,7 @@ NAN_METHOD(CreateKernelsInProgram) {
   if (args[1]->IsUint32()) {
     nkernels = args[1]->Uint32Value();
   } else {
-    throwTypeMismatch(1, "number of kernels", "unsigned int");
+    THROW_ERR(CL_INVALID_VALUE)
   }
 
 

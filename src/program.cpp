@@ -142,17 +142,14 @@ NAN_METHOD(BuildProgram) {
     NOCL_TO_ARRAY(devices, cl_devices, NoCLDeviceId);
   }
 
-
-
   String::Utf8Value * options = nullptr;
 
   if (ARG_EXISTS(2)){
     if (!args[2]->IsString()) {
-      throwTypeMismatch(2, "options", "string");
+      THROW_ERR(CL_INVALID_COMPILER_OPTIONS)
     }
     options = new String::Utf8Value(args[2]);
   }
-
 
   //REQ_STR_ARG(2,options);
 
