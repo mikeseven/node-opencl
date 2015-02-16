@@ -45,28 +45,41 @@ NAN_METHOD(CreateProgramWithBinary) {
   REQ_ARRAY_ARG(1, devices);
   NOCL_TO_ARRAY(cl_devices, devices, NoCLDeviceId);
 
-  for (uint32_t i=0; i < devices->Length(); i++) {
-    NOCL_UNWRAP(device, NoCLDeviceId, devices->Get(i));
-    cl_devices.push_back(device->getRaw());
+  Local<Array> sizes = Local<Array>::Cast(args[2]);
+  if (sizes->Length() == 0) {
+    THROW_ERR(CL_INVALID_VALUE)
+  }
+  const size_t n = sizes->Length();
+  unique_ptr<size_t[]> lengths(new size_t[n]);
+
+  for (uint i = 0; i < sizes->Length(); ++ i) {
+    lengths[i] = sizes->Get(0)->Int32Value();
   }
 
-  Local<Array> binaries = Local<Array>::Cast(args[2]);
-  const size_t n = binaries->Length();
-  unique_ptr<size_t[]> lengths(new size_t[n]);
-  unique_ptr<const unsigned char*[]> images(new const unsigned char*[n]);
+  std::vector<NoCLProgramBinary> cl_binaries;
+  std::vector<unsigned const char *> cl_binaries_str;
 
-  for (uint32_t i = 0; i < n; ++i) {
-    Local<Object> obj=binaries->Get(i)->ToObject();
-    images[i] = (const unsigned char*) obj->GetIndexedPropertiesExternalArrayData();
-    lengths[i] = obj->GetIndexedPropertiesExternalArrayDataLength();
+  REQ_ARRAY_ARG(3, js_binaries);
+  NOCL_TO_ARRAY(cl_binaries, js_binaries, NoCLProgramBinary);
+
+  if (sizes->Length() != js_binaries->Length()) {
+    THROW_ERR(CL_INVALID_VALUE)
+  }
+
+  for (uint i = 0; i < cl_binaries.size(); ++ i){
+    cl_binaries_str.push_back(cl_binaries[i].getRaw());
   }
 
   cl_int ret=CL_SUCCESS;
   cl_program p=::clCreateProgramWithBinary(
-              context->getRaw(), (cl_uint) cl_devices.size(),
-              TO_CL_ARRAY(cl_devices, NoCLDeviceId),
-              lengths.get(), images.get(),
-              NULL, &ret);
+    context->getRaw(),
+    (cl_uint) cl_devices.size(),
+    TO_CL_ARRAY(cl_devices, NoCLDeviceId),
+    lengths.get(),
+    &cl_binaries_str[0],
+    NULL,
+    &ret);
+
   CHECK_ERR(ret);
 
   NanReturnValue(NOCL_WRAP(NoCLProgram, p));
@@ -189,7 +202,7 @@ NAN_METHOD(CompileProgram) {
 
   if (ARG_EXISTS(2)){
     if (!args[2]->IsString()) {
-      throwTypeMismatch(2, "options", "string");
+      THROW_ERR(CL_INVALID_COMPILER_OPTIONS)
     }
     options = new String::Utf8Value(args[2]);
   }
@@ -198,7 +211,6 @@ NAN_METHOD(CompileProgram) {
   // Arg 5 : headers names
   std::vector<NoCLProgram> program_headers;
   std::vector<const char *> names;
-
 
   // Checking correct mapping
   if (ARG_EXISTS(3)){
@@ -216,7 +228,7 @@ NAN_METHOD(CompileProgram) {
 
   // Arg 4 and 5 mapping
   if (program_headers.size() != names.size()) {
-    NanThrowError("Program headers and names should be of the same size");
+    THROW_ERR(CL_INVALID_VALUE);
   }
 
   // CL CALL
@@ -296,43 +308,87 @@ NAN_METHOD(GetProgramInfo) {
       cl_context val;
       CHECK_ERR(::clGetProgramInfo(prog->getRaw(),param_name,sizeof(cl_context), &val, NULL))
       NanReturnValue(NOCL_WRAP(NoCLContext, val));
-      break;
     }
     case CL_PROGRAM_DEVICES:
     {
-      // TODO
-      break;
+      size_t n=0;
+      CHECK_ERR(::clGetProgramInfo(prog->getRaw(),param_name,0,NULL, &n));
+      n /= sizeof(cl_device_id);
+
+      unique_ptr<cl_device_id[]> devices(new cl_device_id[n]);
+      CHECK_ERR(::clGetProgramInfo(prog->getRaw(),param_name,sizeof(cl_device_id)*n, devices.get(), NULL));
+
+      Local<Array> arr = NanNew<Array>((int)n);
+      for(uint32_t i=0;i<n;i++) {
+        arr->Set(i, NOCL_WRAP(NoCLDeviceId, devices[i]));
+      }
+
+      NanReturnValue(arr);
     }
     case CL_PROGRAM_BINARY_SIZES:
     {
-      size_t nsizes;
-      CHECK_ERR(::clGetProgramInfo(prog->getRaw(), param_name, 0, NULL, &nsizes));
+      cl_uint nsizes;
 
-      // get CL_DEVICE_MAX_WORK_ITEM_SIZES array param
+      // TODO This part segfaults if program has not been compiled
+
+      CHECK_ERR(::clGetProgramInfo(
+        prog->getRaw(), CL_PROGRAM_NUM_DEVICES, sizeof(cl_uint), &nsizes, NULL));
+
       unique_ptr<size_t[]> sizes(new size_t[nsizes]);
-      CHECK_ERR(::clGetProgramInfo(prog->getRaw(), param_name, nsizes*sizeof(size_t), sizes.get(), NULL));
+
+      CHECK_ERR(::clGetProgramInfo(
+        prog->getRaw(), param_name, nsizes * sizeof(size_t), sizes.get(), NULL));
+
       Local<Array> arr = NanNew<Array>(nsizes);
       for(cl_uint i=0;i<nsizes;i++)
         arr->Set(i,JS_INT(sizes[i]));
 
       NanReturnValue(arr);
     }
+
+    /*
+     err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeof(size_t)*nb_devices, np, &nbread);//Load in np the size of my binary
+
+
+    char** bn = new char* [nb_devices]; //Create the binary array
+
+
+    for(int i =0; i < nb_devices;i++)  bn[i] = new char[np[i]]; // I know... it's bad... but if i use new char[np[i]], i have a segfault... :/
+
+
+    err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeof(unsigned char *)*nb_devices, bn, &nbread); //Load the binary itself
+
+
+     */
     case CL_PROGRAM_BINARIES:
     {
-      size_t nbins=0;
-      CHECK_ERR(::clGetProgramInfo(prog->getRaw(), param_name, 0, NULL, &nbins));
-      nbins /= sizeof(size_t);
-      unique_ptr<char*[]> binaries(new char*[nbins]);
-      CHECK_ERR(::clGetProgramInfo(prog->getRaw(), param_name, sizeof(char*)*nbins, binaries.get(), NULL));
+      cl_uint nsizes;
 
-      // TODO create an array for Uint8Array to return each binary associated to each device
-      // Handle<Value> abv = Context::GetCurrent()->Global()->Get(String::NewSymbol("ArrayBuffer"));
-      // Handle<Value> argv[] = { Integer::NewFromUnsigned(size) };
-      // Handle<Object> arrbuf = Handle<Function>::Cast(abv)->NewInstance(1, argv);
-      // void *buffer = arrbuf->GetPointerFromInternalField(0);
-      // memcpy(buffer, data, size);
+      // TODO This part segfaults if program has not been compiled
 
-      NanReturnUndefined();
+      CHECK_ERR(::clGetProgramInfo(
+        prog->getRaw(), CL_PROGRAM_NUM_DEVICES, sizeof(cl_uint), &nsizes, NULL));
+
+      unique_ptr<size_t[]> sizes(new size_t[nsizes]);
+
+      CHECK_ERR(::clGetProgramInfo(
+        prog->getRaw(), CL_PROGRAM_BINARY_SIZES, nsizes * sizeof(size_t), sizes.get(), NULL));
+
+      unsigned char** bn = new unsigned char* [nsizes];
+      for(int i = 0; i < nsizes;i++)  {
+        bn[i] = new unsigned char[sizes[i]];
+      }
+
+      CHECK_ERR(::clGetProgramInfo(
+        prog->getRaw(), param_name, sizeof(unsigned char*)*nsizes, bn, NULL));
+
+      Local<Array> arr = NanNew<Array>(nsizes);
+
+      for (cl_uint i = 0; i < nsizes; ++ i) {
+        arr->Set(i, NOCL_WRAP(NoCLProgramBinary, bn[i]));
+      }
+
+      NanReturnValue(arr);
     }
     case CL_PROGRAM_NUM_KERNELS:
     {

@@ -69,7 +69,7 @@ Local<ObjectTemplate> & GetNodeOpenCLObjectGenericTemplate();
 
 template <typename T, uint elid, int err>
 class NoCLObject {
-private:
+protected:
   T raw;
 public:
 
@@ -85,7 +85,7 @@ public:
   }
 
   template <typename A>
-  static bool fromJSArray(std::vector<A> outArr, Local<Array> &arr) {
+  static bool fromJSArray(std::vector<A> & outArr, Local<Array> &arr) {
     for (uint i = 0; i < arr->Length(); ++i) {
       A * v = NoCLUnwrap<A>(arr->Get(i));
       if (v == NULL) {
@@ -184,7 +184,14 @@ public:
   }
 };
 
-class NoCLMappedPtr : public NoCLObject<void *, 9, CL_INVALID_VALUE> {
+class NoCLProgramBinary : public NoCLObject<const unsigned char *, 9, CL_INVALID_VALUE> {
+
+public:
+  NoCLProgramBinary(const unsigned char * raw) : NoCLObject(raw) {
+  }
+};
+
+class NoCLMappedPtr : public NoCLObject<void *, 10, CL_INVALID_VALUE> {
 
 public:
   NoCLMappedPtr(void * raw) : NoCLObject(raw) {

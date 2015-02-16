@@ -85,13 +85,14 @@ describe("Program", function () {
   describe("#createProgramWithBinary", function () {
 
     it("should create a valid program from a binary", function () {
-      assert(false, "This one segfaults (OSX) == disabled");
-      testUtils.withContext(function (ctx) {
+
+      testUtils.withContext(function (ctx, device) {
         var prg = cl.createProgramWithSource(ctx, squareKern);
+        cl.buildProgram(prg);
         var bin = cl.getProgramInfo(prg, cl.PROGRAM_BINARIES);
         var sizes = cl.getProgramInfo(prg, cl.PROGRAM_BINARY_SIZES);
-
-        var prg2 = cl.createProgramFromBinary(ctx, null, sizes, bin);
+        //
+        var prg2 = cl.createProgramWithBinary(ctx, [device], sizes, bin);
 
         assert.isNotNull(prg2);
         assert.isDefined(prg2);
@@ -100,16 +101,25 @@ describe("Program", function () {
       });
     });
 
-    it("should fail as program is invalid", function () {
-      assert(false, "This one segfaults == disabled");
-      testUtils.withContext(function (ctx) {
-        var prg = cl.createProgramWithSource(ctx, squareKern + "$bad_inst");
+    it("should fail as binaries list is empty", function () {
+      testUtils.withContext(function (ctx, device) {
+        testUtils.bind(cl.createProgramWithBinary, ctx, [device], [], [])
+          .should.throw(cl.INVALID_VALUE.message);
+      });
+    });
+
+
+    it("should fail as lists are not of the same length", function () {
+
+      testUtils.withContext(function (ctx, device) {
+        var prg = cl.createProgramWithSource(ctx, squareKern);
+        cl.buildProgram(prg);
         var bin = cl.getProgramInfo(prg, cl.PROGRAM_BINARIES);
         var sizes = cl.getProgramInfo(prg, cl.PROGRAM_BINARY_SIZES);
-        var prg2 = cl.createProgramWithBinary(ctx, null, sizes, bin);
+        sizes.push(100);
 
-        cl.createProgramFromBinary.bind(cl.createProgramFromBinary, ctx, null, sizes, bin)
-          .should.throw(cl.INVALID_PROGRAM.message);
+        testUtils.bind(cl.createProgramWithBinary, ctx, [device], sizes, bin)
+        cl.releaseProgram(prg);
       });
     });
 
@@ -230,13 +240,15 @@ describe("Program", function () {
       it("should have the right types for properties", function () {
         testUtils.withContext(function (ctx) {
           var prg = cl.createProgramWithSource(ctx, squareKern);
+          cl.compileProgram(prg);
           cl.getProgramInfo(prg, cl.PROGRAM_REFERENCE_COUNT).should.be.a.integer;
           cl.getProgramInfo(prg, cl.PROGRAM_NUM_DEVICES).should.be.a.integer;
-          cl.getProgramInfo(prg, cl.PROGRAM_CONTEXT).should.be.a.array;
+          cl.getProgramInfo(prg, cl.PROGRAM_CONTEXT).should.be.an.object;
           cl.getProgramInfo(prg, cl.PROGRAM_DEVICES).should.be.a.array;
           cl.getProgramInfo(prg, cl.PROGRAM_BINARY_SIZES).should.be.a.array;
           cl.getProgramInfo(prg, cl.PROGRAM_SOURCE).should.be.a.string;
           cl.getProgramInfo(prg, cl.PROGRAM_KERNEL_NAMES).should.be.a.string;
+
           cl.releaseProgram(prg);
         });
       });
