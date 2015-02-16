@@ -1,4 +1,4 @@
-# node-opencl
+# Node OpenCL
 
 This is an early implementation of Node.JS bindings to OpenCL supporting all features of OpenCL up to the latests specification available on Khronos.org.
 
