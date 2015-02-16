@@ -154,9 +154,19 @@ NAN_METHOD(GetEventProfilingInfo) {
     case CL_PROFILING_COMMAND_START:
     case CL_PROFILING_COMMAND_END:
     {
+      /**
+      * JS Compatibility
+      *
+      * As JS does not support 64 bits integer, we return a 2 integers array with
+      *  INT / 1000 = arr[0] * 10^6 (milliseconds) + arr[1]  (nanoseconds - milliseconds) */
+
       cl_ulong val;
       CHECK_ERR(::clGetEventProfilingInfo(ev->getRaw(),param_name,sizeof(cl_ulong), &val, NULL))
-      NanReturnValue(JS_INT((uint32_t) val)); // TODO how do we return 64b value in JS?
+
+      Local<Array> arr = NanNew<Array>(2);
+      arr->Set(0, JS_INT((uint32_t)val / 1000000));
+      arr->Set(1, JS_INT((uint32_t)val - val / 1000000));
+      NanReturnValue(arr);
     }
   }
   return NanThrowError(JS_INT(CL_INVALID_VALUE));
