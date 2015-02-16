@@ -32,6 +32,10 @@ using namespace v8;
 
 template <typename T>
 T * NoCLUnwrap(Local<Value> val) {
+  if (val->IsNull() || val->IsUndefined()) {
+    return NULL;
+  }
+
   if (!val->IsObject()) {
     return NULL;
   }

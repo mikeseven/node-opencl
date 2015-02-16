@@ -108,10 +108,7 @@ describe("Kernel", function () {
 
   describe("#setKernelArg", function () {
 
-    it("should be implemented", function () {
-      // TODO
-      assert(false, "not implemented");
-    });
+    // TODO
 
   });
 

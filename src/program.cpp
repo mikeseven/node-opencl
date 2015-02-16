@@ -128,7 +128,9 @@ NAN_METHOD(BuildProgram) {
     REQ_ARRAY_ARG(1, cl_devices);
     NOCL_TO_ARRAY(devices, cl_devices, NoCLDeviceId);
   }
-  
+
+
+
   String::Utf8Value * options = nullptr;
 
   if (ARG_EXISTS(2)){
@@ -137,6 +139,7 @@ NAN_METHOD(BuildProgram) {
     }
     options = new String::Utf8Value(args[2]);
   }
+
 
   //REQ_STR_ARG(2,options);
 
@@ -149,7 +152,9 @@ NAN_METHOD(BuildProgram) {
 
   delete options;
 
+
   CHECK_ERR(err); // TODO CB
+
 
   NanReturnValue(JS_INT(CL_SUCCESS));
 }
@@ -171,10 +176,13 @@ NAN_METHOD(CompileProgram) {
   // Arg 1 : program
   NOCL_UNWRAP(p, NoCLProgram, args[0]);
 
-  // Arg 2 : devices
   std::vector<NoCLDeviceId> cl_devices;
-  REQ_ARRAY_ARG(1, js_devices);
-  NOCL_TO_ARRAY(cl_devices, js_devices, NoCLDeviceId);
+
+  // Arg 2 : devices
+  if (ARG_EXISTS(1)) {
+    REQ_ARRAY_ARG(1, js_devices);
+    NOCL_TO_ARRAY(cl_devices, js_devices, NoCLDeviceId);
+  }
 
   // Arg 3 : Options
   String::Utf8Value * options = nullptr;

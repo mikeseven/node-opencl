@@ -103,7 +103,7 @@ NAN_METHOD(GetDeviceInfo) {
   case CL_DEVICE_QUEUE_PROPERTIES: {
     cl_command_queue_properties param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_command_queue_properties), &param_value, NULL));
-    JS_INT((int)param_value);
+    NanReturnValue(JS_INT((int)param_value));
   }
   break;
   case CL_DEVICE_HALF_FP_CONFIG:
