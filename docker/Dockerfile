@@ -1,10 +1,14 @@
 FROM ubuntu:14.04
 MAINTAINER Dan Liew <daniel.liew@imperial.ac.uk>, Ioweb <contact@ioweb.fr>
 
+RUN apt-get update
+RUN apt-get -y install software-properties-common python-software-properties 
+RUN add-apt-repository ppa:onestone/node.js-0.12 
 RUN apt-get update && apt-get -y install curl
 RUN apt-get -y install gcc g++ gdb
 RUN apt-get -y --no-install-recommends install cmake mercurial git make subversion
 RUN apt-get -y install python python-dev python-pip vim
+RUN apt-get -y install nodejs
 
 WORKDIR /root
 
@@ -32,12 +36,8 @@ RUN ln -s /opt/AMDAPPSDK-*/include/CL /usr/include/
 RUN echo "root:root" | chpasswd
 
 # NodeJS
-RUN apt-get install -y software-properties-common python-software-properties
-RUN add-apt-repository ppa:onestone/node.js-0.12 
-RUN apt-get update
-RUN apt-get install -y nodejs mesa-common-dev
-
 RUN npm install -g mocha node-gyp
+
 # Add a non root user
 RUN useradd -m aasdk
 USER aasdk
