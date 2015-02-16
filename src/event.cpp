@@ -17,7 +17,7 @@ NAN_METHOD(WaitForEvents) {
   NOCL_TO_ARRAY(events, js_events, NoCLEvent);
 
   CHECK_ERR(::clWaitForEvents(
-    events.size(), TO_CL_ARRAY(events, NoCLEvent)));
+    events.size(), NOCL_TO_CL_ARRAY(events, NoCLEvent)));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
 }

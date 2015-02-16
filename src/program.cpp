@@ -74,7 +74,7 @@ NAN_METHOD(CreateProgramWithBinary) {
   cl_program p=::clCreateProgramWithBinary(
     context->getRaw(),
     (cl_uint) cl_devices.size(),
-    TO_CL_ARRAY(cl_devices, NoCLDeviceId),
+    NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
     lengths.get(),
     &cl_binaries_str[0],
     NULL,
@@ -156,7 +156,7 @@ NAN_METHOD(BuildProgram) {
   // TODO callback + userdata
 
   int err = ::clBuildProgram(p->getRaw(),
-    devices.size(), TO_CL_ARRAY(devices, NoCLDeviceId),
+    devices.size(), NOCL_TO_CL_ARRAY(devices, NoCLDeviceId),
     options != NULL ? **options : nullptr,
     nullptr, nullptr);
 
@@ -233,9 +233,9 @@ NAN_METHOD(CompileProgram) {
 
   int err = ::clCompileProgram(
     p->getRaw(),
-    cl_devices.size(), TO_CL_ARRAY(cl_devices, NoCLDeviceId),
+    cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
     options != NULL ? **options : nullptr,
-    program_headers.size(), TO_CL_ARRAY(program_headers, NoCLProgram),
+    program_headers.size(), NOCL_TO_CL_ARRAY(program_headers, NoCLProgram),
     &names.front(),
     nullptr, nullptr);
 

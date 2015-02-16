@@ -183,7 +183,7 @@ NAN_METHOD(EnqueueReadBuffer) {
 
   CHECK_ERR(::clEnqueueReadBuffer(
     q->getRaw(),buffer->getRaw(),blocking_read,offset,size,ptr,
-    cl_events.size(), TO_CL_ARRAY(cl_events, NoCLEvent),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
   NanReturnValue(JS_INT(CL_SUCCESS));
 }
@@ -257,7 +257,7 @@ NAN_METHOD(EnqueueReadBufferRect) {
   CHECK_ERR(::clEnqueueReadBufferRect(
     q->getRaw(),buffer->getRaw(),blocking_read,buffer_offset,host_offset,region,
     buffer_row_pitch,buffer_slice_pitch,host_row_pitch,host_slice_pitch,ptr,
-    cl_events.size(), TO_CL_ARRAY(cl_events, NoCLEvent),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
@@ -307,7 +307,7 @@ NAN_METHOD(EnqueueWriteBuffer) {
 
   CHECK_ERR(::clEnqueueWriteBuffer(
     q->getRaw(),buffer->getRaw(),blocking_write,offset,size,ptr,
-    cl_events.size(), TO_CL_ARRAY(cl_events, NoCLEvent),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
@@ -381,7 +381,7 @@ NAN_METHOD(EnqueueWriteBufferRect) {
   CHECK_ERR(::clEnqueueWriteBufferRect(
     q->getRaw(),buffer->getRaw(),blocking_write,buffer_offset,host_offset,region,
     buffer_row_pitch,buffer_slice_pitch,host_row_pitch,host_slice_pitch,ptr,
-    cl_events.size(), TO_CL_ARRAY(cl_events, NoCLEvent),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
@@ -431,7 +431,7 @@ NAN_METHOD(EnqueueFillBuffer) {
 
   CHECK_ERR(::clEnqueueFillBuffer(
     q->getRaw(),buffer->getRaw(),pattern, len, offset, size,
-    cl_events.size(), TO_CL_ARRAY(cl_events, NoCLEvent),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
@@ -477,7 +477,7 @@ NAN_METHOD(EnqueueCopyBuffer) {
 
   CHECK_ERR(::clEnqueueCopyBuffer(q->getRaw(),
     src_buffer->getRaw(),dst_buffer->getRaw(),src_offset,dst_offset, size,
-    cl_events.size(), TO_CL_ARRAY(cl_events, NoCLEvent),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
   NanReturnValue(JS_INT(CL_SUCCESS));
 }
@@ -543,7 +543,7 @@ NAN_METHOD(EnqueueCopyBufferRect) {
     q->getRaw(),src_buffer->getRaw(),dst_buffer->getRaw(),
     src_origin, dst_origin, region,
     src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch,
-    cl_events.size(), TO_CL_ARRAY(cl_events, NoCLEvent),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
@@ -606,7 +606,7 @@ NAN_METHOD(EnqueueReadImage) {
 
   CHECK_ERR(::clEnqueueReadImage(q->getRaw(),image->getRaw(),blocking_read,
     origin,region,row_pitch,slice_pitch, ptr,
-    cl_events.size(), TO_CL_ARRAY(cl_events, NoCLEvent),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
@@ -670,7 +670,7 @@ NAN_METHOD(EnqueueWriteImage) {
 
   CHECK_ERR(::clEnqueueWriteImage(q->getRaw(),image->getRaw(),blocking_write,
     origin,region,row_pitch,slice_pitch, ptr,
-    cl_events.size(), TO_CL_ARRAY(cl_events, NoCLEvent),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
@@ -726,7 +726,7 @@ NAN_METHOD(EnqueueFillImage) {
   CHECK_ERR(::clEnqueueFillImage(
     q->getRaw(),image->getRaw(),fill_color,
     origin,region,
-    cl_events.size(), TO_CL_ARRAY(cl_events, NoCLEvent),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
@@ -782,7 +782,7 @@ NAN_METHOD(EnqueueCopyImage) {
   CHECK_ERR(::clEnqueueCopyImage(
     q->getRaw(),src_image->getRaw(),dst_image->getRaw(),
     src_origin,dst_origin, region,
-    cl_events.size(), TO_CL_ARRAY(cl_events, NoCLEvent),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
@@ -836,7 +836,7 @@ NAN_METHOD(EnqueueCopyImageToBuffer) {
   CHECK_ERR(::clEnqueueCopyImageToBuffer(
     q->getRaw(),src_image->getRaw(),dst_buffer->getRaw(),
     src_origin, region, dst_offset,
-    cl_events.size(), TO_CL_ARRAY(cl_events, NoCLEvent),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
@@ -890,7 +890,7 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
   CHECK_ERR(::clEnqueueCopyBufferToImage(
     q->getRaw(),src_buffer->getRaw(),dst_image->getRaw(),
     src_offset, dst_origin, region,
-    cl_events.size(), TO_CL_ARRAY(cl_events, NoCLEvent),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
@@ -937,7 +937,7 @@ NAN_METHOD(EnqueueMapBuffer) {
   void *ptr = ::clEnqueueMapBuffer(
     q->getRaw(),buffer->getRaw(),blocking_map,
     map_flags, offset, size,
-    cl_events.size(), TO_CL_ARRAY(cl_events, NoCLEvent),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr,
     &ret);
 
@@ -1014,7 +1014,7 @@ NAN_METHOD(EnqueueMapImage) {
   void *ptr = ::clEnqueueMapImage(
     q->getRaw(),image->getRaw(),blocking_map,map_flags,
     origin, region, (size_t*)image_row_pitch, (size_t*)image_slice_pitch,
-    cl_events.size(), TO_CL_ARRAY(cl_events, NoCLEvent),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr,
     &ret);
 
@@ -1056,7 +1056,7 @@ NAN_METHOD(EnqueueUnmapMemObject) {
   CHECK_ERR(::clEnqueueUnmapMemObject(
     q->getRaw(),memobj->getRaw(),
     mapped_ptr,
-    cl_events.size(), TO_CL_ARRAY(cl_events, NoCLEvent),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
@@ -1105,7 +1105,7 @@ NAN_METHOD(EnqueueMigrateMemObjects) {
   CHECK_ERR(::clEnqueueMigrateMemObjects(
     q->getRaw(),num_mem_objects,
     mem_objects.get(),flags,
-    cl_events.size(), TO_CL_ARRAY(cl_events, NoCLEvent),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
@@ -1160,7 +1160,7 @@ NAN_METHOD(EnqueueNDRangeKernel) {
   CHECK_ERR(::clEnqueueNDRangeKernel(
     q->getRaw(),k->getRaw(),work_dim,
     global_work_offset,global_work_size,local_work_size,
-    cl_events.size(), TO_CL_ARRAY(cl_events, NoCLEvent),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
@@ -1196,7 +1196,7 @@ NAN_METHOD(EnqueueTask) {
 
   CHECK_ERR(::clEnqueueTask(
     q->getRaw(),k->getRaw(),
-    cl_events.size(), TO_CL_ARRAY(cl_events, NoCLEvent),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
@@ -1248,7 +1248,7 @@ NAN_METHOD(EnqueueMarkerWithWaitList) {
 
   CHECK_ERR(::clEnqueueMarkerWithWaitList(
     q->getRaw(),
-    cl_events.size(), TO_CL_ARRAY(cl_events, NoCLEvent),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
@@ -1277,7 +1277,7 @@ NAN_METHOD(EnqueueBarrierWithWaitList) {
   }
 
   CHECK_ERR(::clEnqueueBarrierWithWaitList(q->getRaw(),
-    cl_events.size(), TO_CL_ARRAY(cl_events, NoCLEvent),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
   NanReturnValue(JS_INT(CL_SUCCESS));

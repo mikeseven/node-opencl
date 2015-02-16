@@ -118,7 +118,7 @@ public:
     return NanThrowError(getExceptionMessage(TYPE::getErrorCode()).c_str(), TYPE::getErrorCode()); \
   }
 
-#define TO_CL_ARRAY(FROM, TYPE) \
+#define NOCL_TO_CL_ARRAY(FROM, TYPE) \
   FROM.size() ? &TYPE::toCLArray<TYPE>(FROM).front() : nullptr
 
 class NoCLPlatformId : public NoCLObject<cl_platform_id, 0, CL_INVALID_PLATFORM> {
