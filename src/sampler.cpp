@@ -127,14 +127,14 @@ NAN_METHOD(GetSamplerInfo) {
 namespace Sampler {
 void init(Handle<Object> exports)
 {
+  NODE_SET_METHOD(exports, "retainSampler", RetainSampler);
+  NODE_SET_METHOD(exports, "releaseSampler", ReleaseSampler);
+  NODE_SET_METHOD(exports, "getSamplerInfo", GetSamplerInfo);
 #ifndef CL_VERSION_2_0
   NODE_SET_METHOD(exports, "createSampler", CreateSampler);
 #else
   NODE_SET_METHOD(exports, "createSamplerWithProperties", CreateSamplerWithProperties);
 #endif
-  NODE_SET_METHOD(exports, "retainSampler", RetainSampler);
-  NODE_SET_METHOD(exports, "releaseSampler", ReleaseSampler);
-  NODE_SET_METHOD(exports, "getSamplerInfo", GetSamplerInfo);
 }
 } // namespace Sampler
 

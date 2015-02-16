@@ -129,12 +129,13 @@ describe("Device", function() {
       testInteger(device, "DEVICE_MAX_PARAMETER_SIZE");
       testInteger(device, "DEVICE_MAX_WORK_GROUP_SIZE");
       testInteger(device, "DEVICE_PROFILING_TIMER_RESOLUTION");
+
       if(cl.CL_VERSION_1_2) {
         testInteger(device, "DEVICE_IMAGE_MAX_BUFFER_SIZE");
         testInteger(device, "DEVICE_IMAGE_MAX_ARRAY_SIZE");
       }
 
-      // negative test cases
+      //// negative test cases
       it("should throw cl.INVALID_VALUE with name=-123.56",function() {
         cl.getDeviceInfo.bind(cl.getDeviceInfo,device,-123.56).should.throw(cl.INVALID_VALUE.message);
       });

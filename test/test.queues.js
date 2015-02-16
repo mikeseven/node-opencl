@@ -15,40 +15,47 @@ var isValidCQ = function (cq) {
 describe("CommandQueue", function() {
 
   describe("#createCommandQueue", function() {
-    it("should create a valid command queue", function () {
-      testUtils.withContext(function(ctx, device){
-        var cq = cl.createCommandQueue(ctx, device, null);
-        isValidCQ(cq);
-        cl.releaseCommandQueue(cq);
+    if (testUtils.checkVersion("2.*")) {
+      it ("should be undefined as createCommandQueue does not exist in OpenCL 2.0", function () {
+        assert(cl.createCommandQueue === undefined);
       });
-    });
+    } else {
+      it("should create a valid command queue", function () {
 
-    it("should fail given an invalid property", function () {
-      testUtils.withContext(function(ctx, device) {
-        cl.createCommandQueue.bind(cl.createCommandQueue,ctx, device, -1).should.throw(cl.INVALID_VALUE.message);
+        testUtils.withContext(function(ctx, device){
+          var cq = cl.createCommandQueue(ctx, device, null);
+          isValidCQ(cq);
+          cl.releaseCommandQueue(cq);
+        });
       });
-    });
 
-    it("should fail given an invalid device", function() {
-      testUtils.withContext(function(ctx, device){
-        cl.createCommandQueue.bind(cl.createCommandQueue, ctx, "test", []).should.throw(cl.INVALID_DEVICE.message);
+      it("should fail given an invalid property", function () {
+        testUtils.withContext(function(ctx, device) {
+          cl.createCommandQueue.bind(cl.createCommandQueue,ctx, device, -1).should.throw(cl.INVALID_VALUE.message);
+        });
       });
-    });
+
+      it("should fail given an invalid device", function() {
+        testUtils.withContext(function(ctx, device){
+          cl.createCommandQueue.bind(cl.createCommandQueue, ctx, "test", []).should.throw(cl.INVALID_DEVICE.message);
+        });
+      });
+    }
 
   });
 
-  describe("#retainCommandQueue", function() {
+  describe("# ( TODO ) retainCommandQueue", function() {
     // FIXME
   });
-  describe("#releaseCommandQueue", function() {
+  describe("# ( TODO ) releaseCommandQueue", function() {
     // FIXME
   });
 
-  describe("#getCommandQueueInfo", function() {
+  describe("# ( TODO ) getCommandQueueInfo", function() {
     // FIXME
   });
 
-  describe("#flush", function() {
+  describe("# ( TODO ) flush", function() {
 
     it("should return undefined", function () {
       // TODO
@@ -57,7 +64,7 @@ describe("CommandQueue", function() {
   });
 
 
-  describe("#finish", function() {
+  describe("# ( TODO ) finish", function() {
 
     it("should return undefined", function () {
       // TODO
@@ -65,7 +72,7 @@ describe("CommandQueue", function() {
 
   });
 
-  describe("#enqueueReadBuffer", function() {
+  describe("# ( TODO ) enqueueReadBuffer", function() {
 
     it("should work with read only buffers", function () {
       // TODO
@@ -83,7 +90,7 @@ describe("CommandQueue", function() {
   });
 
 
-  describe("#enqueueReadBufferRect", function() {
+  describe("# ( TODO ) enqueueReadBufferRect", function() {
     it("should work with read write buffers", function () {
       // TODO
     });
@@ -95,7 +102,7 @@ describe("CommandQueue", function() {
   });
 
 
-  describe("#enqueueWriteBuffer", function() {
+  describe("# ( TODO ) enqueueWriteBuffer", function() {
     it("should work with read only buffers", function () {
       // TODO
     });
@@ -107,7 +114,7 @@ describe("CommandQueue", function() {
   });
 
 
-  describe("#enqueueWriteBufferRect", function() {
+  describe("# ( TODO ) enqueueWriteBufferRect", function() {
     it("should work with read write buffers", function () {
       // TODO
     });
@@ -118,11 +125,11 @@ describe("CommandQueue", function() {
 
   });
 
-  describe("#enqueueFillBuffer", function() {
+  describe("# ( TODO ) enqueueFillBuffer", function() {
     // FIXME
   });
 
-  describe("#enqueueCopyBuffer", function() {
+  describe("# ( TODO ) enqueueCopyBuffer", function() {
     it("should work with read only buffers", function () {
       // TODO
     });
@@ -134,7 +141,7 @@ describe("CommandQueue", function() {
   });
 
 
-  describe("#enqueueCopyBufferRect", function() {
+  describe("# ( TODO ) enqueueCopyBufferRect", function() {
     it("should work with read only buffers", function () {
       // TODO
     });
@@ -181,7 +188,7 @@ describe("CommandQueue", function() {
   });
 
 
-  describe("#enqueueReadImage", function() {
+  describe("# ( TODO ) enqueueReadImage", function() {
     it("should work with read write buffers", function () {
       // TODO
     });
@@ -212,7 +219,7 @@ describe("CommandQueue", function() {
 
   });
 
-  describe("#enqueueWriteImage", function() {
+  describe("# ( TODO ) enqueueWriteImage", function() {
     it("should work with read write images", function () {
       // TODO
     });
@@ -239,12 +246,12 @@ describe("CommandQueue", function() {
   });
 
 
-  describe("#enqueueFillImage", function() {
+  describe("# ( TODO ) enqueueFillImage", function() {
     // FIXME
   });
 
 
-  describe("#enqueueCopyImage", function() {
+  describe("# ( TODO ) enqueueCopyImage", function() {
     it("should work with read write images", function () {
       // TODO
     });
@@ -259,7 +266,7 @@ describe("CommandQueue", function() {
   });
 
 
-  describe("#enqueueCopyImageToBuffer", function() {
+  describe("# ( TODO ) enqueueCopyImageToBuffer", function() {
     it("should work with read only buffers", function () {
       // TODO
     });
@@ -309,7 +316,7 @@ describe("CommandQueue", function() {
     });
   });
 
-  describe("#enqueueCopyBufferToImage", function() {
+  describe("# ( TODO ) enqueueCopyBufferToImage", function() {
     it("should work with read only buffers", function () {
       // TODO
     });
@@ -331,27 +338,27 @@ describe("CommandQueue", function() {
     });
   });
 
-  describe("#enqueueMapBuffer", function() {
+  describe("# ( TODO ) enqueueMapBuffer", function() {
     // FIXME
   });
 
-  describe("#enqueueMapImage", function() {
+  describe("# ( TODO ) enqueueMapImage", function() {
     // FIXME
   });
 
-  describe("#enqueueMapBuffer", function() {
+  describe("# ( TODO ) enqueueMapBuffer", function() {
     // FIXME
   });
 
-  describe("#enqueueUnmapMemObject", function() {
+  describe("# ( TODO ) enqueueUnmapMemObject", function() {
     // FIXME
   });
 
-  describe("#enqueueMigrateMemObjects", function() {
+  describe("# ( TODO ) enqueueMigrateMemObjects", function() {
     // FIXME
   });
 
-  describe("#enqueueNDRangeKernel", function() {
+  describe("# ( TODO ) enqueueNDRangeKernel", function() {
 
     it("should work with a valid call", function () {
       // TODO
@@ -363,19 +370,19 @@ describe("CommandQueue", function() {
 
   });
 
-  describe("#enqueueTask", function() {
+  describe("# ( TODO ) enqueueTask", function() {
     // TODO
   });
 
-  describe("#enqueueNativeKernel", function() {
+  describe("# ( TODO ) enqueueNativeKernel", function() {
     // TODO
   });
 
-  describe("#enqueueMarkerWithWaitList", function() {
+  describe("# ( TODO ) enqueueMarkerWithWaitList", function() {
     // TODO
   });
 
-  describe("#enqueueBarrierWithWaitList", function() {
+  describe("# ( TODO ) enqueueBarrierWithWaitList", function() {
     // TODO
   });
 

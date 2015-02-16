@@ -2,6 +2,7 @@ var cl=require('../lib/opencl'),
     should=require('chai').should(),
     assert = require('chai').assert,
     util=require('util'),
+    testUtils = require("../lib/test_utils"),
     log=console.log;
 
 describe("Context", function() {
@@ -19,7 +20,12 @@ describe("Context", function() {
   describe("#createContext", function() {
 
     it("should throw if devices = null",function() {
-      cl.createContext.bind(cl.createContext,null, null, null, null).should.throw(cl.INVALID_DEVICE.message);
+      // DRIVER ISSUE : OSX
+      var ex = testUtils.checkImplementation() == "osx" ?
+        cl.INVALID_DEVICE.message : cl.INVALID_VALUE.message;
+
+      cl.createContext.bind(cl.createContext,null, null, null, null)
+        .should.throw(ex);
     });
 
     it("should create a context with default properties for a platform",function() {
@@ -42,12 +48,29 @@ describe("Context", function() {
 
   describe("#createContextFromType", function() {
 
-    it("should throw cl.INVALID_VALUE if type is unknown", function () {
-      var properties= [
-        cl.CONTEXT_PLATFORM, platform
-      ];
-      cl.createContextFromType.bind(cl.createContextFromType, properties, 0, null, null).should.throw(cl.INVALID_VALUE.message);
-    });
+    if (testUtils.checkImplementation() == "osx") {
+      it("[DRIVER ISSUE = OSX] should throw cl.INVALID_VALUE if type is unknown", function () {
+        var properties= [
+          cl.CONTEXT_PLATFORM, platform
+        ];
+
+        testUtils.bind(cl.createContextFromType, properties, 0, null, null)
+          .should.throw(cl.INVALID_VALUE.message);
+      });
+    } else {
+      it("should throw cl.DEVICE_NOT_FOUND if type is unknown", function () {
+        // DRIVER ISSUE : OSX
+        var ex = testUtils.checkImplementation() == "osx" ?
+          cl.INVALID_VALUE.message : cl.DEVICE_NOT_FOUND.message;
+
+        var properties= [
+          cl.CONTEXT_PLATFORM, platform
+        ];
+
+        testUtils.bind(cl.createContextFromType, properties, 0, null, null)
+          .should.throw(cl.DEVICE_NOT_FOUND.message);
+      });
+    }
 
     it("should create a context with a wildcard type", function () {
       var properties= [

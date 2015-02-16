@@ -54,7 +54,7 @@ describe("MemObj", function() {
     });
 
     it("should copy memory when passed a Buffer", function () {
-      var array = new ArrayBuffer(32);
+      var array = new Buffer(32);
       var buffer = f(context, cl.MEM_COPY_HOST_PTR, 8, array);
       cl.releaseMemObject(buffer);
     });
@@ -84,14 +84,24 @@ describe("MemObj", function() {
         .should.throw(cl.INVALID_MEM_OBJECT.message);
     });
 
-    it("should throw cl.INVALID_VALUE if buffer was created with cl.MEM_WRITE_ONLY and flags specifies CL_MEM_READ_WRITE", function() {
-      var buffer = cl.createBuffer(context, cl.MEM_WRITE_ONLY, 8, null);
+    if (testUtils.checkImplementation() == "osx") {
+      it("should throw cl.INVALID_VALUE if buffer was created with cl.MEM_WRITE_ONLY and flags specifies CL_MEM_READ_WRITE", function() {
+        var buffer = cl.createBuffer(context, cl.MEM_WRITE_ONLY, 8, null);
 
-      f.bind(f, buffer, cl.MEM_READ_WRITE, cl.BUFFER_CREATE_TYPE_REGION, {"origin": 0, "size": 2})
-        .should.throw(cl.INVALID_VALUE.message);
+        f.bind(f, buffer, cl.MEM_READ_WRITE, cl.BUFFER_CREATE_TYPE_REGION, {"origin": 0, "size": 2})
+          .should.throw(cl.INVALID_VALUE.message);
 
-      cl.releaseMemObject(buffer);
-    });
+        cl.releaseMemObject(buffer);
+      });
+    } else{
+      it("[DRIVER ISSUE = AMD] should work if buffer was created with cl.MEM_WRITE_ONLY and flags specifies CL_MEM_READ_WRITE", function() {
+        var buffer = cl.createBuffer(context, cl.MEM_WRITE_ONLY, 8, null);
+
+        f(buffer, cl.MEM_READ_WRITE, cl.BUFFER_CREATE_TYPE_REGION, {"origin": 0, "size": 2});
+        cl.releaseMemObject(buffer);
+      });
+    }
+
 
     it("should throw cl.INVALID_VALUE if bufferCreateType is not BUFFER_CREATE_TYPE_CREGION", function() {
       var buffer = cl.createBuffer(context, 0, 8, null);

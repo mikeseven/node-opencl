@@ -36,7 +36,7 @@ T * NoCLUnwrap(Local<Value> val) {
     return NULL;
   }
 
-  if (!val->IsObject()) {
+  if (!val->IsObject() || val->IsArray()) {
     return NULL;
   }
 

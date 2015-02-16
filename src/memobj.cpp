@@ -31,23 +31,25 @@ NAN_METHOD(CreateBuffer) {
   void *host_ptr = NULL;
   if(ARG_EXISTS(3)) {
     if(args[3]->IsArray()) {
-      CHECK_ERR(CL_INVALID_MEM_OBJECT);
+      THROW_ERR(CL_INVALID_MEM_OBJECT);
     }
     if(args[3]->IsObject()) {
       Local<Object> obj=args[3]->ToObject();
       String::Utf8Value name(obj->GetConstructorName());
-      if(!strcmp("Buffer",*name))
+      if(strcmp("Buffer",*name))
         host_ptr=Buffer::Data(obj);
       else if(strcmp("Array",*name)) {
         // TypedArray
-        assert(obj->HasIndexedPropertiesInExternalArrayData());
+        if (!obj->HasIndexedPropertiesInExternalArrayData()) {
+          THROW_ERR(CL_INVALID_MEM_OBJECT);
+        }
         host_ptr=obj->GetIndexedPropertiesExternalArrayData();
       } else {
-        CHECK_ERR(CL_INVALID_MEM_OBJECT);
+        THROW_ERR(CL_INVALID_MEM_OBJECT);
       }
     }
     else
-      CHECK_ERR(CL_INVALID_MEM_OBJECT);
+    THROW_ERR(CL_INVALID_MEM_OBJECT);
   }
 
   cl_int ret=CL_SUCCESS;
@@ -149,7 +151,9 @@ NAN_METHOD(CreateImage) {
         host_ptr=Buffer::Data(obj);
       else {
         // TypedArray
-        assert(obj->HasIndexedPropertiesInExternalArrayData());
+        if(!obj->HasIndexedPropertiesInExternalArrayData()) {
+          THROW_ERR(CL_INVALID_MEM_OBJECT)
+        }
         host_ptr=obj->GetIndexedPropertiesExternalArrayData();
         // printf("external array data type %d\n",obj->GetIndexedPropertiesExternalArrayDataType());
       }
