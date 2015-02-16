@@ -372,7 +372,7 @@ NAN_METHOD(GetProgramInfo) {
         prog->getRaw(), CL_PROGRAM_BINARY_SIZES, nsizes * sizeof(size_t), sizes.get(), NULL));
 
       unsigned char** bn = new unsigned char* [nsizes];
-      for(int i = 0; i < nsizes;i++)  {
+      for(unsigned int i = 0; i < nsizes;i++)  {
         bn[i] = new unsigned char[sizes[i]];
       }
 

@@ -90,7 +90,7 @@ NAN_METHOD(CreateSubBuffer) {
   }
 
   CHECK_ERR(CL_INVALID_VALUE);
-  return JS_INT(CL_SUCCESS);
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_mem CL_API_CALL
@@ -176,7 +176,7 @@ NAN_METHOD(RetainMemObject) {
   cl_int ret=clRetainMemObject(mem->getRaw());
 
   CHECK_ERR(ret);
-  return JS_INT(CL_SUCCESS);
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -189,7 +189,7 @@ NAN_METHOD(ReleaseMemObject) {
   cl_int ret=clReleaseMemObject(mem->getRaw());
 
   CHECK_ERR(ret);
-  return JS_INT(CL_SUCCESS);
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
