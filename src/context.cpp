@@ -172,15 +172,7 @@ NAN_METHOD(GetContextInfo) {
 
     Local<Array> arr = NanNew<Array>((int)n);
     for(uint32_t i=0;i<n;i++) {
-      if(devices[i]) {
-        // TODO
-        // WebCLObject *obj=findCLObj((void*)devices[i], CLObjType::Device);
-
-        // if(obj)
-        //   arr->Set(i,NanObjectWrapHandle(obj));
-        // else
-        //   arr->Set(i,NanObjectWrapHandle(Device::New(devices[i])));
-      }
+      arr->Set(i, NOCL_WRAP(NoCLDeviceId, devices[i]));
     }
     NanReturnValue(arr);
   }

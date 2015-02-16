@@ -326,7 +326,7 @@ NAN_METHOD(GetProgramInfo) {
     {
       cl_uint nsizes;
 
-      // TODO This part segfaults if program has not been compiled
+      // DRIVER ISSUE :  This part segfaults if program has not been compiled
 
       CHECK_ERR(::clGetProgramInfo(
         prog->getRaw(), CL_PROGRAM_NUM_DEVICES, sizeof(cl_uint), &nsizes, NULL));
@@ -361,7 +361,7 @@ NAN_METHOD(GetProgramInfo) {
     {
       cl_uint nsizes;
 
-      // TODO This part segfaults if program has not been compiled
+      // DRIVER ISSUE :  This part segfaults if program has not been compiled
 
       CHECK_ERR(::clGetProgramInfo(
         prog->getRaw(), CL_PROGRAM_NUM_DEVICES, sizeof(cl_uint), &nsizes, NULL));
