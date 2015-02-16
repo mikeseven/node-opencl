@@ -52,6 +52,16 @@ describe("Device", function() {
     })
   }
 
+  function test64Array(device, name) {
+    it(name+" should return a 2 integers array",function(done) {
+      var val=cl.getDeviceInfo(device,eval("cl."+name));
+      assert.isArray(val);
+      assert.isNumber(val[0]);
+      assert.isNumber(val[1]);
+      done(log(name+" = " + val))
+    })
+  }
+
   function testDevice(device) {
     var device_vendor=cl.getDeviceInfo(device,cl.DEVICE_VENDOR);
     var device_name=cl.getDeviceInfo(device,cl.DEVICE_NAME);
@@ -115,11 +125,11 @@ describe("Device", function() {
         testInteger(device, "DEVICE_PARTITION_MAX_SUB_DEVICES");
       }
 
-      testInteger(device, "DEVICE_GLOBAL_MEM_CACHE_SIZE");
-      testInteger(device, "DEVICE_GLOBAL_MEM_SIZE");
-      testInteger(device, "DEVICE_LOCAL_MEM_SIZE");
-      testInteger(device, "DEVICE_MAX_CONSTANT_BUFFER_SIZE");
-      testInteger(device, "DEVICE_MAX_MEM_ALLOC_SIZE");
+      test64Array(device, "DEVICE_GLOBAL_MEM_CACHE_SIZE");
+      test64Array(device, "DEVICE_GLOBAL_MEM_SIZE");
+      test64Array(device, "DEVICE_LOCAL_MEM_SIZE");
+      test64Array(device, "DEVICE_MAX_CONSTANT_BUFFER_SIZE");
+      test64Array(device, "DEVICE_MAX_MEM_ALLOC_SIZE");
 
       testInteger(device, "DEVICE_IMAGE2D_MAX_HEIGHT");
       testInteger(device, "DEVICE_IMAGE2D_MAX_WIDTH");

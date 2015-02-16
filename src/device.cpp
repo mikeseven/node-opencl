@@ -193,10 +193,16 @@ NAN_METHOD(GetDeviceInfo) {
     cl_ulong param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_ulong), &param_value, NULL));
 
-    // FIXME: handle uint64 somehow
-    // JS only supports doubles, v8 has ints, CL params can be uint64
-    // the memory params can certainly overflow uint32 size
-    NanReturnValue(JS_INT((int)param_value));
+    /**
+    * JS Compatibility
+    *
+    * As JS does not support 64 bits integer, we return a 2 integers array with
+    *  INT = arr[0] * 1024^2 (megabytes) + arr[1]  (bytes - megabytes) */
+    Local<Array> arr = NanNew<Array>(2);
+    arr->Set(0, JS_INT((uint32_t)param_value / (1024 * 1024)));
+    arr->Set(1, JS_INT((uint32_t)param_value - param_value / (1024 * 1024)));
+    NanReturnValue(arr);
+
   }
   break;
   // size_t params
@@ -218,7 +224,6 @@ NAN_METHOD(GetDeviceInfo) {
     size_t param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(size_t), &param_value, NULL));
 
-    // FIXME: handle 64 bit size_t somehow
     // assume for these params it will fit in an int
     NanReturnValue(NanNew<Integer>((int)param_value));
   }
