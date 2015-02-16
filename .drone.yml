@@ -1,4 +1,12 @@
 image: ioweb/opencl
+branches:
+  - master
+  - develop
 script:
-    - npm install
+    - npm install --unsafe-perm
     - npm test
+notify:
+  email:
+    recipients:
+      - contact@ioweb.fr
+      - fabien.cellier@gmail.com
