@@ -236,22 +236,26 @@ describe("Program", function () {
   });
 
   describe("#getProgramInfo", function () {
-    testUtils.withContext(function (ctx) {
-      it("should have the right types for properties", function () {
-        testUtils.withContext(function (ctx) {
-          var prg = cl.createProgramWithSource(ctx, squareKern);
-          cl.compileProgram(prg);
-          cl.getProgramInfo(prg, cl.PROGRAM_REFERENCE_COUNT).should.be.a.integer;
-          cl.getProgramInfo(prg, cl.PROGRAM_NUM_DEVICES).should.be.a.integer;
-          cl.getProgramInfo(prg, cl.PROGRAM_CONTEXT).should.be.an.object;
-          cl.getProgramInfo(prg, cl.PROGRAM_DEVICES).should.be.a.array;
-          cl.getProgramInfo(prg, cl.PROGRAM_BINARY_SIZES).should.be.a.array;
-          cl.getProgramInfo(prg, cl.PROGRAM_SOURCE).should.be.a.string;
-          cl.getProgramInfo(prg, cl.PROGRAM_KERNEL_NAMES).should.be.a.string;
+    var testForType = function(clKey, _assert) {
+      it("should return the good type for " + clKey, function () {
+        testUtils.withContext(function (ctx, device) {
+          testUtils.withProgram(ctx, squareKern, function (prg) {
 
-          cl.releaseProgram(prg);
-        });
-      });
+            var val = cl.getProgramInfo(prg, cl[clKey]);
+            _assert(val);
+            console.log(clKey + " = " + val);
+          });
+        })
+      })
+    };
+
+    testForType("PROGRAM_REFERENCE_COUNT", assert.isNumber.bind(assert));
+    testForType("PROGRAM_NUM_DEVICES", assert.isNumber.bind(assert));
+    testForType("PROGRAM_CONTEXT", assert.isObject.bind(assert));
+    testForType("PROGRAM_DEVICES", assert.isArray.bind(assert));
+    testForType("PROGRAM_BINARY_SIZES", assert.isArray.bind(assert));
+    testForType("PROGRAM_SOURCE", assert.isString.bind(assert));
+    testForType("PROGRAM_KERNEL_NAMES", assert.isString.bind(assert));
 
       it("should have the same program source as the one given", function () {
         testUtils.withContext(function (ctx) {
@@ -267,18 +271,23 @@ describe("Program", function () {
 
   describe("#getProgramBuildInfo", function () {
 
-    it("should have the right types for properties", function () {
-      testUtils.withContext(function (ctx, device) {
-        var prg = cl.createProgramWithSource(ctx, squareKern);
-        var ret = cl.buildProgram(prg);
-        cl.getProgramBuildInfo(prg, device, cl.PROGRAM_BUILD_STATUS).should.be.a.integer;
-        cl.getProgramBuildInfo(prg, device, cl.PROGRAM_BUILD_OPTIONS).should.be.a.string;
-        cl.getProgramBuildInfo(prg, device, cl.PROGRAM_BUILD_LOG).should.be.a.string;
-        cl.getProgramBuildInfo(prg, device, cl.PROGRAM_BINARY_TYPE).should.be.a.integer;
+    var testForType = function(clKey, _assert) {
+      it("should return the good type for " + clKey, function () {
+        testUtils.withContext(function (ctx, device) {
+          testUtils.withProgram(ctx, squareKern, function (prg) {
 
-        cl.releaseProgram(prg);
-      });
-    });
+            var val = cl.getProgramBuildInfo(prg, device, cl[clKey]);
+            _assert(val);
+            console.log(clKey + " = " + val);
+          });
+        })
+      })
+    };
+
+    testForType("PROGRAM_BUILD_STATUS", assert.isNumber.bind(assert));
+    testForType("PROGRAM_BUILD_OPTIONS", assert.isString.bind(assert))
+    testForType("PROGRAM_BUILD_LOG", assert.isString.bind(assert))
+    testForType("PROGRAM_BINARY_TYPE", assert.isNumber.bind(assert))
 
     it("should return the same options string that was passed before", function () {
       testUtils.withContext(function (ctx, device) {
@@ -292,6 +301,5 @@ describe("Program", function () {
       });
     });
 
-  });
 
 });

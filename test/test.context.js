@@ -84,14 +84,22 @@ describe("Context", function() {
     var properties= [
       cl.CONTEXT_PLATFORM, platform
     ];
-    var ctx=cl.createContextFromType(properties, cl.DEVICE_TYPE_ALL, null, null);
 
-    it("should return values with good types", function () {
-      cl.getContextInfo(ctx, cl.CONTEXT_REFERENCE_COUNT).should.be.a.integer;
-      cl.getContextInfo(ctx, cl.CONTEXT_REFERENCE_COUNT).should.be.a.integer;
-      cl.getContextInfo(ctx, cl.CONTEXT_DEVICES).should.be.a.array;
-      cl.getContextInfo(ctx, cl.CONTEXT_PROPERTIES).should.be.a.array;
-    });
+    var testForType = function(clKey, _assert) {
+      it("should return the good type for " + clKey, function () {
+        testUtils.withContext(function (ctx) {
+          var val = cl.getContextInfo(ctx, cl[clKey]);
+          _assert(val);
+          console.log(clKey +" = " + val);
+        })
+      })
+    };
+
+    testForType("CONTEXT_REFERENCE_COUNT", assert.isNumber.bind(assert));
+    testForType("CONTEXT_DEVICES", assert.isArray.bind(assert));
+    testForType("CONTEXT_PROPERTIES", assert.isArray.bind(assert));
+
+    var ctx=cl.createContextFromType(properties, cl.DEVICE_TYPE_ALL, null, null);
 
     it("should throw cl.INVALID_VALUE if an unknown param is given", function () {
       cl.getContextInfo.bind(cl.getContextInfo, ctx, -1)

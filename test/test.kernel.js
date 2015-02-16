@@ -9,13 +9,6 @@ var cl = require('../lib/opencl'),
 var squareKern = fs.readFileSync(__dirname + "/kernels/square.cl").toString();
 var squareCpyKern = fs.readFileSync(__dirname + "/kernels/square_cpy.cl").toString();
 
-function testString(kernel, name) {
-  it(name+" should return a string",function(done) {
-    var val=cl.getKernelInfo(kernel,eval("cl."+name));
-    assert.isString(val);
-    done(log(name+" = " + val))
-  })
-}
 
 describe("Kernel", function () {
 
@@ -114,24 +107,26 @@ describe("Kernel", function () {
 
   describe("#getKernelInfo", function () {
 
-    it("should have valid types for properties", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
-          var k = cl.createKernel(prg, "square");
+    var testForType = function(clKey, _assert) {
+      it("should return the good type for " + clKey, function () {
+        testUtils.withContext(function (ctx) {
+          testUtils.withProgram(ctx, squareKern, function (prg) {
+            var k = cl.createKernel(prg, "square");
 
-          testString(k, "KERNEL_ATTRIBUTES");
-          testString(k, "KERNEL_FUNCTION_NAME");
-          testString(k, "KERNEL_REFERENCE_COUNT");
-          testString(k, "KERNEL_NUM_ARGS");
+            var val = cl.getKernelInfo(k, cl[clKey]);
+            _assert(val);
+            console.log(clKey + " = " + val);
+          });
+        })
+      })
+    };
 
-          var c = cl.getKernelInfo(k, cl.KERNEL_CONTEXT);
-          var p = cl.getKernelInfo(k, cl.KERNEL_PROGRAM);
-
-          assert.isDefined(c, "context is undefined");
-          assert.isDefined(p, "program is undefined");
-        });
-      });
-    });
+    testForType("KERNEL_ATTRIBUTES", assert.isString.bind(assert));
+    testForType("KERNEL_FUNCTION_NAME", assert.isString.bind(assert));
+    testForType("KERNEL_REFERENCE_COUNT", assert.isNumber.bind(assert));
+    testForType("KERNEL_NUM_ARGS", assert.isNumber.bind(assert));
+    testForType("KERNEL_CONTEXT", assert.isObject.bind(assert));
+    testForType("KERNEL_PROGRAM", assert.isObject.bind(assert));
 
     it("should return the corresponding number of arguments", function () {
       testUtils.withContext(function (ctx) {
@@ -184,20 +179,23 @@ describe("Kernel", function () {
   });
 
   describe("#getKernelArgInfo", function () {
-    it("should have valid types for properties", function(){
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
-          var k = cl.createKernel(prg, "square");
+    var testForType = function(clKey, _assert) {
+      it("should return the good type for " + clKey, function () {
+        testUtils.withContext(function (ctx) {
+          testUtils.withProgram(ctx, squareKern, function (prg) {
+            var k = cl.createKernel(prg, "square");
 
-          cl.getKernelArgInfo(k, 0, cl.KERNEL_ARG_ADDRESS_QUALIFIER).should.be.a.integer;
-          cl.getKernelArgInfo(k, 0, cl.KERNEL_ARG_ACCESS_QUALIFIER).should.be.a.integer;
-          cl.getKernelArgInfo(k, 0, cl.KERNEL_ARG_TYPE_QUALIFIER).should.be.a.integer;
+            var val = cl.getKernelArgInfo(k, 0, cl[clKey]);
+            _assert(val);
+            console.log(clKey + " = " + val);
+          });
+        })
+      })
+    };
 
-          testString(k, "KERNEL_ARG_TYPE");
-          testString(k, "KERNEL_ARG_NAME");
-        });
-      });
-    });
+    testForType("KERNEL_ARG_ADDRESS_QUALIFIER", assert.isNumber.bind(assert));
+    testForType("KERNEL_ARG_ACCESS_QUALIFIER", assert.isNumber.bind(assert));
+    testForType("KERNEL_ARG_TYPE_QUALIFIER", assert.isNumber.bind(assert));
 
     it("should return the corresponding names", function(){
       testUtils.withContext(function (ctx) {
@@ -233,20 +231,33 @@ describe("Kernel", function () {
 
   describe("#getKernelWorkGroupInfo", function () {
 
-    it("should have valid types for properties", function(){
+    var testForType = function(clKey, _assert) {
+      it("should return the good type for " + clKey, function () {
+        testUtils.withContext(function (ctx, device) {
+          testUtils.withProgram(ctx, squareKern, function (prg) {
+            var k = cl.createKernel(prg, "square");
+
+            var val = cl.getKernelWorkGroupInfo(k, device, cl[clKey]);
+            _assert(val);
+            console.log(clKey + " = " + val);
+          });
+        })
+      })
+    };
+
+    testForType("KERNEL_COMPILE_WORK_GROUP_SIZE", assert.isArray.bind(assert));
+    testForType("KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE", assert.isNumber.bind(assert));
+    testForType("KERNEL_WORK_GROUP_SIZE", assert.isNumber.bind(assert));
+    testForType("KERNEL_LOCAL_MEM_SIZE", assert.isNumber.bind(assert));
+    testForType("KERNEL_PRIVATE_MEM_SIZE", assert.isNumber.bind(assert));
+
+
+    it("should throw INVALID_VALUE when looking for KERNEL_GLOBAL_WORK_SIZE", function(){
       testUtils.withContext(function (ctx, device) {
         testUtils.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
-
-          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_COMPILE_WORK_GROUP_SIZE).should.be.an.array;
           cl.getKernelWorkGroupInfo.bind(cl.getKernelWorkGroupInfo,k, device, cl.KERNEL_GLOBAL_WORK_SIZE)
             .should.throw(cl.INVALID_VALUE.message);
-
-          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE).should.be.an.integer;
-          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_WORK_GROUP_SIZE).should.be.an.integer;
-
-          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_LOCAL_MEM_SIZE).should.be.an.integer;
-          cl.getKernelWorkGroupInfo(k, device, cl.KERNEL_PRIVATE_MEM_SIZE).should.be.an.integer;
         });
       });
     })
