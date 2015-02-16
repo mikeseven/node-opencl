@@ -11,11 +11,7 @@ describe("Context", function() {
   var platform=platforms[0];
   var devices=cl.getDeviceIDs(platform);
 
-  var device=null;
-  for(var i=0;i<devices.length;i++) {
-      device=devices[i];
-  }
-  log('using device '+cl.getDeviceInfo(device,cl.DEVICE_VENDOR)+" "+cl.getDeviceInfo(device,cl.DEVICE_NAME));
+  var device=devices[global.MAIN_DEVICE_IDX];
 
   describe("#createContext", function() {
 

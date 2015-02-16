@@ -176,7 +176,6 @@ describe("Device", function() {
     })
   }
 
-  for(var i=0;i<devices.length;i++)
-    testDevice(devices[i]);
+  testDevice(global.MAIN_DEVICE_ID);
 
 });
