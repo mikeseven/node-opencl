@@ -334,8 +334,7 @@ NAN_METHOD(GetImageInfo) {
     case CL_IMAGE_BUFFER: {
       cl_mem val;
       CHECK_ERR(::clGetImageInfo(mem->getRaw(),param_name,sizeof(cl_mem), &val, NULL))
-      // TODO NanReturnValue(JS_INT(val));
-      break;
+      NanReturnValue(NOCL_WRAP(NoCLMem, val));
     }
     case CL_IMAGE_NUM_MIP_LEVELS:
     case CL_IMAGE_NUM_SAMPLES:

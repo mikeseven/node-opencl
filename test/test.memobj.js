@@ -425,6 +425,15 @@ describe("MemObj", function() {
 
     });
 
+    it("should return CL_IMAGE_BUFFER", function () {
+      testUtils.withContext(function (context, device, platform) {
+        var image = cl.createImage(context, 0, imageFormat, imageDesc, null);
+        var imageInfo = f(image, cl.IMAGE_BUFFER);
+        assert.isObject(imageInfo);
+      });
+
+    });
+
     it("should throw cl.INVALID_MEM_OBJECT if memory object is invalid", function () {
       testUtils.withContext(function (context, device, platform) {
         f.bind(f, null).should.throw(cl.INVALID_MEM_OBJECT.message);
