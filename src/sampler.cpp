@@ -99,7 +99,7 @@ NAN_METHOD(GetSamplerInfo) {
     {
       cl_context val;
       CHECK_ERR(::clGetSamplerInfo(sampler->getRaw(),param_name,sizeof(cl_context), &val, NULL))
-      // TODO NanReturnValue(JS_INT(val));
+
       break;
     }
     case CL_SAMPLER_NORMALIZED_COORDS:

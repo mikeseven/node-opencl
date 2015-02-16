@@ -287,6 +287,32 @@ describe("MemObj", function() {
       });
     });
 
+    it("should return CL_MEM_CONTEXT", function () {
+      testUtils.withContext(function (context, device, platform) {
+        var buffer = cl.createBuffer(context, 0, 8, null);
+        var ret = f(buffer, cl.MEM_CONTEXT);
+        assert.isObject(ret);
+        cl.releaseMemObject(buffer);
+      });
+    });
+
+    it("should return CL_MEM_HOST_PTR", function () {
+      testUtils.withContext(function (context, device, platform) {
+        var buffer = cl.createBuffer(context, 0, 8, null);
+        var ret = f(buffer, cl.MEM_ASSOCIATED_MEMOBJECT);
+        assert.isObject(ret);
+        cl.releaseMemObject(buffer);
+      });
+    });
+
+    it("should return CL_MEM_CONTEXT", function () {
+      testUtils.withContext(function (context, device, platform) {
+        var buffer = cl.createBuffer(context, 0, 8, null);
+        var ret = f(buffer, cl.MEM_CONTEXT);
+        assert.isObject(ret);
+        cl.releaseMemObject(buffer);
+      });
+    });
     it("should throw cl.INVALID_MEM_OBJECT if memory object is invalid", function () {
       testUtils.withContext(function (context, device, platform) {
         f.bind(f, null).should.throw(cl.INVALID_MEM_OBJECT.message);
@@ -395,6 +421,15 @@ describe("MemObj", function() {
         var image = cl.createImage(context, 0, imageFormat, imageDesc, null);
         var imageInfo = f(image, cl.IMAGE_NUM_SAMPLES);
         assert.isNumber(imageInfo);
+      });
+
+    });
+
+    it("should return CL_IMAGE_BUFFER", function () {
+      testUtils.withContext(function (context, device, platform) {
+        var image = cl.createImage(context, 0, imageFormat, imageDesc, null);
+        var imageInfo = f(image, cl.IMAGE_BUFFER);
+        assert.isObject(imageInfo);
       });
 
     });

@@ -277,17 +277,18 @@ NAN_METHOD(GetMemObjectInfo) {
     case CL_MEM_HOST_PTR: {
       void* val;
       CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(void*), &val, NULL))
-      // TODO NanReturnValue(JS_INT(val));
+
+      NanReturnValue(NOCL_WRAP(NoCLMappedPtr, val));
     }
     case CL_MEM_CONTEXT: {
       cl_context val;
       CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(cl_context), &val, NULL))
-      // TODO NanReturnValue(JS_INT(val));
+      NanReturnValue(NOCL_WRAP(NoCLContext, val));
     }
     case CL_MEM_ASSOCIATED_MEMOBJECT: {
       cl_mem val;
       CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(cl_mem), &val, NULL))
-      // TODO NanReturnValue(JS_INT(val));
+      NanReturnValue(NOCL_WRAP(NoCLMem, val));
     }
   }
   return NanThrowError(JS_INT(CL_INVALID_VALUE));
@@ -333,8 +334,7 @@ NAN_METHOD(GetImageInfo) {
     case CL_IMAGE_BUFFER: {
       cl_mem val;
       CHECK_ERR(::clGetImageInfo(mem->getRaw(),param_name,sizeof(cl_mem), &val, NULL))
-      // TODO NanReturnValue(JS_INT(val));
-      break;
+      NanReturnValue(NOCL_WRAP(NoCLMem, val));
     }
     case CL_IMAGE_NUM_MIP_LEVELS:
     case CL_IMAGE_NUM_SAMPLES:

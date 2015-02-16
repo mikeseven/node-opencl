@@ -101,6 +101,12 @@ describe("Context", function() {
 
     var ctx=cl.createContextFromType(properties, cl.DEVICE_TYPE_ALL, null, null);
 
+    it("should return at least one device", function () {
+      var devices = cl.getContextInfo(ctx, cl.CONTEXT_DEVICES);
+      assert(devices.length >= 1);
+      assert.isObject(devices[0]);
+    });
+
     it("should throw cl.INVALID_VALUE if an unknown param is given", function () {
       cl.getContextInfo.bind(cl.getContextInfo, ctx, -1)
         .should.throw(cl.INVALID_VALUE.message);
