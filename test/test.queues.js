@@ -17,7 +17,7 @@ describe("CommandQueue", function() {
   describe("#createCommandQueue", function() {
     it("should create a valid command queue", function () {
       testUtils.withContext(function(ctx, device){
-        var cq = cl.createCommandQueue(ctx, device, []);
+        var cq = cl.createCommandQueue(ctx, device, null);
         isValidCQ(cq);
         cl.releaseCommandQueue(cq);
       });
@@ -25,13 +25,13 @@ describe("CommandQueue", function() {
 
     it("should fail given an invalid property", function () {
       testUtils.withContext(function(ctx, device) {
-        cl.createCommandQueue.bind(cl.createCommandQueue,ctx, device, [cl.DEVICE_TYPE_GPU]).should.throw(cl.INVALID_VALUE);
+        cl.createCommandQueue.bind(cl.createCommandQueue,ctx, device, -1).should.throw(cl.INVALID_VALUE.message);
       });
     });
 
     it("should fail given an invalid device", function() {
       testUtils.withContext(function(ctx, device){
-        cl.createCommandQueue.bind(cl.createCommandQueue, ctx, "test", []).should.throw(cl.INVALID_DEVICE);
+        cl.createCommandQueue.bind(cl.createCommandQueue, ctx, "test", []).should.throw(cl.INVALID_DEVICE.message);
       });
     });
 

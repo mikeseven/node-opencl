@@ -128,7 +128,7 @@ NAN_METHOD(BuildProgram) {
     REQ_ARRAY_ARG(1, cl_devices);
     NOCL_TO_ARRAY(devices, cl_devices, NoCLDeviceId);
   }
-
+  
   String::Utf8Value * options = nullptr;
 
   if (ARG_EXISTS(2)){
@@ -200,7 +200,7 @@ NAN_METHOD(CompileProgram) {
 
   if (ARG_EXISTS(4)){
     Local<Array> arr = Local<Array>::Cast(args[4]);
-    for (int i = 0; i < arr->Length(); ++ i) {
+    for (unsigned int i = 0; i < arr->Length(); ++ i) {
       String::Utf8Value str(arr->Get(i));
       names.push_back(str.operator*());
     }
@@ -258,7 +258,6 @@ NAN_METHOD(UnloadPlatformCompiler) {
   NOCL_UNWRAP(platform, NoCLPlatformId, args[0]);
 
   CHECK_ERR(::clUnloadPlatformCompiler(platform->getRaw()));
-
   NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
@@ -273,6 +272,10 @@ NAN_METHOD(GetProgramInfo) {
   REQ_ARGS(2);
 
   NOCL_UNWRAP(program, NoCLProgram, args[0]);
+  if(!isOpenCLObj(args[0])) {
+    THROW_ERR(CL_INVALID_MEM_OBJECT);
+  }
+  cl_program prog=Unwrap<cl_program>(args[0]);
   cl_program_info param_name = args[1]->Uint32Value();
 
   switch(param_name) {
@@ -286,8 +289,8 @@ NAN_METHOD(GetProgramInfo) {
     case CL_PROGRAM_CONTEXT:
     {
       cl_context val;
-      CHECK_ERR(::clGetProgramInfo(program->getRaw(),param_name,sizeof(cl_context), &val, NULL))
-      // TODO NanReturnValue(JS_INT(val));
+      CHECK_ERR(::clGetProgramInfo(prog,param_name,sizeof(cl_context), &val, NULL))
+      NanReturnValue(Wrap<cl_context>(val));
       break;
     }
     case CL_PROGRAM_DEVICES:
@@ -342,7 +345,7 @@ NAN_METHOD(GetProgramInfo) {
       NanReturnValue(JS_STR(names.get()));
     }
   }
-  return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  THROW_ERR(CL_INVALID_VALUE);
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -383,7 +386,7 @@ NAN_METHOD(GetProgramBuildInfo) {
       NanReturnValue(JS_INT(val));
     }
   }
-  return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  THROW_ERR(CL_INVALID_VALUE);
 }
 
 namespace Program {

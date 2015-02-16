@@ -55,6 +55,10 @@ namespace {
   } \
 }
 
+#define THROW_ERR(code) { cl_int _err=(code); \
+  return NanThrowError(getExceptionMessage(_err).c_str(), _err); \
+}
+
 #define REQ_ARGS(N)                                                     \
   if (args.Length() < (N)) {                                            \
     NanThrowTypeError("Expected " #N " arguments");                     \

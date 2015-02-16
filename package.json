@@ -44,6 +44,7 @@
     "nan": "^1.6.2"
   },
   "devDependencies": {
-    "mocha": "*"
+    "mocha": "*",
+    "chai": "*"
   }
 }

@@ -121,7 +121,7 @@ NAN_METHOD(GetSamplerInfo) {
       NanReturnValue(JS_INT(val));
     }
   }
-  return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  THROW_ERR(CL_INVALID_VALUE);
 }
 
 namespace Sampler {

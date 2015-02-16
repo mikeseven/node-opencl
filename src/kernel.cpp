@@ -130,14 +130,12 @@ NAN_METHOD(GetKernelInfo) {
     case CL_KERNEL_CONTEXT: {
       cl_context ctx=0;
       CHECK_ERR(::clGetKernelInfo(k->getRaw(),param_name,sizeof(cl_context),&ctx, NULL));
-      // TODO
-      NanReturnUndefined();
+      NanReturnValue(Wrap(ctx));
     }
     case CL_KERNEL_PROGRAM: {
       cl_program p=0;
       CHECK_ERR(::clGetKernelInfo(k->getRaw(),param_name,sizeof(cl_program),&p, NULL));
-      // TODO
-      NanReturnUndefined();
+      NanReturnValue(Wrap(p));
     }
   }
 
@@ -162,25 +160,25 @@ NAN_METHOD(GetKernelArgInfo) {
   switch(param_name) {
     case CL_KERNEL_ARG_ADDRESS_QUALIFIER: {
       cl_kernel_arg_address_qualifier num=0;
-      CHECK_ERR(::clGetKernelInfo(k->getRaw(),param_name,sizeof(cl_kernel_arg_address_qualifier),&num, NULL));
+      CHECK_ERR(::clGetKernelArgInfo(k,arg_idx,param_name,sizeof(cl_kernel_arg_address_qualifier),&num, NULL));
       NanReturnValue(JS_INT(num));
     }
     case CL_KERNEL_ARG_ACCESS_QUALIFIER: {
       cl_kernel_arg_access_qualifier num=0;
-      CHECK_ERR(::clGetKernelInfo(k->getRaw(),param_name,sizeof(cl_kernel_arg_access_qualifier),&num, NULL));
+      CHECK_ERR(::clGetKernelArgInfo(k,arg_idx,param_name,sizeof(cl_kernel_arg_access_qualifier),&num, NULL));
       NanReturnValue(JS_INT(num));
     }
     case CL_KERNEL_ARG_TYPE_QUALIFIER: {
       cl_kernel_arg_type_qualifier num=0;
-      CHECK_ERR(::clGetKernelInfo(k->getRaw(),param_name,sizeof(cl_kernel_arg_type_qualifier),&num, NULL));
+      CHECK_ERR(::clGetKernelArgInfo(k,arg_idx,param_name,sizeof(cl_kernel_arg_type_qualifier),&num, NULL));
       NanReturnValue(JS_INT(num));
     }
     case CL_KERNEL_ARG_TYPE_NAME:
     case CL_KERNEL_ARG_NAME: {
       size_t nchars=0;
-      CHECK_ERR(::clGetKernelArgInfo(k->getRaw(),arg_idx,param_name,0,NULL,&nchars));
+      CHECK_ERR(::clGetKernelArgInfo(k,arg_idx,param_name,0,NULL,&nchars));
       unique_ptr<char[]> name(new char[nchars]);
-      CHECK_ERR(::clGetKernelArgInfo(k->getRaw(),arg_idx,param_name,nchars,name.get(),NULL));
+      CHECK_ERR(::clGetKernelArgInfo(k,arg_idx,param_name,nchars,name.get(),NULL));
       NanReturnValue(JS_STR(name.get()));
     }
   }
@@ -229,7 +227,7 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
     }
   }
 
-  return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  THROW_ERR(CL_INVALID_VALUE);
 }
 
 #ifdef CL_VERSION_2_0

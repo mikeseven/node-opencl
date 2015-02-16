@@ -1,5 +1,6 @@
 #include "memobj.h"
 #include "types.h"
+#include "common.h"
 #include <node_buffer.h>
 
 using namespace node;
@@ -30,24 +31,23 @@ NAN_METHOD(CreateBuffer) {
   void *host_ptr = NULL;
   if(ARG_EXISTS(3)) {
     if(args[3]->IsArray()) {
-      // JS Array
-      Local<Array> arr=Local<Array>::Cast(args[3]);
-      host_ptr=arr->GetIndexedPropertiesExternalArrayData();
+      CHECK_ERR(CL_INVALID_MEM_OBJECT);
     }
-    else if(args[3]->IsObject()) {
+    if(args[3]->IsObject()) {
       Local<Object> obj=args[3]->ToObject();
       String::Utf8Value name(obj->GetConstructorName());
       if(!strcmp("Buffer",*name))
         host_ptr=Buffer::Data(obj);
-      else {
+      else if(strcmp("Array",*name)) {
         // TypedArray
         assert(obj->HasIndexedPropertiesInExternalArrayData());
         host_ptr=obj->GetIndexedPropertiesExternalArrayData();
-        // printf("external array data type %d\n",obj->GetIndexedPropertiesExternalArrayDataType());
+      } else {
+        CHECK_ERR(CL_INVALID_MEM_OBJECT);
       }
     }
     else
-      NanThrowError("Invalid memory object");
+      CHECK_ERR(CL_INVALID_MEM_OBJECT);
   }
 
   cl_int ret=CL_SUCCESS;
@@ -89,7 +89,8 @@ NAN_METHOD(CreateSubBuffer) {
     NanReturnValue(NOCL_WRAP(NoCLMem, mem));
   }
 
-  return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  CHECK_ERR(CL_INVALID_VALUE);
+  return JS_INT(CL_SUCCESS);
 }
 
 // extern CL_API_ENTRY cl_mem CL_API_CALL
@@ -171,9 +172,10 @@ NAN_METHOD(RetainMemObject) {
   REQ_ARGS(1);
 
   NOCL_UNWRAP(mem, NoCLMem, args[0]);
-  cl_int count=clRetainMemObject(mem->getRaw());
+  cl_int ret=clRetainMemObject(mem);
 
-  NanReturnValue(JS_INT(count));
+  CHECK_ERR(ret);
+  return JS_INT(CL_SUCCESS);
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -184,8 +186,10 @@ NAN_METHOD(ReleaseMemObject) {
 
   NOCL_UNWRAP(mem, NoCLMem, args[0]);
   cl_int count=clReleaseMemObject(mem->getRaw());
+  cl_int ret=clReleaseMemObject(mem);
 
-  NanReturnValue(JS_INT(count));
+  CHECK_ERR(ret);
+  return JS_INT(CL_SUCCESS);
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL

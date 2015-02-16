@@ -198,7 +198,7 @@ NAN_METHOD(GetContextInfo) {
     NanReturnValue(arr);
   }
   default: {
-    NanThrowError(JS_INT(CL_INVALID_VALUE));
+    THROW_ERR(CL_INVALID_VALUE);
   }
   }
 
