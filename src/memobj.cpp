@@ -172,7 +172,8 @@ NAN_METHOD(RetainMemObject) {
   REQ_ARGS(1);
 
   NOCL_UNWRAP(mem, NoCLMem, args[0]);
-  cl_int ret=clRetainMemObject(mem);
+
+  cl_int ret=clRetainMemObject(mem->getRaw());
 
   CHECK_ERR(ret);
   return JS_INT(CL_SUCCESS);
@@ -185,8 +186,7 @@ NAN_METHOD(ReleaseMemObject) {
   REQ_ARGS(1);
 
   NOCL_UNWRAP(mem, NoCLMem, args[0]);
-  cl_int count=clReleaseMemObject(mem->getRaw());
-  cl_int ret=clReleaseMemObject(mem);
+  cl_int ret=clReleaseMemObject(mem->getRaw());
 
   CHECK_ERR(ret);
   return JS_INT(CL_SUCCESS);

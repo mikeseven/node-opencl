@@ -58,12 +58,12 @@ T * NoCLUnwrap(Local<Value> val) {
 
 Local<ObjectTemplate> & GetNodeOpenCLObjectGenericTemplate();
 
-#define NOCL_UNWRAP(V, T, VAL) \
-  T * V; \
-  V = NoCLUnwrap<T>(VAL);\
-  if (V == NULL) return NanThrowTypeError("Bad type of NoCL object")
+#define NOCL_UNWRAP(VAR, TYPE, EXPR) \
+  TYPE * VAR; \
+  VAR = NoCLUnwrap<TYPE>(EXPR);\
+  if (VAR == NULL) return NanThrowError(getExceptionMessage(TYPE::getErrorCode()).c_str(), TYPE::getErrorCode());
 
-template <typename T, uint elid>
+template <typename T, uint elid, int err>
 class NoCLObject {
 private:
   T raw;
@@ -103,80 +103,84 @@ public:
     return out;
   }
 
+  static cl_uint getErrorCode(){
+    return err;
+  }
+
 };
 
 #define NOCL_TO_ARRAY(TO, FROM, TYPE) \
   if (!TYPE::fromJSArray<TYPE>(TO, FROM)) { \
-    return NanThrowTypeError("Bad type of NoCL object in array"); \
+    return NanThrowError(getExceptionMessage(TYPE::getErrorCode()).c_str(), TYPE::getErrorCode()); \
   }
 
 #define TO_CL_ARRAY(FROM, TYPE) \
   FROM.size() ? &TYPE::toCLArray<TYPE>(FROM).front() : nullptr
 
-class NoCLPlatformId : public NoCLObject<cl_platform_id, 0> {
+class NoCLPlatformId : public NoCLObject<cl_platform_id, 0, CL_INVALID_PLATFORM> {
 
 public:
   NoCLPlatformId(cl_platform_id raw) : NoCLObject(raw) {
   }
 };
 
-class NoCLDeviceId : public NoCLObject<cl_device_id, 1> {
+class NoCLDeviceId : public NoCLObject<cl_device_id, 1, CL_INVALID_DEVICE> {
 
 public:
   NoCLDeviceId(cl_device_id raw) : NoCLObject(raw) {
   }
 };
 
-class NoCLContext : public NoCLObject<cl_context, 2> {
+class NoCLContext : public NoCLObject<cl_context, 2, CL_INVALID_CONTEXT> {
 
 public:
   NoCLContext(cl_context raw) : NoCLObject(raw) {
   }
 };;
 
-class NoCLProgram : public NoCLObject<cl_program, 3> {
+class NoCLProgram : public NoCLObject<cl_program, 3, CL_INVALID_PROGRAM> {
 
 public:
   NoCLProgram(cl_program raw) : NoCLObject(raw) {
   }
 };
 
-class NoCLKernel : public NoCLObject<cl_kernel, 4> {
+class NoCLKernel : public NoCLObject<cl_kernel, 4, CL_INVALID_KERNEL> {
 
 public:
   NoCLKernel(cl_kernel raw) : NoCLObject(raw) {
   }
 };
 
-class NoCLMem : public NoCLObject<cl_mem, 5> {
+class NoCLMem : public NoCLObject<cl_mem, 5, CL_INVALID_MEM_OBJECT> {
 
 public:
   NoCLMem(cl_mem raw) : NoCLObject(raw) {
   }
 };
 
-class NoCLSampler : public NoCLObject<cl_sampler, 6> {
+class NoCLSampler : public NoCLObject<cl_sampler, 6, CL_INVALID_SAMPLER> {
 
 public:
   NoCLSampler(cl_sampler raw) : NoCLObject(raw) {
   }
 };
 
-class NoCLCommandQueue : public NoCLObject<cl_command_queue, 7> {
+class NoCLCommandQueue : public NoCLObject<cl_command_queue, 7, CL_INVALID_COMMAND_QUEUE> {
 
 public:
   NoCLCommandQueue(cl_command_queue raw) : NoCLObject(raw) {
   }
 };
 
-class NoCLEvent : public NoCLObject<cl_event, 8> {
+class NoCLEvent : public NoCLObject<cl_event, 8, CL_INVALID_EVENT> {
 
 public:
   NoCLEvent(cl_event raw) : NoCLObject(raw) {
   }
 };
 
-class NoCLMappedPtr : public NoCLObject<void *, 9> {
+class NoCLMappedPtr : public NoCLObject<void *, 9, CL_INVALID_VALUE> {
 
 public:
   NoCLMappedPtr(void * raw) : NoCLObject(raw) {

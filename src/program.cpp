@@ -271,11 +271,8 @@ NAN_METHOD(GetProgramInfo) {
   NanScope();
   REQ_ARGS(2);
 
-  NOCL_UNWRAP(program, NoCLProgram, args[0]);
-  if(!isOpenCLObj(args[0])) {
-    THROW_ERR(CL_INVALID_MEM_OBJECT);
-  }
-  cl_program prog=Unwrap<cl_program>(args[0]);
+  NOCL_UNWRAP(prog, NoCLProgram, args[0]);
+
   cl_program_info param_name = args[1]->Uint32Value();
 
   switch(param_name) {
@@ -283,14 +280,14 @@ NAN_METHOD(GetProgramInfo) {
     case CL_PROGRAM_NUM_DEVICES:
     {
       cl_uint val;
-      CHECK_ERR(::clGetProgramInfo(program->getRaw(),param_name,sizeof(cl_uint), &val, NULL))
+      CHECK_ERR(::clGetProgramInfo(prog->getRaw(),param_name,sizeof(cl_uint), &val, NULL))
       NanReturnValue(JS_INT(val));
     }
     case CL_PROGRAM_CONTEXT:
     {
       cl_context val;
-      CHECK_ERR(::clGetProgramInfo(prog,param_name,sizeof(cl_context), &val, NULL))
-      NanReturnValue(Wrap<cl_context>(val));
+      CHECK_ERR(::clGetProgramInfo(prog->getRaw(),param_name,sizeof(cl_context), &val, NULL))
+      NanReturnValue(NOCL_WRAP(NoCLContext, val));
       break;
     }
     case CL_PROGRAM_DEVICES:
@@ -301,11 +298,11 @@ NAN_METHOD(GetProgramInfo) {
     case CL_PROGRAM_BINARY_SIZES:
     {
       size_t nsizes;
-      CHECK_ERR(::clGetProgramInfo(program->getRaw(), param_name, 0, NULL, &nsizes));
+      CHECK_ERR(::clGetProgramInfo(prog->getRaw(), param_name, 0, NULL, &nsizes));
 
       // get CL_DEVICE_MAX_WORK_ITEM_SIZES array param
       unique_ptr<size_t[]> sizes(new size_t[nsizes]);
-      CHECK_ERR(::clGetProgramInfo(program->getRaw(), param_name, nsizes*sizeof(size_t), sizes.get(), NULL));
+      CHECK_ERR(::clGetProgramInfo(prog->getRaw(), param_name, nsizes*sizeof(size_t), sizes.get(), NULL));
       Local<Array> arr = NanNew<Array>(nsizes);
       for(cl_uint i=0;i<nsizes;i++)
         arr->Set(i,JS_INT(sizes[i]));
@@ -315,10 +312,10 @@ NAN_METHOD(GetProgramInfo) {
     case CL_PROGRAM_BINARIES:
     {
       size_t nbins=0;
-      CHECK_ERR(::clGetProgramInfo(program->getRaw(), param_name, 0, NULL, &nbins));
+      CHECK_ERR(::clGetProgramInfo(prog->getRaw(), param_name, 0, NULL, &nbins));
       nbins /= sizeof(size_t);
       unique_ptr<char*[]> binaries(new char*[nbins]);
-      CHECK_ERR(::clGetProgramInfo(program->getRaw(), param_name, sizeof(char*)*nbins, binaries.get(), NULL));
+      CHECK_ERR(::clGetProgramInfo(prog->getRaw(), param_name, sizeof(char*)*nbins, binaries.get(), NULL));
 
       // TODO create an array for Uint8Array to return each binary associated to each device
       // Handle<Value> abv = Context::GetCurrent()->Global()->Get(String::NewSymbol("ArrayBuffer"));
@@ -332,16 +329,16 @@ NAN_METHOD(GetProgramInfo) {
     case CL_PROGRAM_NUM_KERNELS:
     {
       size_t val;
-      CHECK_ERR(::clGetProgramInfo(program->getRaw(),param_name,sizeof(size_t), &val, NULL))
+      CHECK_ERR(::clGetProgramInfo(prog->getRaw(),param_name,sizeof(size_t), &val, NULL))
       NanReturnValue(JS_INT(val));
     }
     case CL_PROGRAM_SOURCE:
     case CL_PROGRAM_KERNEL_NAMES:
     {
       size_t nchars;
-      CHECK_ERR(::clGetProgramInfo(program->getRaw(), param_name, 0, NULL, &nchars));
+      CHECK_ERR(::clGetProgramInfo(prog->getRaw(), param_name, 0, NULL, &nchars));
       unique_ptr<char[]> names(new char[nchars]);
-      CHECK_ERR(::clGetProgramInfo(program->getRaw(), param_name, nchars*sizeof(char), names.get(), NULL));
+      CHECK_ERR(::clGetProgramInfo(prog->getRaw(), param_name, nchars*sizeof(char), names.get(), NULL));
       NanReturnValue(JS_STR(names.get()));
     }
   }
