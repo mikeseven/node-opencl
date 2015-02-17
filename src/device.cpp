@@ -41,6 +41,7 @@ NAN_METHOD(GetDeviceIDs) {
 //                 void *          /* param_value */,
 //                 size_t *        /* param_value_size_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(GetDeviceInfo) {
+  // TODO: CHECK ALL VALUES ARE LISTED (I think at least CL_DEVICE_PARENT is missing)
   NanScope();
   REQ_ARGS(2);
 
@@ -242,9 +243,31 @@ NAN_METHOD(GetDeviceInfo) {
 //                    cl_device_id *                       /* out_devices */,
 //                    cl_uint *                            /* num_devices_ret */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(CreateSubDevices) {
+
   NanScope();
-  // TODO
-  NanReturnUndefined();
+  REQ_ARGS(3)
+
+  NOCL_UNWRAP(device, NoCLDeviceId, args[0]);
+
+  cl_device_id deviceId = device->getRaw();
+  cl_device_partition_property props = args[1]->Uint32Value();
+  cl_uint numDevices = args[2]->Uint32Value();
+
+  cl_uint capacity=0;
+
+  cl_int ret = ::clCreateSubDevices(deviceId, &props, numDevices, NULL, &capacity);
+  CHECK_ERR(ret);
+  unique_ptr<cl_device_id[]> subDevices(new cl_device_id[capacity]);
+  ret = ::clCreateSubDevices(deviceId, &props, numDevices, subDevices.get(), NULL);
+  CHECK_ERR(ret);
+
+  Local<Array> subDevicesArray = NanNew<Array>(numDevices);
+  for (uint32_t i=0; i<capacity; i++) {
+    Local<Object> subDevice = NOCL_WRAP(NoCLDeviceId, subDevices[i]);
+    subDevicesArray->Set(i, subDevice);
+  }
+
+  NanReturnValue(subDevicesArray);
 
 }
 
@@ -254,13 +277,21 @@ NAN_METHOD(RetainDevice) {
   NanScope();
   REQ_ARGS(1);
 
-  // TODO make sure device_id is a sub-device
-  NanReturnValue(JS_INT(0));
+  NOCL_UNWRAP(device, NoCLDeviceId, args[0]);
 
-  // Local<External> wrap = Local<External>::Cast(args[0]->ToObject()->GetInternalField(0));
-  // cl_device_id device_id = static_cast<cl_device_id>(wrap->Value());
-  // cl_int num=::clRetainDevice(device_id);
-  // NanReturnValue(JS_INT(num));
+  cl_device_id deviceId = device->getRaw();
+  cl_device_id parentId = NULL;
+
+  ::clGetDeviceInfo(deviceId, CL_DEVICE_PARENT_DEVICE, sizeof(cl_device_id), &parentId, NULL);
+
+  if (parentId == NULL) {
+    THROW_ERR(CL_INVALID_DEVICE);
+  }
+
+  cl_int ret = ::clRetainDevice(deviceId);
+
+  CHECK_ERR(ret);
+  NanReturnValue(JS_INT(ret));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -269,13 +300,20 @@ NAN_METHOD(ReleaseDevice) {
   NanScope();
   REQ_ARGS(1);
 
-  // TODO make sure device_id is a sub-device
-  NanReturnValue(JS_INT(0));
+  NOCL_UNWRAP(device, NoCLDeviceId, args[0]);
 
-  // Local<External> wrap = Local<External>::Cast(args[0]->ToObject()->GetInternalField(0));
-  // cl_device_id device_id = static_cast<cl_device_id>(wrap->Value());
-  // cl_int num=::clReleaseDevice(device_id);
-  // NanReturnValue(JS_INT(num));
+  cl_device_id deviceId = device->getRaw();
+  cl_device_id parentId = NULL;
+
+  ::clGetDeviceInfo(deviceId, CL_DEVICE_PARENT_DEVICE, sizeof(cl_device_id), &parentId, NULL);
+
+  if (parentId == NULL) {
+    THROW_ERR(CL_INVALID_DEVICE);
+  }
+
+  cl_int ret = ::clReleaseDevice(deviceId);
+  CHECK_ERR(ret);
+  NanReturnValue(JS_INT(ret));
 }
 
 namespace Device {

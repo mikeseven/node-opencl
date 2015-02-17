@@ -1,5 +1,5 @@
 # Node OpenCL
-
+ 
 This is an early implementation of Node.JS bindings to OpenCL supporting all features of OpenCL up to the latests specification available on Khronos.org.
 
 This implementation is different from node-webcl in the sense that it is close to OpenCL C host methods. A WebCL object model would be available later by simply wrapping the low level methods of node-opencl.
