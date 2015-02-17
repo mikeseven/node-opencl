@@ -36,6 +36,7 @@ To run unit tests, you will need mocha as a global package. Then you can simply 
 ## Mac OS X
 
 You should only need : 
+
 - XCode Developers tools (for C++ bindings compilation)
 - NodeJS >= 0.10
 - OpenCL 1.2 is natively included
@@ -43,22 +44,27 @@ You should only need :
 ## Linux / Docker 
 
 The easiest way to get the projet running with an Intel CPU or an AMD CPU/GPU/APU is by using AMD APP SDK.
+
 You can use the included Dockerfile for an example with Ubuntu. 
+
 This dockerfile is based on the following guide : http://streamcomputing.eu/blog/2011-06-24/install-opencl-on-debianubuntu-orderly/
 
 ## Windows
 
 You need : 
+
 - Visual Studio 2013
 - NodeJS >= 0.10
 - AMD APP SDK
 
 Please note that while node-gyp should work for compilation, it is possible that another DLL will be used on dynamic linking, leading to errors.
+
 You need to update your path in order to get AMD APP SDK as the first OpenCL.dll.
 
 # Usage
 
 For now you can simply require this project and call native-like functions on the global object returned. 
+
 The API is very close to the low-level one, although there are minor changes when it comes to lengths and, of course, pointers.
 
 A full documentation and a WebCL wrapper might be available soon. For now, you can find examples API calls in the examples folder.
@@ -75,6 +81,7 @@ those behaviours so you can run them to check if it is a known issue.
 
 Javascript does not support 64 bits integers. OpenCL returns some int64, mainly in getInfo functions. To resolve this, we instead return a data structure
 that changes depending on what kind of value is returned : 
+
 - Instead of a 64 bits integer representing nanoseconds time, we return an array with [milliseconds, nanoseconds]
 - Instead of a 64 bits integer reprensenting bytes, we return an array with [megabytes, bytes]
 
@@ -82,6 +89,7 @@ that changes depending on what kind of value is returned :
 # Contributions Guidelines
 
 Pull requests are welcome ! When you do a PR on this project, you need to respect the following rules : 
+
 - Your JS files must be compliant with the eslint rules
 - Your C++ files must be compliant with the cpplint rules
 - All tests should pass on as much platforms as possible
@@ -99,6 +107,7 @@ This project has two goals  :
 For the first part, we are quite done.
 
 However, for the second, this is much more difficult and you can help us in two ways :
+
 - Reporting issues with drivers that are not listed in unit tests
 - Provide a CI project build on a different platform, so we can test new builds with your platform easily
 
