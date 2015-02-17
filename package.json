@@ -36,7 +36,7 @@
   "scripts": {
     "install": "node-gyp rebuild --msvs_version=2013",
     "clean": "rm -rf build node_modules",
-    "test": "mocha test/*"
+    "test": "mocha test/*.js"
   },
   "dependencies": {
     "bindings": "^1.2.1",
