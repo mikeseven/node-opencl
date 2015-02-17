@@ -15,8 +15,7 @@
 
 #define NODE_DEFINE_CONSTANT_VALUE(exports, name, value)                   \
   (exports)->Set(NanNew<v8::String>(name),                         \
-                NanNew<v8::Integer>((uint)value), \
-                static_cast<v8::PropertyAttribute>(v8::ReadOnly|v8::DontDelete))
+                NanNew<v8::Integer>((uint)value))
 
 #ifdef _WIN32
 /*-
