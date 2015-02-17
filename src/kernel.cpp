@@ -87,16 +87,126 @@ NAN_METHOD(ReleaseKernel) {
 //                const void * /* arg_value */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(SetKernelArg) {
   NanScope();
-  REQ_ARGS(4);
+  REQ_ARGS(3);
+
+  // Arg 0
   NOCL_UNWRAP(k, NoCLKernel, args[0]);
 
-  // cl_kernel k = Unwrap<cl_kernel>(args[0]);
-  // cl_uint arg_index=args[1]->Uint32Value();
-  // size_t arg_size=args[2]->Uint32Value();
-  // TODO arg_value
+  // Arg 1
+  uint idx = args[1]->Uint32Value();
 
-  // NanReturnValue(JS_INT(CL_SUCCESS));
-  NanReturnUndefined();
+  size_t nchars = 0;
+  CHECK_ERR(::clGetKernelArgInfo(k->getRaw(), idx, CL_KERNEL_ARG_TYPE_NAME, 0, NULL, &nchars));
+  unique_ptr<char[]> name(new char[nchars]);
+  CHECK_ERR(::clGetKernelArgInfo(k->getRaw(), idx, CL_KERNEL_ARG_TYPE_NAME, nchars, name.get(), NULL));
+
+  // Arg 2
+  size_t ptr_size = 0;
+  void * ptr_data = NULL;
+
+  // Boolean
+  if (strcmp(name.get(), "bool") == 0) {
+    ptr_size = sizeof(cl_bool);
+    ptr_data = new cl_bool;
+
+    *((cl_bool *)ptr_data) = args[2]->BooleanValue() ? 1 : 0;
+  }
+
+  #define CONVERT_NUMBER(NAME, TYPE, PRED, CONV) \
+    if (strcmp(name.get(), NAME) == 0) { \
+      if (!args[2]->PRED()){\
+        THROW_ERR(CL_INVALID_ARG_VALUE) \
+      }\
+      ptr_data = new TYPE;\
+      ptr_size = sizeof(TYPE); \
+      *((TYPE *)ptr_data) = args[2]->CONV();\
+    }
+
+  CONVERT_NUMBER("char", cl_short, IsInt32, ToInt32()->Value);
+  CONVERT_NUMBER("uchar", cl_short, IsInt32, ToInt32()->Value);
+  CONVERT_NUMBER("short", cl_short, IsInt32, ToInt32()->Value);
+  CONVERT_NUMBER("ushort", cl_ushort, IsInt32, ToInt32()->Value);
+  CONVERT_NUMBER("int", cl_int , IsInt32, ToInt32()->Value);
+  CONVERT_NUMBER("uint", cl_uint, IsInt32, ToInt32()->Value);
+  CONVERT_NUMBER("long", cl_long, IsInt32, ToInt32()->Value);
+  CONVERT_NUMBER("ulong", cl_ulong, IsInt32, ToInt32()->Value);
+  CONVERT_NUMBER("float", cl_float, IsNumber, NumberValue);
+  CONVERT_NUMBER("double", cl_double, IsNumber, NumberValue);
+  CONVERT_NUMBER("half", cl_half, IsNumber, NumberValue);
+
+
+
+  #define CONVERT_VECT(NAME, TYPE, I, PRED, COND) \
+    if (strcmp(name.get(), "NAME ## I") == 0) { \
+      if (!args[2]->IsArray()) {\
+        THROW_ERR(CL_INVALID_ARG_VALUE);\
+      }\
+      Local<Array> arr = Local<Array>::Cast(args[2]);\
+      if (arr->Length() != I) {\
+        THROW_ERR(CL_INVALID_ARG_SIZE);\
+      }\
+      TYPE * vvc = new TYPE[I];\
+      ptr_size = sizeof(TYPE) * I;\
+      ptr_data = vvc;\
+      for (uint i = 0; i < I; ++ i) {\
+        if (!arr->Get(i)->PRED()) {\
+          THROW_ERR(CL_INVALID_ARG_VALUE);\
+        }\
+        vvc[i] = arr->Get(i)->COND();\
+      }\
+    }
+
+  #define CONVERT_VECTS(NAME, TYPE, PRED, COND) \
+    CONVERT_VECT(NAME, TYPE, 2, PRED, COND);\
+    CONVERT_VECT(NAME, TYPE, 3, PRED, COND);\
+    CONVERT_VECT(NAME, TYPE, 4, PRED, COND);\
+    CONVERT_VECT(NAME, TYPE, 8, PRED, COND);\
+    CONVERT_VECT(MAME, TYPE, 16, PRED, COND);
+
+  CONVERT_VECTS("char", cl_char, IsInt32, ToInt32()->Value);
+  CONVERT_VECTS("uchar", cl_uchar, IsInt32, ToInt32()->Value);
+  CONVERT_VECTS("short", cl_short, IsInt32, ToInt32()->Value);
+  CONVERT_VECTS("ushort", cl_ushort, IsInt32, ToInt32()->Value);
+  CONVERT_VECTS("int", cl_int, IsInt32, ToInt32()->Value);
+  CONVERT_VECTS("uint", cl_uint, IsInt32, ToInt32()->Value);
+  CONVERT_VECTS("long", cl_long, IsInt32, ToInt32()->Value);
+  CONVERT_VECTS("ulong", cl_ulong, IsInt32, ToInt32()->Value);
+  CONVERT_VECTS("float", cl_char, IsNumber, NumberValue);
+  CONVERT_VECTS("double", cl_char, IsNumber, NumberValue);
+
+  bool dont_delete = false;
+
+  // Otherwise it should be a native type
+  if (strcmp(name.get(), "sampler_t") == 0) {
+    NOCL_UNWRAP(sw , NoCLSampler, args[2]);
+    ptr_data = sw->getRaw();
+    ptr_size = sizeof(cl_sampler);
+    dont_delete = true;
+  }
+
+  // And if it ends with a star it is a memobject
+  if ('*' == name.get()[(strlen(name.get()) - 1)]){
+    NOCL_UNWRAP(mem , NoCLMem, args[2]);
+    ptr_data = mem->getRaw();
+    ptr_size = sizeof(cl_mem);
+    dont_delete = true;
+  }
+
+  if (ptr_data == NULL) {
+    THROW_ERR(CL_INVALID_VALUE);
+  }
+
+  cl_int err = ::clSetKernelArg(
+    k->getRaw(), idx, ptr_size, &ptr_data);
+
+  if (!dont_delete) {
+    free(ptr_data);
+  }
+
+  CHECK_ERR(err);
+
+  NanReturnValue(JS_INT(err));
+
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL

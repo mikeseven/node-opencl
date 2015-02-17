@@ -101,7 +101,112 @@ describe("Kernel", function () {
 
   describe("#setKernelArg", function () {
 
-    // TODO
+    it("should successfully accept a memobject as first argument", function () {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          var k = cl.createKernel(prg, "square");
+          var mem = cl.createBuffer(ctx, 0, 8, null);
+
+          assert(cl.setKernelArg(k, 0, mem) == cl.SUCCESS);
+
+          cl.releaseKernel(k);
+        });
+      });
+    });
+
+    it("should fail when passed a scalar type as first argument (expected : memobject)", function () {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          var k = cl.createKernel(prg, "square");
+
+          testUtils.bind(cl.setKernelArg, k, 0, 5)
+            .should.throw(cl.INVALID_MEM_OBJECT.message);
+
+          cl.releaseKernel(k);
+        });
+      });
+    });
+
+    it("should fail when passed a vector type as first argument (expected : memobject)", function () {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          var k = cl.createKernel(prg, "square");
+
+          testUtils.bind(cl.setKernelArg, k, 0, [5, 10, 15])
+            .should.throw(cl.INVALID_MEM_OBJECT.message);
+
+          cl.releaseKernel(k);
+        });
+      });
+    });
+
+    it("should successfully accept an integer as third argument", function () {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          var k = cl.createKernel(prg, "square");
+
+          assert(cl.setKernelArg(k, 2, 5) == cl.SUCCESS);
+
+          cl.releaseKernel(k);
+        });
+      });
+    });
+
+    it("should fail when passed a char as third argument (expected : integer)", function () {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          var k = cl.createKernel(prg, "square");
+
+          testUtils.bind(cl.setKernelArg, k, 2, "a")
+            .should.throw(cl.INVALID_ARG_VALUE.message);
+
+          cl.releaseKernel(k);
+        });
+      });
+    });
+
+    it("should fail when passed a vector as third argument (expected : integer)", function () {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          var k = cl.createKernel(prg, "square");
+
+          testUtils.bind(cl.setKernelArg, k, 2, [5, 10, 15])
+            .should.throw(cl.INVALID_ARG_VALUE.message);
+
+          cl.releaseKernel(k);
+        });
+      });
+    });
+
+
+    it("should fail when passed a memobject as third argument (expected : integer)", function () {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          var k = cl.createKernel(prg, "square");
+          var mem = cl.createBuffer(ctx, 0, 8, null);
+
+          testUtils.bind(cl.setKernelArg, k, 2, mem)
+            .should.throw(cl.INVALID_ARG_VALUE.message);
+
+          cl.releaseKernel(k);
+        });
+      });
+    });
+
+
+
+    it("should fail when passed a fourth argument on a kernel that only have three", function () {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          var k = cl.createKernel(prg, "square");
+
+          testUtils.bind(cl.setKernelArg, k, 3, 5)
+            .should.throw(cl.INVALID_ARG_INDEX.message);
+
+          cl.releaseKernel(k);
+        });
+      });
+    });
 
   });
 
