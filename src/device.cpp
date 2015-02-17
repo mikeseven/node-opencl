@@ -261,7 +261,7 @@ NAN_METHOD(CreateSubDevices) {
   ret = ::clCreateSubDevices(deviceId, &props, numDevices, subDevices.get(), NULL);
   CHECK_ERR(ret);
 
-  Local<Array> subDevicesArray=Array::New(numDevices);
+  Local<Array> subDevicesArray = NanNew<Array>(numDevices);
   for (uint32_t i=0; i<capacity; i++) {
     Local<Object> subDevice = NOCL_WRAP(NoCLDeviceId, subDevices[i]);
     subDevicesArray->Set(i, subDevice);
