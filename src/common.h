@@ -14,8 +14,6 @@
 using namespace std;
 using namespace v8;
 
-// OpenCL includes
-#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
 
 #if defined (__APPLE__) || defined(MACOSX)
   #ifdef __ECLIPSE__
@@ -51,39 +49,32 @@ namespace {
 
 #define CHECK_ERR(ret)  { cl_int _err=(ret); \
   if ((_err) != CL_SUCCESS) { \
-    return NanThrowError(getExceptionMessage(_err).c_str(), _err); \
+    return NanThrowError(opencl::getExceptionMessage(_err).c_str(), _err); \
   } \
 }
 
 #define THROW_ERR(code) { cl_int _err=(code); \
-  return NanThrowError(getExceptionMessage(_err).c_str(), _err); \
+  return NanThrowError(opencl::getExceptionMessage(_err).c_str(), _err); \
 }
 
 #define REQ_ARGS(N)                                                     \
   if (args.Length() < (N)) {                                            \
     NanThrowTypeError("Expected " #N " arguments");                     \
+    NanReturnUndefined(); \
   }
 
 #define REQ_STR_ARG(I, VAR)                                             \
-  if (args.Length() <= (I) || !args[I]->IsString())                     \
+  if (args.Length() <= (I) || !args[I]->IsString())  {                   \
     NanThrowTypeError("Argument " #I " must be a string");              \
+        NanReturnUndefined(); }\
   String::Utf8Value VAR(args[I]->ToString());
 
 #define REQ_ARRAY_ARG(I, VAR) \
   if (!args[I]->IsArray()) { \
     NanThrowTypeError("Argument " #I " must be an array");              \
+    NanReturnUndefined(); \
       } \
     Local<Array> VAR = Local<Array>::Cast(args[I])
-
-#define REQ_EXT_ARG(I, VAR)                                             \
-  if (args.Length() <= (I) || !args[I]->IsExternal())                   \
-    NanThrowTypeError("Argument " #I " invalid");                       \
-  Local<External> VAR = Local<External>::Cast(args[I]);
-
-#define REQ_FUN_ARG(I, VAR)                                             \
-  if (args.Length() <= (I) || !args[I]->IsFunction())                   \
-    NanThrowTypeError("Argument " #I " must be a function");            \
-  Local<Function> VAR = Local<Function>::Cast(args[I]);
 
 } // namespace
 

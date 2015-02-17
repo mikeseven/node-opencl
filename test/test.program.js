@@ -193,38 +193,83 @@ describe("Program", function () {
   });
 
   describe("#linkProgram", function () {
-    it("should be implemented", function() {
-      // TODO
-    });
-    //it("should link a single program", function () {
-    //  testUtils.withContext(function (ctx) {
-    //    var prg = cl.createProgramWithSource(ctx, squareKern);
-    //    var prgl = cl.linkProgram(prg, null, null, 1, [prg]);
-    //    assert.isNotNull(prgl);
-    //    assert.isDefined(prgl);
-    //    cl.releaseProgram(prg);
-    //  });
-    //});
-    //
-    //it("should link two programs", function () {
-    //  testUtils.withContext(function (ctx) {
-    //    var prg = cl.createProgramWithSource(ctx, squareKern);
-    //    var prg2 = cl.createProgramWithSource(ctx, squareKern);
-    //    var prgl = cl.linkProgram(prg, null, null, 1, [prg, prg2]);
-    //    assert.isNotNull(prgl);
-    //    assert.isDefined(prgl);
-    //    cl.releaseProgram(prg);
-    //  });
-    //});
 
-    //it("should fail as a program is invalid", function () {
-    //  testUtils.withContext(function (ctx) {
-    //    var prg = cl.createProgramWithSource(ctx, squareKern + "$bad_inst");
-    //    cl.linkProgram.bind(cl.linkProgram, ctx, null, null, 1, [prg])
-    //      .should.throw(cl.INVALID_PROGRAM.message);
-    //    cl.releaseProgram(prg);
-    //  });
-    //});
+
+    it("should fail as context is invalid", function () {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+
+          testUtils.bind(cl.linkProgram, null, null, null, [prg])
+            .should.throw(cl.INVALID_CONTEXT.message);
+
+        });
+      });
+    });
+
+    it("should fail as program is of bad type", function () {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+
+          testUtils.bind(cl.linkProgram,ctx, null, null, [ctx])
+            .should.throw(cl.INVALID_PROGRAM.message);
+
+        });
+      });
+    });
+
+    it("should fail as options sent to the linker are invalid", function () {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          cl.compileProgram(prg);
+
+          if (testUtils.checkImplementation() == 'osx') {
+            console.warn("[DRIVER ISSUE = OSX] Always returns true if not checked by C++ bindings");
+            cl.linkProgram(ctx, null, "-DnoCLtest=5", [prg]);
+          } else {
+            testUtils.bind(cl.linkProgram,ctx, null, "-DnoCLtest=5", [prg])
+              .should.throw(cl.INVALID_LINKER_OPTIONS.message);
+          }
+
+        });
+      });
+    });
+
+    it("should success in linking one compiled program", function () {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          cl.compileProgram(prg);
+          var nprg = cl.linkProgram(ctx, null, null, [prg]);
+
+          assert.isObject(nprg);
+        });
+      });
+    });
+
+    it("should success in linking one compiled program with a list of devices", function () {
+      testUtils.withContext(function (ctx, device) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          cl.compileProgram(prg);
+          var nprg = cl.linkProgram(ctx, [device], null, [prg]);
+
+          assert.isObject(nprg);
+        });
+      });
+    });
+
+    it("should success in linking two compiled programs", function () {
+      testUtils.withContext(function (ctx) {
+        testUtils.withProgram(ctx, squareKern, function (prg) {
+          testUtils.withProgram(ctx, squareCpyKern, function (prg2) {
+            cl.compileProgram(prg);
+            cl.compileProgram(prg2);
+
+            var nprg = cl.linkProgram(ctx, null, null, [prg, prg2]);
+            assert.isObject(nprg);
+          });
+        });
+      });
+    });
+
   });
 
   describe("#unloadPlatformCompiler", function () {

@@ -85,6 +85,7 @@ NAN_METHOD(CreateProgramWithBinary) {
   NanReturnValue(NOCL_WRAP(NoCLProgram, p));
 }
 
+
 // extern CL_API_ENTRY cl_program CL_API_CALL
 // clCreateProgramWithBuiltInKernels(cl_context            /* context */,
 //                                   cl_uint               /* num_devices */,
@@ -93,8 +94,20 @@ NAN_METHOD(CreateProgramWithBinary) {
 //                                   cl_int *              /* errcode_ret */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(CreateProgramWithBuiltInKernels) {
   NanScope();
-  // TODO
-  NanReturnUndefined();
+  REQ_ARGS(3);
+
+  // Arg 0
+  NOCL_UNWRAP(context, NoCLContext, args[0]);
+
+  // Arg 1
+  vector<NoCLDeviceId> cl_devices;
+  REQ_ARRAY_ARG(1, devices);
+  NOCL_TO_ARRAY(cl_devices, devices, NoCLDeviceId);
+
+  // Arg 2
+  vector<char *> names;
+  REQ_ARRAY_ARG(2, js_names);
+  //for (uint i = 0; i < js_names->)
 
 }
 
@@ -258,9 +271,54 @@ NAN_METHOD(CompileProgram) {
 //               cl_int *             /* errcode_ret */ ) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(LinkProgram) {
   NanScope();
-  // TODO
-  NanReturnUndefined();
+  REQ_ARGS(4);
 
+
+  //Arg 0
+  NOCL_UNWRAP(ctx, NoCLContext, args[0]);
+
+  std::vector<NoCLDeviceId> cl_devices;
+
+  //Arg 1
+  if (ARG_EXISTS(1)) {
+    REQ_ARRAY_ARG(1, js_devices);
+    NOCL_TO_ARRAY(cl_devices, js_devices, NoCLDeviceId);
+  }
+
+  //Arg 2
+  String::Utf8Value * options = nullptr;
+
+  if (ARG_EXISTS(2)){
+    if (!args[2]->IsString()) {
+      THROW_ERR(CL_INVALID_COMPILER_OPTIONS)
+    }
+    options = new String::Utf8Value(args[2]);
+  }
+
+  //Arg 3
+  std::vector<NoCLProgram> cl_programs;
+
+  if (ARG_EXISTS(3)) {
+    REQ_ARRAY_ARG(3, js_programs);
+    NOCL_TO_ARRAY(cl_programs, js_programs, NoCLProgram);
+  }
+
+  /** OSX ISSUE
+  * ret is always equals to CL_SUCCESS, whatever happens when clLinkProgram is called
+  * I don't know if anything happens during this call
+  */
+  cl_int ret = CL_SUCCESS;
+
+  cl_program prg = ::clLinkProgram(
+    ctx->getRaw(),
+    cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
+    options != NULL ? **options : nullptr,
+    cl_programs.size(), NOCL_TO_CL_ARRAY(cl_programs, NoCLProgram),
+    NULL, NULL,
+    &ret);
+
+  CHECK_ERR(ret);
+  NanReturnValue(NOCL_WRAP(NoCLProgram, prg));
 }
 
 

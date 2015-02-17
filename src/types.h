@@ -56,6 +56,7 @@ T * NoCLUnwrap(Local<Value> val) {
     return NULL;
   }
 
+
   T * output = (T *) NanGetInternalFieldPointer(obj, 0);
   return output;
 }
@@ -63,9 +64,8 @@ T * NoCLUnwrap(Local<Value> val) {
 Local<ObjectTemplate> & GetNodeOpenCLObjectGenericTemplate();
 
 #define NOCL_UNWRAP(VAR, TYPE, EXPR) \
-  TYPE * VAR; \
-  VAR = NoCLUnwrap<TYPE>(EXPR);\
-  if (VAR == NULL) return NanThrowError(getExceptionMessage(TYPE::getErrorCode()).c_str(), TYPE::getErrorCode());
+  TYPE * VAR = NoCLUnwrap<TYPE>(EXPR);\
+  if (VAR == NULL) { NanThrowError(opencl::getExceptionMessage(TYPE::getErrorCode()).c_str(), TYPE::getErrorCode()); NanReturnUndefined(); }
 
 template <typename T, uint elid, int err>
 class NoCLObject {
@@ -115,7 +115,8 @@ public:
 
 #define NOCL_TO_ARRAY(TO, FROM, TYPE) \
   if (!TYPE::fromJSArray<TYPE>(TO, FROM)) { \
-    return NanThrowError(getExceptionMessage(TYPE::getErrorCode()).c_str(), TYPE::getErrorCode()); \
+    NanThrowError(opencl::getExceptionMessage(TYPE::getErrorCode()).c_str(), TYPE::getErrorCode()); \
+    NanReturnUndefined();\
   }
 
 #define NOCL_TO_CL_ARRAY(FROM, TYPE) \
