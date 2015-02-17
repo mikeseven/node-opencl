@@ -16,9 +16,12 @@ describe("Context", function() {
   describe("#createContext", function() {
 
     it("should throw if devices = null",function() {
-      // DRIVER ISSUE : OSX
-      var ex = testUtils.checkImplementation() == "osx" ?
-        cl.INVALID_DEVICE.message : cl.INVALID_VALUE.message;
+      if (testUtils.checkImplementation() == "osx") {
+          console.warn("[DRIVER ISSUE = OSX] OSX returns INVALID_DEVICE instead of INVALID_VALUE");
+          ex = cl.INVALID_DEVICE.message;
+      } else { 
+         ex = cl.INVALID_VALUE.message;
+      }
 
       cl.createContext.bind(cl.createContext,null, null, null, null)
         .should.throw(ex);
@@ -44,29 +47,22 @@ describe("Context", function() {
 
   describe("#createContextFromType", function() {
 
-    if (testUtils.checkImplementation() == "osx") {
-      it("[DRIVER ISSUE = OSX] should throw cl.INVALID_VALUE if type is unknown", function () {
-        var properties= [
-          cl.CONTEXT_PLATFORM, platform
-        ];
-
-        testUtils.bind(cl.createContextFromType, properties, 0, null, null)
-          .should.throw(cl.INVALID_VALUE.message);
-      });
-    } else {
-      it("should throw cl.DEVICE_NOT_FOUND if type is unknown", function () {
-        // DRIVER ISSUE : OSX
-        var ex = testUtils.checkImplementation() == "osx" ?
-          cl.INVALID_VALUE.message : cl.DEVICE_NOT_FOUND.message;
+    it("should throw cl.CL_INVALID_DEVICE_TYPE if type is unknown", function () {
+        var ex;
+        if (testUtils.checkImplementation() == "osx") {
+          console.warn("[DRIVER ISSUE = OSX] OSX returns INVALID_VALUE instead of INVALID_DEVICE_TYPE");
+          ex = cl.INVALID_VALUE.message;
+        } else if (testUtils.checkImplementation() == "amd"){
+          ex = cl.INVALID_DEVICE_TYPE.message;
+        } 
 
         var properties= [
           cl.CONTEXT_PLATFORM, platform
         ];
 
         testUtils.bind(cl.createContextFromType, properties, 0, null, null)
-          .should.throw(cl.DEVICE_NOT_FOUND.message);
-      });
-    }
+          .should.throw(ex);
+     });
 
     it("should create a context with a wildcard type", function () {
       var properties= [
