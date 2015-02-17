@@ -90,14 +90,12 @@ NAN_METHOD(GetCommandQueueInfo) {
     case CL_QUEUE_CONTEXT: {
       cl_context val;
       CHECK_ERR(::clGetCommandQueueInfo(q->getRaw(),param_name,sizeof(cl_context), &val, nullptr))
-      // TODO NanReturnValue(JS_INT(val));
-      break;
+      NanReturnValue(NOCL_WRAP(NoCLContext, val));
     }
     case CL_QUEUE_DEVICE: {
       cl_device_id val;
       CHECK_ERR(::clGetCommandQueueInfo(q->getRaw(),param_name,sizeof(cl_device_id), &val, nullptr))
-      // TODO NanReturnValue(JS_INT(val));
-      break;
+      NanReturnValue(NOCL_WRAP(NoCLDeviceId, val));
     }
     case CL_QUEUE_REFERENCE_COUNT: {
       cl_uint val;
