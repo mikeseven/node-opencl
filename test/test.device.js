@@ -173,15 +173,66 @@ describe("Device", function() {
 
     });
     describe("#createSubDevices() for "+device_vendor+" "+device_name,function() {
+
+      it("should return an array of sub-devices", function() {
+        var subDevices;
+        try {
+          cl.createSubDevices(device, cl.DEVICE_PARTITION_BY_COUNTS, 2);
+          assert.isArray(subDevices);
+          assert.isAbove(subDevices.length, 0);
+        } catch (error) {
+          if (error.message === cl.DEVICE_PARTITION_FAILED.message) {
+            assert.isTrue(true);
+          }
+        }
+      })
+
     });
     describe("#retainDevice() for "+device_vendor+" "+device_name,function() {
+
+      var f = cl.retainDevice;
+
+      it("should throw cl.INVALID_DEVICE if device is not a subdevice", function () {
+        f.bind(f, device).should.throw(cl.INVALID_DEVICE.message);
+      });
+
       it("should increase device reference count",function() {
-        cl.retainDevice(device).should.equal(0);
+        try {
+          var subDevice = cl.createSubDevices(device, cl.DEVICE_PARTITION_BY_COUNTS, 2);
+          cl.retainDevice(subDevice);
+          var count = cl.getDeviceInfo(subDevice, cl.DEVICE_REFERENCE_COUNT);
+          assert.strictEqual(count, 2);
+          cl.releaseDevice(subDevice);
+        } catch (error) {
+          if (error.message === cl.DEVICE_PARTITION_FAILED.message) {
+            assert.isTrue(true);
+          }
+        }
+
       })
     });
     describe("#releaseDevice() for "+device_vendor+" "+device_name,function() {
+
+      var f = cl.releaseDevice;
+
+      it("should throw cl.INVALID_DEVICE if device is not a subdevice", function () {
+        f.bind(f, device).should.throw(cl.INVALID_DEVICE.message);
+      });
+
       it("should decrease device reference count",function() {
-        cl.releaseDevice(device).should.equal(0);
+        try {
+          var subDevice = cl.createSubDevices(device, cl.DEVICE_PARTITION_BY_COUNTS, 2);
+          cl.retainDevice(subDevice);
+          var count = cl.getDeviceInfo(subDevice, cl.DEVICE_REFERENCE_COUNT);
+          assert.strictEqual(count, 2);
+          cl.releaseDevice(subDevice);
+          count = cl.getDeviceInfo(subDevice, cl.DEVICE_REFERENCE_COUNT);
+          assert.strictEqual(count, 1);
+        } catch (error) {
+          if (error.message === cl.DEVICE_PARTITION_FAILED.message) {
+            assert.isTrue(true);
+          }
+        }
       })
     })
   }
