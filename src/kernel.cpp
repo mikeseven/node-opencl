@@ -93,7 +93,7 @@ NAN_METHOD(SetKernelArg) {
   NOCL_UNWRAP(k, NoCLKernel, args[0]);
 
   // Arg 1
-  uint idx = args[1]->Uint32Value();
+  unsigned int idx = args[1]->Uint32Value();
 
   size_t nchars = 0;
   CHECK_ERR(::clGetKernelArgInfo(k->getRaw(), idx, CL_KERNEL_ARG_TYPE_NAME, 0, NULL, &nchars));
@@ -148,7 +148,7 @@ NAN_METHOD(SetKernelArg) {
       TYPE * vvc = new TYPE[I];\
       ptr_size = sizeof(TYPE) * I;\
       ptr_data = vvc;\
-      for (uint i = 0; i < I; ++ i) {\
+      for (unsigned int i = 0; i < I; ++ i) {\
         if (!arr->Get(i)->PRED()) {\
           THROW_ERR(CL_INVALID_ARG_VALUE);\
         }\

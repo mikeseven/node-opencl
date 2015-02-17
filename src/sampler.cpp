@@ -47,6 +47,8 @@ NAN_METHOD(CreateSampler) {
 NAN_METHOD(CreateSamplerWithProperties) {
   NanScope();
   REQ_ARGS(4);
+
+  NanReturnUndefined();
 }
 
 #endif

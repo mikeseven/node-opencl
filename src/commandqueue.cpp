@@ -38,6 +38,8 @@ NAN_METHOD(CreateCommandQueue) {
 //                                    cl_int *                 /* errcode_ret */) CL_API_SUFFIX__VERSION_2_0;
 NAN_METHOD(CreateCommandQueueWithProperties) {
   NanScope();
+
+  NanReturnUndefined();
 }
 #endif
 

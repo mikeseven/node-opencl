@@ -52,7 +52,7 @@ NAN_METHOD(CreateProgramWithBinary) {
   const size_t n = sizes->Length();
   unique_ptr<size_t[]> lengths(new size_t[n]);
 
-  for (uint i = 0; i < sizes->Length(); ++ i) {
+  for (unsigned int i = 0; i < sizes->Length(); ++ i) {
     lengths[i] = sizes->Get(0)->Int32Value();
   }
 
@@ -66,7 +66,7 @@ NAN_METHOD(CreateProgramWithBinary) {
     THROW_ERR(CL_INVALID_VALUE)
   }
 
-  for (uint i = 0; i < cl_binaries.size(); ++ i){
+  for (unsigned int i = 0; i < cl_binaries.size(); ++ i){
     cl_binaries_str.push_back(cl_binaries[i].getRaw());
   }
 

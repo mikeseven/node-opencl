@@ -50,7 +50,7 @@ T * NoCLUnwrap(Local<Value> val) {
     return NULL;
   }
 
-  uint identifier = * (uint *) NanGetInternalFieldPointer(obj, 1);
+  unsigned int identifier = * (unsigned int *) NanGetInternalFieldPointer(obj, 1);
 
   if (identifier != T::GetId()) {
     return NULL;
@@ -67,7 +67,7 @@ Local<ObjectTemplate> & GetNodeOpenCLObjectGenericTemplate();
   TYPE * VAR = NoCLUnwrap<TYPE>(EXPR);\
   if (VAR == NULL) { NanThrowError(opencl::getExceptionMessage(TYPE::getErrorCode()).c_str(), TYPE::getErrorCode()); NanReturnUndefined(); }
 
-template <typename T, uint elid, int err>
+template <typename T, unsigned int elid, int err>
 class NoCLObject {
 protected:
   T raw;
@@ -80,13 +80,13 @@ public:
     return this->raw;
   }
 
-  static uint GetId() {
+  static unsigned int GetId() {
     return elid;
   }
 
   template <typename A>
   static bool fromJSArray(std::vector<A> & outArr, Local<Array> &arr) {
-    for (uint i = 0; i < arr->Length(); ++i) {
+    for (unsigned int i = 0; i < arr->Length(); ++i) {
       A * v = NoCLUnwrap<A>(arr->Get(i));
       if (v == NULL) {
         return false;
@@ -100,7 +100,7 @@ public:
   template <typename U>
   static std::vector<T> toCLArray(std::vector<U> outArr) {
     std::vector<T> out;
-    for (uint i = 0; i < outArr.size(); ++i) {
+    for (unsigned int i = 0; i < outArr.size(); ++i) {
       out.push_back(outArr[i].getRaw());
     }
 
@@ -208,7 +208,7 @@ Local<Object> NoCLWrapCLObject(T * elm) {
   Local<Object> obj = tpl->NewInstance();
 
   NanSetInternalFieldPointer(obj, 0, elm);
-  NanSetInternalFieldPointer(obj, 1, new uint(T::GetId()));
+  NanSetInternalFieldPointer(obj, 1, new unsigned int(T::GetId()));
   return obj;
 }
 
