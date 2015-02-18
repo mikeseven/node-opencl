@@ -35,11 +35,11 @@ NAN_METHOD(CreateSampler) {
               filter_mode,
               &ret);
   CHECK_ERR(ret);
-
   NanReturnValue(NOCL_WRAP(NoCLSampler, sw));
 }
 
 #else
+
 // extern CL_API_ENTRY cl_sampler CL_API_CALL
 // clCreateSamplerWithProperties(cl_context                     /* context */,
 //                               const cl_sampler_properties *  /* normalized_coords */,
@@ -49,42 +49,53 @@ NAN_METHOD(CreateSamplerWithProperties) {
   NanScope();
   REQ_ARGS(2);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_CONTEXT));
-  }
-
-  cl_context context=Unwrap<cl_context>(args[0]);
+  // Arg 0
+  NOCL_UNWRAP(context, NoCLContext, args[0]);
 
   Local<Array> properties = Local<Array>::Cast(args[1]);
   vector<cl_sampler_properties> cl_properties;
 
-  for (uint32_t i=0; i < properties->Length(); i++) {
-    cl_uint prop_id = properties->Get(i)->Uint32Value();
+  for (uint32_t i=0; i < properties->Length(); i+=2) {
+    cl_uint prop_id = properties->Get(i)->Int32Value();
     cl_properties.push_back(prop_id);
     if(prop_id == CL_SAMPLER_NORMALIZED_COORDS) {
-      cl_bool * norm = Unwrap<cl_bool *>(properties->Get(++i));
-      cl_properties.push_back((cl_context_properties) * norm);
+      if (!properties->Get(i+1)->IsBoolean()) {
+        THROW_ERR(CL_INVALID_VALUE);
+      }
+      cl_bool norm = properties->Get(i+1)->BooleanValue() ? 1 : 0;
+      cl_properties.push_back(norm);
     } else if (prop_id == CL_SAMPLER_ADDRESSING_MODE) {
-      cl_addressing_mode * addr = Unwrap<cl_addressing_mode *>(properties->Get(++i));
-      cl_properties.push_back((cl_context_properties) * addr);
+      if (!properties->Get(i+1)->IsNumber()) {
+        THROW_ERR(CL_INVALID_VALUE);
+      }
+      cl_addressing_mode addr = properties->Get(i+1)->Int32Value();
+      cl_properties.push_back(addr);
     } else if (prop_id == CL_SAMPLER_FILTER_MODE) {
-      cl_addressing_mode * fil = Unwrap<cl_filter_mode *>(properties->Get(++i));
-      cl_properties.push_back((cl_context_properties) * fil);
+      if (!properties->Get(i+1)->IsNumber()) {
+        THROW_ERR(CL_INVALID_VALUE);
+      }
+      cl_filter_mode fil = properties->Get(i+1)->Int32Value();
+      cl_properties.push_back(fil);
     } else {
-      // TODO Throw good exception
-      return NanThrowError(JS_INT(CL_INVALID_SAMPLER));
+      THROW_ERR(CL_INVALID_VALUE)
     }
   }
   cl_properties.push_back(0);
 
+
+  cl_sampler_properties  pp [] = {CL_SAMPLER_NORMALIZED_COORDS, true,
+   CL_SAMPLER_ADDRESSING_MODE, CL_ADDRESS_NONE,
+   CL_SAMPLER_FILTER_MODE, CL_FILTER_LINEAR, 0};
+
   cl_int err = CL_SUCCESS;
   cl_sampler sw = ::clCreateSamplerWithProperties(
-              context,
-              NULL,
+              context->getRaw(),
+              cl_properties.data(),
               &err);
   CHECK_ERR(err);
 
-  NanReturnValue(Wrap(sw));
+  NanReturnValue(NOCL_WRAP(NoCLSampler, sw));
+
 
 }
 #endif
@@ -96,6 +107,7 @@ NAN_METHOD(RetainSampler) {
   REQ_ARGS(1);
 
   NOCL_UNWRAP(sampler, NoCLSampler, args[0]);
+
   cl_int count=clRetainSampler(sampler->getRaw());
 
   NanReturnValue(JS_INT(count));
@@ -124,6 +136,7 @@ NAN_METHOD(GetSamplerInfo) {
   REQ_ARGS(2);
 
   NOCL_UNWRAP(sampler, NoCLSampler, args[0]);
+
   cl_sampler_info param_name = args[1]->Uint32Value();
 
   switch(param_name) {
