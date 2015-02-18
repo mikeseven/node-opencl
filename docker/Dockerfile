@@ -14,7 +14,7 @@ RUN apt-get -y install software-properties-common python-software-properties
 RUN apt-get update && apt-get -y install curl
 RUN apt-get -y install gcc g++ gdb
 RUN apt-get -y --no-install-recommends install cmake mercurial git make subversion
-RUN apt-get -y install python python-dev python-pip vim wget
+RUN apt-get -y install python python-dev python-pip vim wget openssh-server
 
 RUN \
   cd /tmp && \
