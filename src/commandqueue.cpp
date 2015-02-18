@@ -4,6 +4,7 @@
 namespace opencl {
 
 #ifndef CL_VERSION_2_0
+
 // /* Command Queue APIs */
 // extern CL_API_ENTRY cl_command_queue CL_API_CALL
 // clCreateCommandQueue(cl_context                     /* context */,
@@ -25,12 +26,13 @@ NAN_METHOD(CreateCommandQueue) {
   cl_int err;
   cl_command_queue q = ::clCreateCommandQueue(
     context->getRaw(), device->getRaw(), properties, &err);
-  CHECK_ERR(err)
 
+  CHECK_ERR(err)
   NanReturnValue(NOCL_WRAP(NoCLCommandQueue, q));
 }
 
 #else
+
 // extern CL_API_ENTRY cl_command_queue CL_API_CALL
 // clCreateCommandQueueWithProperties(cl_context               /* context */,
 //                                    cl_device_id              /* device */,
@@ -39,42 +41,52 @@ NAN_METHOD(CreateCommandQueue) {
 NAN_METHOD(CreateCommandQueueWithProperties) {
   NanScope();
   REQ_ARGS(3);
+  REQ_ARGS(3);
 
+  // Arg 1
+  NOCL_UNWRAP(context, NoCLContext, args[0]);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_CONTEXT));
-  }
-  cl_context context=Unwrap<cl_context>(args[0]);
+  // Arg 2
+  NOCL_UNWRAP(device, NoCLDeviceId, args[1]);
 
-  if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_DEVICE));
-  }
-  cl_device_id device=Unwrap<cl_device_id>(args[1]);
-
-  Local<Array> properties = Local<Array>::Cast(args[1]);
+  // Arg 3
+  Local<Array> properties = Local<Array>::Cast(args[2]);
   vector<cl_queue_properties> cl_properties;
 
-  for (uint32_t i=0; i < properties->Length(); i++) {
+  for (uint32_t i=0; i < properties->Length(); i+=2) {
+    if (!properties->Get(i)->IsNumber()) {
+        THROW_ERR(CL_INVALID_VALUE);
+    }
     cl_uint prop_id = properties->Get(i)->Uint32Value();
     cl_properties.push_back(prop_id);
+
     if(prop_id == CL_QUEUE_PROPERTIES) {
-      cl_bool * norm = Unwrap<cl_bool *>(properties->Get(++i));
-      cl_properties.push_back((cl_context_properties) * norm);
+      if (!properties->Get(i+1)->IsNumber()) {
+        THROW_ERR(CL_INVALID_VALUE);
+      }
+      cl_queue_properties props = properties->Get(i+1)->Int32Value();
+      cl_properties.push_back(props);
     } else if (prop_id == CL_QUEUE_SIZE) {
-       cl_uint * size = Unwrap<cl_uint *>(properties->Get(++i));
-      cl_properties.push_back((cl_context_properties) * size);
+      if (!properties->Get(i+1)->IsNumber()) {
+        THROW_ERR(CL_INVALID_VALUE);
+      }
+      cl_queue_properties size = properties->Get(i+1)->Int32Value();
+      cl_properties.push_back(size);
     } else {
-      // TODO Throw good exception
-      return NanThrowError(JS_INT(CL_INVALID_SAMPLER));
+      THROW_ERR(CL_INVALID_QUEUE_PROPERTIES)
     }
   }
 
-
   cl_int err;
-  cl_command_queue q = ::clCreateCommandQueueWithProperties(context, device, &cl_properties.front(), &err);
+  cl_command_queue q = ::clCreateCommandQueueWithProperties(
+    context->getRaw(),
+    device->getRaw(),
+    cl_properties.data(),
+    &err);
+
   CHECK_ERR(err)
 
-  NanReturnValue(Wrap(q));
+  NanReturnValue(NOCL_WRAP(NoCLCommandQueue, q));
 }
 #endif
 
