@@ -14,9 +14,8 @@ namespace opencl {
 //                 void *                  /* user_data */,
 //                 cl_int *                /* errcode_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(CreateContext) {
-  NanScope();
+  NanEscapableScope();
   REQ_ARGS(4)
-
   Local<Array> properties;
   Local<Array> devices;
   Local<Function> callback;
@@ -26,42 +25,50 @@ NAN_METHOD(CreateContext) {
   cl_context ctx=NULL;
   int err=CL_SUCCESS;
 
-  if(!args[0]->IsNull() && !args[0]->IsUndefined()) {
-      properties = Local<Array>::Cast(args[0]);
-      for (uint32_t i=0; i < properties->Length(); i++) {
-        cl_uint prop_id = properties->Get(i)->Uint32Value();
-        cl_properties.push_back(prop_id);
-        if(prop_id == CL_CONTEXT_PLATFORM) {
-          cl_platform_id platform = Unwrap<cl_platform_id>(properties->Get(++i));
-          cl_properties.push_back((cl_context_properties) platform);
-          // printf("Adding platform %p\n",platform);
-        }
+  // Arg 1 -- properties
+  if(ARG_EXISTS(0)) {
+    REQ_ARRAY_ARG(0, properties);
+    for (uint32_t i=0; i < properties->Length(); i++) {
+      cl_uint prop_id = properties->Get(i)->Uint32Value();
+      cl_properties.push_back(prop_id);
+      if(prop_id == CL_CONTEXT_PLATFORM) {
+        NOCL_UNWRAP(platform, NoCLPlatformId, properties->Get(++i));
+        cl_properties.push_back((cl_context_properties) platform->getRaw());
       }
-      cl_properties.push_back(0);
+    }
+    cl_properties.push_back(0);
+  }
 
+  // Arg 2 -- devices
+  if(ARG_EXISTS(1)) {
+    REQ_ARRAY_ARG(1, devices);
+    for (uint32_t i=0; i<devices->Length(); i++) {
+      NOCL_UNWRAP(device, NoCLDeviceId, devices->Get(i));
+      cl_devices.push_back(device->getRaw());
+        // printf("Adding device %p\n",device);
+    }
   }
-  if(!args[1]->IsNull() && !args[1]->IsUndefined()) {
-      devices = Local<Array>::Cast(args[1]);
-      for (uint32_t i=0; i<devices->Length(); i++) {
-        cl_device_id device = Unwrap<cl_device_id>(devices->Get(i));
-        cl_devices.push_back(device);
-          // printf("Adding device %p\n",device);
-      }
+
+  // Arg 3 -- Callback
+  if(ARG_EXISTS(2)) {
+    callback = Local<Function>::Cast(args[2]);
   }
-  if(!args[2]->IsNull() && !args[2]->IsUndefined()) {
-      callback = Local<Function>::Cast(args[2]);
+
+  // Arg 4 -- Error callback
+  if(ARG_EXISTS(3)) {
+    err_cb = Local<Function>::Cast(args[3]);
   }
-  if(!args[3]->IsNull() && !args[3]->IsUndefined()) {
-      err_cb = Local<Function>::Cast(args[3]);
-  }
+
 
   ctx = ::clCreateContext(&cl_properties.front(),
                         (int) cl_devices.size(), &cl_devices.front(),
                          NULL, NULL, // TODO callback support
                          &err);
-  CHECK_ERR(err);
 
-  NanReturnValue(Wrap(ctx));
+  CHECK_ERR(err);
+  Local<Object> obj = NoCLWrapCLObject<NoCLContext>(new NoCLContext(ctx));
+
+  NanReturnValue(obj);
 }
 
 // extern CL_API_ENTRY cl_context CL_API_CALL
@@ -71,7 +78,7 @@ NAN_METHOD(CreateContext) {
 //                         void *                  /* user_data */,
 //                         cl_int *                /* errcode_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(CreateContextFromType) {
-  NanScope();
+  NanEscapableScope();
   REQ_ARGS(4)
 
   Local<Array> properties;
@@ -80,18 +87,17 @@ NAN_METHOD(CreateContextFromType) {
   Local<Function> err_cb;
 
   if(!args[0]->IsNull() && !args[0]->IsUndefined()) {
-      properties = Local<Array>::Cast(args[0]);
-      for (uint32_t i=0; i < properties->Length(); i++) {
-        cl_uint prop_id = properties->Get(i)->Uint32Value();
-        cl_properties.push_back(prop_id);
-        if(prop_id == CL_CONTEXT_PLATFORM) {
-          cl_platform_id platform = Unwrap<cl_platform_id>(properties->Get(++i));
-          cl_properties.push_back((cl_context_properties) platform);
-          // printf("Adding platform %p\n",platform);
-        }
+    REQ_ARRAY_ARG(0, properties);
+    for (uint32_t i=0; i < properties->Length(); i++) {
+      cl_uint prop_id = properties->Get(i)->Uint32Value();
+      cl_properties.push_back(prop_id);
+      if(prop_id == CL_CONTEXT_PLATFORM) {
+        NOCL_UNWRAP(platform, NoCLPlatformId, properties->Get(++i));
+        cl_properties.push_back((cl_context_properties) platform->getRaw());
+        // printf("Adding platform %p\n",platform);
       }
-      cl_properties.push_back(0);
-
+    }
+    cl_properties.push_back(0);
   }
 
   cl_device_type device_type=args[1]->Uint32Value();
@@ -110,7 +116,7 @@ NAN_METHOD(CreateContextFromType) {
                         &err);
   CHECK_ERR(err);
 
-  NanReturnValue(Wrap(ctx));
+  NanReturnValue(NoCLWrapCLObject<NoCLContext>(new NoCLContext(ctx)));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -119,12 +125,8 @@ NAN_METHOD(RetainContext) {
   NanScope();
   REQ_ARGS(1);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_CONTEXT));
-  }
-
-  cl_context context = Unwrap<cl_context>(args[0]);
-  cl_int count=clRetainContext(context);
+  NOCL_UNWRAP(context, NoCLContext, args[0]);
+  cl_int count=clRetainContext(context->getRaw());
 
   NanReturnValue(JS_INT(count));
 }
@@ -135,12 +137,8 @@ NAN_METHOD(ReleaseContext) {
   NanScope();
   REQ_ARGS(1);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_CONTEXT));
-  }
-
-  cl_context context = Unwrap<cl_context>(args[0]);
-  cl_int count=clReleaseContext(context);
+  NOCL_UNWRAP(context, NoCLContext, args[0]);
+  cl_int count=clReleaseContext(context->getRaw());
 
   NanReturnValue(JS_INT(count));
 }
@@ -154,48 +152,37 @@ NAN_METHOD(ReleaseContext) {
 NAN_METHOD(GetContextInfo) {
   NanScope();
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_CONTEXT));
-  }
-  cl_context context = Unwrap<cl_context>(args[0]);
+  NOCL_UNWRAP(context, NoCLContext, args[0]);
   cl_context_info param_name = args[1]->Uint32Value();
 
   switch (param_name) {
   case CL_CONTEXT_REFERENCE_COUNT:
   case CL_CONTEXT_NUM_DEVICES: {
     cl_uint param_value=0;
-    CHECK_ERR(::clGetContextInfo(context,param_name,sizeof(cl_uint), &param_value, NULL));
+    CHECK_ERR(::clGetContextInfo(context->getRaw(),param_name,sizeof(cl_uint), &param_value, NULL));
     NanReturnValue(JS_INT(param_value));
   }
   case CL_CONTEXT_DEVICES: {
     size_t n=0;
-    CHECK_ERR(::clGetContextInfo(context,param_name,0,NULL, &n));
+    CHECK_ERR(::clGetContextInfo(context->getRaw(),param_name,0,NULL, &n));
     n /= sizeof(cl_device_id);
 
     unique_ptr<cl_device_id[]> devices(new cl_device_id[n]);
-    CHECK_ERR(::clGetContextInfo(context,param_name,sizeof(cl_device_id)*n, devices.get(), NULL));
+    CHECK_ERR(::clGetContextInfo(context->getRaw(),param_name,sizeof(cl_device_id)*n, devices.get(), NULL));
 
-    Local<Array> arr = Array::New((int)n);
+    Local<Array> arr = NanNew<Array>((int)n);
     for(uint32_t i=0;i<n;i++) {
-      if(devices[i]) {
-        // TODO
-        // WebCLObject *obj=findCLObj((void*)devices[i], CLObjType::Device);
-
-        // if(obj)
-        //   arr->Set(i,NanObjectWrapHandle(obj));
-        // else
-        //   arr->Set(i,NanObjectWrapHandle(Device::New(devices[i])));
-      }
+      arr->Set(i, NOCL_WRAP(NoCLDeviceId, devices[i]));
     }
     NanReturnValue(arr);
   }
   case CL_CONTEXT_PROPERTIES: {
     size_t n=0;
-    CHECK_ERR(::clGetContextInfo(context,param_name,0,NULL, &n));
+    CHECK_ERR(::clGetContextInfo(context->getRaw(),param_name,0,NULL, &n));
     unique_ptr<cl_context_properties[]> ctx(new cl_context_properties[n]);
-    CHECK_ERR(::clGetContextInfo(context,param_name,sizeof(cl_context_properties)*n, ctx.get(), NULL));
+    CHECK_ERR(::clGetContextInfo(context->getRaw(),param_name,sizeof(cl_context_properties)*n, ctx.get(), NULL));
 
-    Local<Array> arr = Array::New((int)n);
+    Local<Array> arr = NanNew<Array>((int)n);
     for(uint32_t i=0;i<n;i++) {
       arr->Set(i,JS_INT((int32_t)ctx[i]));
     }
@@ -203,7 +190,7 @@ NAN_METHOD(GetContextInfo) {
     NanReturnValue(arr);
   }
   default: {
-    NanThrowError(JS_INT(CL_INVALID_VALUE));
+    THROW_ERR(CL_INVALID_VALUE);
   }
   }
 

@@ -2,6 +2,7 @@
 #define CONTEXT_H_
 
 #include "common.h"
+#include "types.h"
 
 namespace opencl {
 

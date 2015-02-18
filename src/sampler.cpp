@@ -1,4 +1,5 @@
 #include "sampler.h"
+#include "types.h"
 
 namespace opencl {
 
@@ -14,24 +15,28 @@ NAN_METHOD(CreateSampler) {
   NanScope();
   REQ_ARGS(4);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_CONTEXT));
-  }
-  cl_context context=Unwrap<cl_context>(args[0]);
+  // Arg 0
+  NOCL_UNWRAP(context, NoCLContext, args[0]);
+
+  // Arg 1
   cl_bool normalized_coords = args[1]->BooleanValue() ? CL_TRUE : CL_FALSE;
+
+  // Arg 2
   cl_addressing_mode addressing_mode = args[2]->Uint32Value();
+
+  // Arg 3
   cl_filter_mode filter_mode = args[3]->Uint32Value();
 
   cl_int ret=CL_SUCCESS;
   cl_sampler sw = ::clCreateSampler(
-              context,
+              context->getRaw(),
               normalized_coords,
               addressing_mode,
               filter_mode,
               &ret);
   CHECK_ERR(ret);
 
-  NanReturnValue(Wrap(sw));
+  NanReturnValue(NOCL_WRAP(NoCLSampler, sw));
 }
 
 #else
@@ -90,12 +95,8 @@ NAN_METHOD(RetainSampler) {
   NanScope();
   REQ_ARGS(1);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_SAMPLER));
-  }
-
-  cl_sampler sampler = Unwrap<cl_sampler>(args[0]);
-  cl_int count=clRetainSampler(sampler);
+  NOCL_UNWRAP(sampler, NoCLSampler, args[0]);
+  cl_int count=clRetainSampler(sampler->getRaw());
 
   NanReturnValue(JS_INT(count));
 }
@@ -106,16 +107,10 @@ NAN_METHOD(ReleaseSampler) {
   NanScope();
   REQ_ARGS(1);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_SAMPLER));
-  }
+  NOCL_UNWRAP(sampler, NoCLSampler, args[0]);
+  cl_int count=clReleaseSampler(sampler->getRaw());
 
-  cl_sampler sampler = Unwrap<cl_sampler>(args[0]);
-  cl_int ret = ::clReleaseSampler(sampler);
-
-  CHECK_ERR(ret);
-
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  NanReturnValue(JS_INT(count));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -128,59 +123,56 @@ NAN_METHOD(GetSamplerInfo) {
   NanScope();
   REQ_ARGS(2);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_SAMPLER));
-  }
-  cl_sampler sampler=Unwrap<cl_sampler>(args[0]);
+  NOCL_UNWRAP(sampler, NoCLSampler, args[0]);
   cl_sampler_info param_name = args[1]->Uint32Value();
 
   switch(param_name) {
     case CL_SAMPLER_REFERENCE_COUNT:
     {
       cl_uint val;
-      CHECK_ERR(::clGetSamplerInfo(sampler,param_name,sizeof(cl_uint), &val, NULL))
+      CHECK_ERR(::clGetSamplerInfo(sampler->getRaw(),param_name,sizeof(cl_uint), &val, NULL))
       NanReturnValue(JS_INT(val));
     }
     case CL_SAMPLER_CONTEXT:
     {
       cl_context val;
-      CHECK_ERR(::clGetSamplerInfo(sampler,param_name,sizeof(cl_context), &val, NULL))
-      // TODO NanReturnValue(JS_INT(val));
+      CHECK_ERR(::clGetSamplerInfo(sampler->getRaw(),param_name,sizeof(cl_context), &val, NULL))
+
       break;
     }
     case CL_SAMPLER_NORMALIZED_COORDS:
     {
       cl_bool val;
-      CHECK_ERR(::clGetSamplerInfo(sampler,param_name,sizeof(cl_bool), &val, NULL))
+      CHECK_ERR(::clGetSamplerInfo(sampler->getRaw(),param_name,sizeof(cl_bool), &val, NULL))
       NanReturnValue(JS_BOOL(val));
     }
     case CL_SAMPLER_ADDRESSING_MODE:
     {
       cl_addressing_mode val;
-      CHECK_ERR(::clGetSamplerInfo(sampler,param_name,sizeof(cl_addressing_mode), &val, NULL))
+      CHECK_ERR(::clGetSamplerInfo(sampler->getRaw(),param_name,sizeof(cl_addressing_mode), &val, NULL))
       NanReturnValue(JS_INT(val));
     }
     case CL_SAMPLER_FILTER_MODE:
     {
       cl_filter_mode val;
-      CHECK_ERR(::clGetSamplerInfo(sampler,param_name,sizeof(cl_filter_mode), &val, NULL))
+      CHECK_ERR(::clGetSamplerInfo(sampler->getRaw(),param_name,sizeof(cl_filter_mode), &val, NULL))
       NanReturnValue(JS_INT(val));
     }
   }
-  return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  THROW_ERR(CL_INVALID_VALUE);
 }
 
 namespace Sampler {
 void init(Handle<Object> exports)
 {
+  NODE_SET_METHOD(exports, "retainSampler", RetainSampler);
+  NODE_SET_METHOD(exports, "releaseSampler", ReleaseSampler);
+  NODE_SET_METHOD(exports, "getSamplerInfo", GetSamplerInfo);
 #ifndef CL_VERSION_2_0
   NODE_SET_METHOD(exports, "createSampler", CreateSampler);
 #else
   NODE_SET_METHOD(exports, "createSamplerWithProperties", CreateSamplerWithProperties);
 #endif
-  NODE_SET_METHOD(exports, "retainSampler", RetainSampler);
-  NODE_SET_METHOD(exports, "releaseSampler", ReleaseSampler);
-  NODE_SET_METHOD(exports, "getSamplerInfo", GetSamplerInfo);
 }
 } // namespace Sampler
 

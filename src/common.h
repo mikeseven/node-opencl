@@ -14,37 +14,22 @@
 using namespace std;
 using namespace v8;
 
-// OpenCL includes
-#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
 
 #if defined (__APPLE__) || defined(MACOSX)
   #ifdef __ECLIPSE__
-    #include <gltypes.h>
-    #include <gl3.h>
     #include <cl_platform.h>
     #include <cl.h>
-    #include <cl_gl.h>
-    #include <cl_gl_ext.h>
     #include <cl_ext.h>
   #else
-    #include <OpenGL/gl3.h>
-    #include <OpenGL/gl3ext.h>
-    #include <OpenGL/OpenGL.h>
     #include <OpenCL/opencl.h>
-    #define CL_GL_CONTEXT_KHR 0x2008
-    #define CL_EGL_DISPLAY_KHR 0x2009
-    #define CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR CL_INVALID_GL_CONTEXT_APPLE
   #endif
   #define HAS_clGetContextInfo
 #elif defined(_WIN32)
-    #include <GL/gl.h>
     #include <CL/opencl.h>
     #define strcasecmp _stricmp
     #define strncasecmp _strnicmp
     char *strcasestr(const char *s, char *find);
 #else
-    #include <GL/gl.h>
-    #include <GL/glx.h>
     #include <CL/opencl.h>
 #endif
 
@@ -64,71 +49,59 @@ namespace {
 
 #define CHECK_ERR(ret)  { cl_int _err=(ret); \
   if ((_err) != CL_SUCCESS) { \
-    return NanThrowError(JS_INT(_err)); \
+    return NanThrowError(opencl::getExceptionMessage(_err).c_str(), _err); \
   } \
+}
+
+#define THROW_ERR(code) { cl_int _err=(code); \
+  return NanThrowError(opencl::getExceptionMessage(_err).c_str(), _err); \
 }
 
 #define REQ_ARGS(N)                                                     \
   if (args.Length() < (N)) {                                            \
     NanThrowTypeError("Expected " #N " arguments");                     \
+    NanReturnUndefined(); \
   }
 
 #define REQ_STR_ARG(I, VAR)                                             \
-  if (args.Length() <= (I) || !args[I]->IsString())                     \
+  if (args.Length() <= (I) || !args[I]->IsString())  {                   \
     NanThrowTypeError("Argument " #I " must be a string");              \
+        NanReturnUndefined(); }\
   String::Utf8Value VAR(args[I]->ToString());
 
-#define REQ_EXT_ARG(I, VAR)                                             \
-  if (args.Length() <= (I) || !args[I]->IsExternal())                   \
-    NanThrowTypeError("Argument " #I " invalid");                       \
-  Local<External> VAR = Local<External>::Cast(args[I]);
-
-#define REQ_FUN_ARG(I, VAR)                                             \
-  if (args.Length() <= (I) || !args[I]->IsFunction())                   \
-    NanThrowTypeError("Argument " #I " must be a function");            \
-  Local<Function> VAR = Local<Function>::Cast(args[I]);
+#define REQ_ARRAY_ARG(I, VAR) \
+  if (!args[I]->IsArray()) { \
+    NanThrowTypeError("Argument " #I " must be an array");              \
+    NanReturnUndefined(); \
+      } \
+    Local<Array> VAR = Local<Array>::Cast(args[I])
 
 } // namespace
 
 namespace opencl {
 
-const char* ErrorDesc(cl_int err);
+#define ARG_EXISTS(nth) \
+  args.Length() >= nth + 1 && !args[nth]->IsNull() && !args[nth]->IsUndefined()
 
-inline bool isOpenCLObj(Local<Value> val) {
-    return !(val->IsNull() || !val->IsObject() || val->IsArray() || val->ToObject()->InternalFieldCount()<1);
-}
-
-template<typename CL_TYPE>
-inline CL_TYPE Unwrap(Local<Value> val) {
-  Local<External> wrap = Local<External>::Cast(val->ToObject()->GetInternalField(0));
-  return static_cast<CL_TYPE>(wrap->Value());
-}
-
-template<typename CL_TYPE>
-inline Local<Object> Wrap(CL_TYPE param_value) {
-  Local<ObjectTemplate> tpl = ObjectTemplate::New();
-  tpl->SetInternalFieldCount(1);
-  Local<Object> obj = tpl->NewInstance();
-  obj->SetInternalField(0, External::New(param_value));
-  return obj;
-}
 
 void getPtrAndLen(const Local<Value> value, void* &ptr, int &len);
 
-template<typename CL_TYPE>
-void getValuesFromArray(const Local<Array>& arr, std::vector<CL_TYPE>& vals)
-{
-  size_t num=arr->Length();
-  if(!num) {
-    vals.clear();
-    return;
-  }
+//template<typename CL_TYPE>
+//void getValuesFromArray(const Local<Array>& arr, std::vector<CL_TYPE>& vals)
+//{
+//  size_t num=arr->Length();
+//  if(!num) {
+//    vals.clear();
+//    return;
+//  }
+//
+//  vals.reserve(num);
+//  for(size_t i=0;i<num;i++)
+//    vals.push_back()
+//    vals.push_back(Unwrap<CL_TYPE>(arr->Get(i)));
+//}
 
-  vals.reserve(num);
-  for(size_t i=0;i<num;i++)
-    vals.push_back(Unwrap<CL_TYPE>(arr->Get(i)));
-}
-
+const std::string getExceptionMessage(const cl_int code);
 
 } // namespace opencl
 
