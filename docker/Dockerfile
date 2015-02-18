@@ -56,7 +56,7 @@ RUN ln -s /opt/AMDAPPSDK-*/include/CL /usr/include/
 RUN echo "root:root" | chpasswd
 
 # NodeJS
-RUN npm install -g mocha node-gyp
+RUN npm install -g mocha node-gyp eslint
 
 # Add a non root user
 RUN useradd -m aasdk

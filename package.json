@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "A binding to OpenCL for Node.JS",
   "main": "lib/opencl.js",
-  "author": "Mikael Bourges-Sevenier <mikeseven@gmail.com>",
+  "author": "Ioweb <context@ioweb.fr>, Mikael Bourges-Sevenier <mikeseven@gmail.com>",
   "keywords": [
     "opencl",
     "gpu",
@@ -36,6 +36,7 @@
   "scripts": {
     "install": "node-gyp rebuild --msvs_version=2013",
     "clean": "rm -rf build node_modules",
+    "lint": "eslint lib test",
     "test": "mocha test/*.js"
   },
   "dependencies": {

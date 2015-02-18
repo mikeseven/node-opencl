@@ -1,0 +1,12 @@
+{
+    "env": {
+        "browser": false,
+        "node": true
+    },
+    "rules": {
+        "brace-style": true,
+        "eol-last": true,
+        "strict": false
+    }
+}
+
