@@ -107,8 +107,27 @@ NAN_METHOD(CreateProgramWithBuiltInKernels) {
   // Arg 2
   vector<char *> names;
   REQ_ARRAY_ARG(2, js_names);
-  //for (uint i = 0; i < js_names->)
+  for (unsigned int i=0; i < js_names->Length(); ++ i) {
+    if (!js_names->IsString()) {
+      THROW_ERR(CL_INVALID_VALUE);
+    }
+    names.push_back(*String::Utf8Value(js_names->Get(i)));
+  }
 
+  if (names.size() == 0) {
+    THROW_ERR(CL_INVALID_VALUE);
+  }
+
+  cl_int err = CL_SUCCESS;
+  cl_program prg = ::clCreateProgramWithBuiltInKernels(
+    context->getRaw(),
+    cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
+    names.front(),
+    &err);
+
+  CHECK_ERR(err);
+
+  NanReturnValue(NOCL_WRAP(NoCLProgram, prg));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL

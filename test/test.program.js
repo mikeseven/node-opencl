@@ -128,6 +128,42 @@ describe("Program", function () {
 
   describe("#createProgramWithBuiltInKernels", function () {
 
+    var f = cl.createProgramWithBuiltInKernels;
+
+    it("should fail as context is invalid", function () {
+      testUtils.withContext(function (context, device) {
+        testUtils.bind(f, null, [device], ['a'])
+          .should.throw(cl.INVALID_CONTEXT.message);
+      })
+    });
+
+    it("should fail as device list is empty", function () {
+      testUtils.withContext(function (context, device) {
+        testUtils.bind(f, context, [], ['a'])
+          .should.throw(cl.INVALID_VALUE.message);
+      })
+    });
+
+    it("should fail as names list is empty", function () {
+      testUtils.withContext(function (context, device) {
+        testUtils.bind(f, context, [device], [])
+          .should.throw(cl.INVALID_VALUE.message);
+      })
+    });
+
+    it("should fail as names list contains non string values", function () {
+      testUtils.withContext(function (context, device) {
+        testUtils.bind(f, context, [device], [function(){}])
+          .should.throw(cl.INVALID_VALUE.message);
+      })
+    });
+
+    it("should fail as kernel name is unknown", function () {
+      testUtils.withContext(function (context, device) {
+        testUtils.bind(f, context, [device], ['nocl_test'])
+          .should.throw(cl.INVALID_VALUE.message);
+      })
+    });
   });
 
   describe("#retainProgram", function () {
