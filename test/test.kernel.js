@@ -6,6 +6,9 @@ var cl = require('../lib/opencl'),
   assert = require("chai").assert,
   fs = require("fs");
 
+testUtils.initMainDevice();
+
+
 var squareKern = fs.readFileSync(__dirname + "/kernels/square.cl").toString();
 var squareCpyKern = fs.readFileSync(__dirname + "/kernels/square_cpy.cl").toString();
 

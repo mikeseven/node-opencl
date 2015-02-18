@@ -7,6 +7,8 @@ var cl = require('../lib/opencl'),
   chai = require("chai"),
   log = console.log;
 
+require("../lib/test_utils").initMainDevice();
+
 var makeSampler = function () {
   if (checkVersion("1.*")) {
     cl.createSampler(context, cl.TRUE, cl.ADDRESS_NONE, cl.FILTER_LINEAR);
@@ -15,6 +17,7 @@ var makeSampler = function () {
     //cl.createSamplerFromProperties(context, cl.TRUE, cl.ADDRESS_NONE, cl.FILTER_LINEAR);
   }
 };
+
 
 describe("Sampler", function () {
   describe("#createSampler", function () {

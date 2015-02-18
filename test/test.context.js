@@ -5,6 +5,8 @@ var cl=require('../lib/opencl'),
     testUtils = require("../lib/test_utils"),
     log=console.log;
 
+testUtils.initMainDevice();
+
 describe("Context", function() {
 
   var platforms=cl.getPlatformIDs();

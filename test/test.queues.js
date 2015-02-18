@@ -5,6 +5,8 @@ var cl=require('../lib/opencl'),
     log=console.log,
     testUtils = require("../lib/test_utils");
 
+testUtils.initMainDevice();
+
 
 var isValidCQ = function (cq) {
   assert.isNotNull(cq);

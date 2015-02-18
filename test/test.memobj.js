@@ -6,6 +6,9 @@ var cl=require('../lib/opencl'),
     testUtils = require("../lib/test_utils"),
     log=console.log;
 
+testUtils.initMainDevice();
+
+
 describe("MemObj", function() {
 
   describe("#createBuffer", function() {

@@ -4,6 +4,9 @@ var cl=require('../lib/opencl'),
   util=require('util'),
   log=console.log;
 
+
+require("../lib/test_utils").initMainDevice();
+
 describe("Device", function() {
   var platforms=cl.getPlatformIDs();
   var platform=platforms[0];
