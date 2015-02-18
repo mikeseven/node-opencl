@@ -1,6 +1,14 @@
 FROM ubuntu:14.04
 MAINTAINER Dan Liew <daniel.liew@imperial.ac.uk>, Ioweb <contact@ioweb.fr>
 
+##### INSTRUCTIONS
+#
+# You need to download AMD APP SDK and put it in the same folder as the Dockerfile
+# with the name : 
+# amd-app-sdk.tar.bz2
+#
+#####
+
 RUN apt-get update
 RUN apt-get -y install software-properties-common python-software-properties 
 RUN apt-get update && apt-get -y install curl
