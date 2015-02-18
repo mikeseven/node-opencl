@@ -86,23 +86,23 @@ describe("MemObj", function() {
       });
     });
 
-      it("should throw cl.INVALID_VALUE if buffer was created with cl.MEM_WRITE_ONLY and flags specifies CL_MEM_READ_WRITE", function() {
-        testUtils.withContext(function (context, device, platform) {
+    it("should throw cl.INVALID_VALUE if buffer was created with cl.MEM_WRITE_ONLY and flags specifies CL_MEM_READ_WRITE", function() {
+      testUtils.withContext(function (context, device, platform) {
 
-          var buffer = cl.createBuffer(context, cl.MEM_WRITE_ONLY, 8, null);
+        var buffer = cl.createBuffer(context, cl.MEM_WRITE_ONLY, 8, null);
 
-          if (testUtils.checkImplementation("osx") || process.platform.indexOf("win") === 0) {
-              f.bind(f, buffer, cl.MEM_READ_WRITE, cl.BUFFER_CREATE_TYPE_REGION, {"origin": 0, "size": 2})
-                .should.throw(cl.INVALID_VALUE.message);
-          } else {
-              console.warn("[DRIVER ISSUE = AMD LINUX] It should be created, ignoring read only restrictions");
-              var buf = f(buffer, cl.MEM_READ_WRITE, cl.BUFFER_CREATE_TYPE_REGION, {"origin": 0, "size": 2});
-              cl.releaseMemObject(buf);
-          } 
+        if (testUtils.checkImplementation() == "osx" || process.platform.indexOf("win") === 0) {
+            f.bind(f, buffer, cl.MEM_READ_WRITE, cl.BUFFER_CREATE_TYPE_REGION, {"origin": 0, "size": 2})
+              .should.throw(cl.INVALID_VALUE.message);
+        } else {
+            console.warn("[DRIVER ISSUE = AMD LINUX] It should be created, ignoring read only restrictions");
+            var buf = f(buffer, cl.MEM_READ_WRITE, cl.BUFFER_CREATE_TYPE_REGION, {"origin": 0, "size": 2});
+            cl.releaseMemObject(buf);
+        }
 
 
-        });
       });
+    });
 
 
     it("should throw cl.INVALID_VALUE if bufferCreateType is not BUFFER_CREATE_TYPE_CREGION", function() {
@@ -315,9 +315,10 @@ describe("MemObj", function() {
         cl.releaseMemObject(buffer);
       });
     });
+
     it("should throw cl.INVALID_MEM_OBJECT if memory object is invalid", function () {
       testUtils.withContext(function (context, device, platform) {
-        f.bind(f, null).should.throw(cl.INVALID_MEM_OBJECT.message);
+        f.bind(f, null, cl.MEM_ASSOCIATED_MEMOBJECT).should.throw(cl.INVALID_MEM_OBJECT.message);
       });
     });
 
@@ -438,7 +439,7 @@ describe("MemObj", function() {
 
     it("should throw cl.INVALID_MEM_OBJECT if memory object is invalid", function () {
       testUtils.withContext(function (context, device, platform) {
-        f.bind(f, null).should.throw(cl.INVALID_MEM_OBJECT.message);
+        f.bind(f, null, cl.IMAGE_BUFFER).should.throw(cl.INVALID_MEM_OBJECT.message);
       });
     });
   });
