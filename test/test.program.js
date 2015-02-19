@@ -1,13 +1,11 @@
-var cl = require('../lib/opencl'),
-  should = require('chai').should(),
-  util = require('util'),
-  testUtils = require("../lib/test_utils"),
-  log = console.log,
-  assert = require("chai").assert,
-  fs = require("fs");
-
-testUtils.initMainDevice();
-
+var cl = require('../lib/opencl');
+var should = require('chai').should();
+var util = require('util');
+var log = console.log;
+var assert = require("chai").assert;
+var fs = require("fs");
+var U = require("./utils/utils");
+var Diag = require("./utils/diagnostic");
 
 var squareKern = fs.readFileSync(__dirname + "/kernels/square.cl").toString();
 var squareCpyKern = fs.readFileSync(__dirname + "/kernels/square_cpy.cl").toString();
@@ -17,7 +15,7 @@ describe("Program", function () {
   describe("#createProgramWithSource", function () {
 
     it("should return a valid program", function () {
-      testUtils.withContext(function (ctx) {
+      U.withContext(function (ctx) {
         var prg = cl.createProgramWithSource(ctx, squareKern);
 
         assert.isNotNull(prg);
@@ -28,7 +26,7 @@ describe("Program", function () {
     });
 
     it("should throw as context is invalid", function () {
-      testUtils.bind(cl.createProgramWithSource, null, squareKern)
+      U.bind(cl.createProgramWithSource, null, squareKern)
         .should.throw(cl.INVALID_CONTEXT.message);
     });
 
@@ -37,7 +35,7 @@ describe("Program", function () {
   describe("#buildProgram", function () {
 
     it("should build using a valid program and a given device", function () {
-      testUtils.withContext(function (ctx, device) {
+      U.withContext(function (ctx, device) {
         var prg = cl.createProgramWithSource(ctx, squareKern);
         var ret = cl.buildProgram(prg, [device]);
         assert(ret == cl.SUCCESS);
@@ -47,7 +45,7 @@ describe("Program", function () {
     });
 
     it("should build using a valid program", function () {
-      testUtils.withContext(function (ctx) {
+      U.withContext(function (ctx) {
         var prg = cl.createProgramWithSource(ctx, squareKern);
         var ret = cl.buildProgram(prg);
         assert(ret == cl.SUCCESS);
@@ -57,7 +55,7 @@ describe("Program", function () {
     });
 
     it("should build using a valid program and options", function () {
-      testUtils.withContext(function (ctx) {
+      U.withContext(function (ctx) {
         var prg = cl.createProgramWithSource(ctx, squareKern);
         var ret = cl.buildProgram(prg, null, "-D NOCL_TEST=5");
         assert(ret == cl.SUCCESS);
@@ -68,16 +66,16 @@ describe("Program", function () {
 
 
     it("should throw if program is NULL", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.bind(cl.buildProgram, null)
+      U.withContext(function (ctx) {
+        U.bind(cl.buildProgram, null)
           .should.throw(cl.INVALID_PROGRAM.message);
       });
     });
 
     it("should throw if program is INVALID", function () {
-      testUtils.withContext(function (ctx) {
+      U.withContext(function (ctx) {
         var prg = cl.createProgramWithSource(ctx, squareKern + "$bad_inst");
-        testUtils.bind(cl.buildProgram, prg)
+        U.bind(cl.buildProgram, prg)
           .should.throw(cl.BUILD_PROGRAM_FAILURE.message);
       });
     });
@@ -89,7 +87,7 @@ describe("Program", function () {
 
     it("should create a valid program from a binary", function () {
 
-      testUtils.withContext(function (ctx, device) {
+      U.withContext(function (ctx, device) {
         var prg = cl.createProgramWithSource(ctx, squareKern);
         cl.buildProgram(prg);
         var bin = cl.getProgramInfo(prg, cl.PROGRAM_BINARIES);
@@ -105,8 +103,8 @@ describe("Program", function () {
     });
 
     it("should fail as binaries list is empty", function () {
-      testUtils.withContext(function (ctx, device) {
-        testUtils.bind(cl.createProgramWithBinary, ctx, [device], [], [])
+      U.withContext(function (ctx, device) {
+        U.bind(cl.createProgramWithBinary, ctx, [device], [], [])
           .should.throw(cl.INVALID_VALUE.message);
       });
     });
@@ -114,14 +112,14 @@ describe("Program", function () {
 
     it("should fail as lists are not of the same length", function () {
 
-      testUtils.withContext(function (ctx, device) {
+      U.withContext(function (ctx, device) {
         var prg = cl.createProgramWithSource(ctx, squareKern);
         cl.buildProgram(prg);
         var bin = cl.getProgramInfo(prg, cl.PROGRAM_BINARIES);
         var sizes = cl.getProgramInfo(prg, cl.PROGRAM_BINARY_SIZES);
         sizes.push(100);
 
-        testUtils.bind(cl.createProgramWithBinary, ctx, [device], sizes, bin)
+        U.bind(cl.createProgramWithBinary, ctx, [device], sizes, bin)
         cl.releaseProgram(prg);
       });
     });
@@ -134,36 +132,36 @@ describe("Program", function () {
     var f = cl.createProgramWithBuiltInKernels;
 
     it("should fail as context is invalid", function () {
-      testUtils.withContext(function (context, device) {
-        testUtils.bind(f, null, [device], ['a'])
+      U.withContext(function (context, device) {
+        U.bind(f, null, [device], ['a'])
           .should.throw(cl.INVALID_CONTEXT.message);
       })
     });
 
     it("should fail as device list is empty", function () {
-      testUtils.withContext(function (context, device) {
-        testUtils.bind(f, context, [], ['a'])
+      U.withContext(function (context, device) {
+        U.bind(f, context, [], ['a'])
           .should.throw(cl.INVALID_VALUE.message);
       })
     });
 
     it("should fail as names list is empty", function () {
-      testUtils.withContext(function (context, device) {
-        testUtils.bind(f, context, [device], [])
+      U.withContext(function (context, device) {
+        U.bind(f, context, [device], [])
           .should.throw(cl.INVALID_VALUE.message);
       })
     });
 
     it("should fail as names list contains non string values", function () {
-      testUtils.withContext(function (context, device) {
-        testUtils.bind(f, context, [device], [function(){}])
+      U.withContext(function (context, device) {
+        U.bind(f, context, [device], [function(){}])
           .should.throw(cl.INVALID_VALUE.message);
       })
     });
 
     it("should fail as kernel name is unknown", function () {
-      testUtils.withContext(function (context, device) {
-        testUtils.bind(f, context, [device], ['nocl_test'])
+      U.withContext(function (context, device) {
+        U.bind(f, context, [device], ['nocl_test'])
           .should.throw(cl.INVALID_VALUE.message);
       })
     });
@@ -171,7 +169,7 @@ describe("Program", function () {
 
   describe("#retainProgram", function () {
     it("should increment the reference count", function () {
-      testUtils.withContext(function (ctx) {
+      U.withContext(function (ctx) {
         var prg = cl.createProgramWithSource(ctx, squareKern);
         var before = cl.getProgramInfo(prg, cl.PROGRAM_REFERENCE_COUNT);
         cl.retainProgram(prg);
@@ -184,7 +182,7 @@ describe("Program", function () {
 
   describe("#releaseProgram", function () {
     it("should decrement the reference count", function () {
-      testUtils.withContext(function (ctx) {
+      U.withContext(function (ctx) {
         var prg = cl.createProgramWithSource(ctx, squareKern);
         var before = cl.getProgramInfo(prg, cl.PROGRAM_REFERENCE_COUNT);
         cl.retainProgram(prg);
@@ -198,7 +196,7 @@ describe("Program", function () {
 
   describe("#compileProgram", function () {
     it("should build a program with no input headers", function () {
-      testUtils.withContext(function (ctx) {
+      U.withContext(function (ctx) {
         var prg = cl.createProgramWithSource(ctx, squareKern);
         var ret = cl.compileProgram(prg);
         assert(ret == cl.SUCCESS);
@@ -207,7 +205,7 @@ describe("Program", function () {
     });
 
     it("should build a program with an input header", function () {
-      testUtils.withContext(function (ctx) {
+      U.withContext(function (ctx) {
         var prg = cl.createProgramWithSource(ctx, squareKern);
         var prg2 = cl.createProgramWithSource(ctx, squareKern);
 
@@ -218,11 +216,11 @@ describe("Program", function () {
     });
 
     it("should fail as ain't no name for header", function () {
-      testUtils.withContext(function (ctx) {
+      U.withContext(function (ctx) {
         var prg = cl.createProgramWithSource(ctx, squareKern);
         var prg2 = cl.createProgramWithSource(ctx, squareKern);
 
-        testUtils.bind(cl.compileProgram, prg, null, null, [prg2], [])
+        U.bind(cl.compileProgram, prg, null, null, [prg2], [])
           .should.throw();
 
         cl.releaseProgram(prg);
@@ -235,10 +233,10 @@ describe("Program", function () {
 
 
     it("should fail as context is invalid", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, squareKern, function (prg) {
 
-          testUtils.bind(cl.linkProgram, null, null, null, [prg])
+          U.bind(cl.linkProgram, null, null, null, [prg])
             .should.throw(cl.INVALID_CONTEXT.message);
 
         });
@@ -246,10 +244,10 @@ describe("Program", function () {
     });
 
     it("should fail as program is of bad type", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, squareKern, function (prg) {
 
-          testUtils.bind(cl.linkProgram,ctx, null, null, [ctx])
+          U.bind(cl.linkProgram,ctx, null, null, [ctx])
             .should.throw(cl.INVALID_PROGRAM.message);
 
         });
@@ -257,25 +255,30 @@ describe("Program", function () {
     });
 
     it("should fail as options sent to the linker are invalid", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx, device) {
+        U.withProgram(ctx, squareKern, function (prg) {
           cl.compileProgram(prg);
 
-          if (testUtils.checkImplementation() == 'osx') {
-            console.warn("[DRIVER ISSUE = OSX] Always returns true if not checked by C++ bindings");
-            cl.linkProgram(ctx, null, "-DnoCLtest=5", [prg]);
-          } else {
-            testUtils.bind(cl.linkProgram,ctx, null, "-DnoCLtest=5", [prg])
-              .should.throw(cl.INVALID_LINKER_OPTIONS.message);
-          }
+          Diag.exclude(device)
+            .os("win32")
+            .driver("OpenCL 1.2 ") // Intel
+            .gpu("Intel(R) HD Graphics 4400")
+            .because("It does not fail on bad linker options")
+            .should(function () {
+              cl.linkProgram(ctx, null, "-DnoCLtest=5", [prg]);
+            })
+            .raise();
+
+          U.bind(cl.linkProgram,ctx, null, "-DnoCLtest=5", [prg])
+            .should.throw(cl.INVALID_LINKER_OPTIONS.message);
 
         });
       });
     });
 
     it("should success in linking one compiled program", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, squareKern, function (prg) {
           cl.compileProgram(prg);
           var nprg = cl.linkProgram(ctx, null, null, [prg]);
 
@@ -285,8 +288,8 @@ describe("Program", function () {
     });
 
     it("should success in linking one compiled program with a list of devices", function () {
-      testUtils.withContext(function (ctx, device) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx, device) {
+        U.withProgram(ctx, squareKern, function (prg) {
           cl.compileProgram(prg);
           var nprg = cl.linkProgram(ctx, [device], null, [prg]);
 
@@ -296,9 +299,9 @@ describe("Program", function () {
     });
 
     it("should success in linking two compiled programs", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
-          testUtils.withProgram(ctx, squareCpyKern, function (prg2) {
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, squareKern, function (prg) {
+          U.withProgram(ctx, squareCpyKern, function (prg2) {
             cl.compileProgram(prg);
             cl.compileProgram(prg2);
 
@@ -313,7 +316,7 @@ describe("Program", function () {
 
   describe("#unloadPlatformCompiler", function () {
     it("should work when using a valid platform", function() {
-      testUtils.withContext(function (ctx, device, platform) {
+      U.withContext(function (ctx, device, platform) {
         cl.unloadPlatformCompiler(platform);
       })
     });
@@ -322,8 +325,8 @@ describe("Program", function () {
   describe("#getProgramInfo", function () {
     var testForType = function(clKey, _assert) {
       it("should return the good type for " + clKey, function () {
-        testUtils.withContext(function (ctx, device) {
-          testUtils.withProgram(ctx, squareKern, function (prg) {
+        U.withContext(function (ctx, device) {
+          U.withProgram(ctx, squareKern, function (prg) {
 
             var val = cl.getProgramInfo(prg, cl[clKey]);
             _assert(val);
@@ -342,7 +345,7 @@ describe("Program", function () {
     testForType("PROGRAM_KERNEL_NAMES", assert.isString.bind(assert));
 
       it("should have the same program source as the one given", function () {
-        testUtils.withContext(function (ctx) {
+        U.withContext(function (ctx) {
           var prg = cl.createProgramWithSource(ctx, squareKern);
           assert(cl.getProgramInfo(prg, cl.PROGRAM_SOURCE) == squareKern);
           cl.releaseProgram(prg);
@@ -357,8 +360,8 @@ describe("Program", function () {
 
     var testForType = function(clKey, _assert) {
       it("should return the good type for " + clKey, function () {
-        testUtils.withContext(function (ctx, device) {
-          testUtils.withProgram(ctx, squareKern, function (prg) {
+        U.withContext(function (ctx, device) {
+          U.withProgram(ctx, squareKern, function (prg) {
 
             var val = cl.getProgramBuildInfo(prg, device, cl[clKey]);
             _assert(val);
@@ -374,7 +377,7 @@ describe("Program", function () {
     testForType("PROGRAM_BINARY_TYPE", assert.isNumber.bind(assert))
 
     it("should return the same options string that was passed before", function () {
-      testUtils.withContext(function (ctx, device) {
+      U.withContext(function (ctx, device) {
         var prg = cl.createProgramWithSource(ctx, squareKern);
         var buildOpts = "-D NOCL_TEST=5";
         var ret = cl.buildProgram(prg, null, buildOpts);

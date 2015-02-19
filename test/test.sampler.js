@@ -1,13 +1,11 @@
-var cl = require('../lib/opencl'),
-  should = require('chai').should(),
-  util = require('util'),
-  withContext = require("../lib/test_utils").withContext,
-  checkVersion = require("../lib/test_utils").checkVersion,
-  assert = require("chai").assert,
-  chai = require("chai"),
-  log = console.log;
-
-require("../lib/test_utils").initMainDevice();
+var cl = require('../lib/opencl');
+var should = require('chai').should();
+var util = require('util');
+var withContext = require("./utils/utils").withContext;
+var checkVersion = require("./utils/utils").checkVersion;
+var assert = require("chai").assert;
+var chai = require("chai");
+var log = console.log;
 
 var makeSampler = function () {
   if (checkVersion("1.*")) {

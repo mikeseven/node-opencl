@@ -245,26 +245,31 @@ NAN_METHOD(GetDeviceInfo) {
 NAN_METHOD(CreateSubDevices) {
 
   NanScope();
-  REQ_ARGS(3)
+  REQ_ARGS(2)
 
+  // Arg 1
   NOCL_UNWRAP(device, NoCLDeviceId, args[0]);
-
   cl_device_id deviceId = device->getRaw();
-  cl_device_partition_property props = args[1]->Uint32Value();
-  cl_uint numDevices = args[2]->Uint32Value();
 
-  cl_uint capacity=0;
+  // Arg 2
+  std::vector<cl_device_partition_property> cl_properties;
+  REQ_ARRAY_ARG(1, js_properties);
+  for (unsigned int i = 0; i < js_properties->Length(); ++ i) {
+    cl_properties.push_back(js_properties->Get(i)->Int32Value());
+  }
 
-  cl_int ret = ::clCreateSubDevices(deviceId, &props, numDevices, NULL, &capacity);
+  cl_uint capacity = 0;
+  cl_device_partition_property pps [] = {CL_DEVICE_PARTITION_BY_COUNTS,3,1,CL_DEVICE_PARTITION_BY_COUNTS_LIST_END,0};
+
+  cl_int ret = ::clCreateSubDevices(deviceId, pps, 0, NULL, &capacity);
   CHECK_ERR(ret);
   unique_ptr<cl_device_id[]> subDevices(new cl_device_id[capacity]);
-  ret = ::clCreateSubDevices(deviceId, &props, numDevices, subDevices.get(), NULL);
+  ret = ::clCreateSubDevices(deviceId, &cl_properties.front(), capacity, subDevices.get(), NULL);
   CHECK_ERR(ret);
 
-  Local<Array> subDevicesArray = NanNew<Array>(numDevices);
+  Local<Array> subDevicesArray = NanNew<Array>(capacity);
   for (uint32_t i=0; i<capacity; i++) {
-    Local<Object> subDevice = NOCL_WRAP(NoCLDeviceId, subDevices[i]);
-    subDevicesArray->Set(i, subDevice);
+    subDevicesArray->Set(i, NOCL_WRAP(NoCLDeviceId, subDevices[i]));
   }
 
   NanReturnValue(subDevicesArray);

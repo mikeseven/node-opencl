@@ -37,7 +37,7 @@
     "install": "node-gyp rebuild --msvs_version=2013",
     "clean": "rm -rf build node_modules",
     "lint": "eslint lib test",
-    "test": "mocha test/*.js"
+    "test": "node test/utils/runner.js"
   },
   "dependencies": {
     "bindings": "^1.2.1",
@@ -45,7 +45,8 @@
     "nan": "^1.6.2"
   },
   "devDependencies": {
-    "mocha": "*",
-    "chai": "*"
+    "chai": "*",
+    "chalk": "^0.5.1",
+    "mocha": "*"
   }
 }

@@ -1,11 +1,9 @@
-var cl=require('../lib/opencl'),
-  should=require('chai').should(),
-  assert=require('chai').assert,
-  util=require('util'),
-  log=console.log;
-
-
-require("../lib/test_utils").initMainDevice();
+var cl = require('../lib/opencl');
+var should = require('chai').should();
+var assert = require('chai').assert;
+var util = require('util');
+var log = console.log;
+var Diag = require("./utils/diagnostic");
 
 describe("Device", function() {
   var platforms=cl.getPlatformIDs();
@@ -178,9 +176,17 @@ describe("Device", function() {
     describe("#createSubDevices() for "+device_vendor+" "+device_name,function() {
 
       it("should return an array of sub-devices", function() {
-        var subDevices;
+
+        Diag.exclude(device)
+          .os("win32")
+          .driver("OpenCL 1.2 ") // Intel
+          .gpu("Intel(R) HD Graphics 4400")
+          .because("It crashes as MAX_INTEGER is returned as sub-devices available")
+          .raise();
+
+        var subdevices;
         try {
-          cl.createSubDevices(device, cl.DEVICE_PARTITION_BY_COUNTS, 2);
+          cl.createSubDevices(device, [cl.DEVICE_PARTITION_BY_COUNTS, 3, 1, cl.DEVICE_PARTITION_BY_COUNTS_LIST_END, 0], 2);
           assert.isArray(subDevices);
           assert.isAbove(subDevices.length, 0);
         } catch (error) {
@@ -188,6 +194,7 @@ describe("Device", function() {
             assert.isTrue(true);
           }
         }
+
       })
 
     });

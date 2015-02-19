@@ -1,11 +1,9 @@
-var cl=require('../lib/opencl'),
-    should=require('chai').should(),
-    assert = require('chai').assert,
-    util=require('util'),
-    testUtils = require("../lib/test_utils"),
-    log=console.log;
-
-testUtils.initMainDevice();
+var cl = require('../lib/opencl');
+var should = require('chai').should();
+var assert = require('chai').assert;
+var util = require('util');
+var U = require("./utils/utils");
+var log = console.log;
 
 describe("Context", function() {
 
@@ -18,13 +16,7 @@ describe("Context", function() {
   describe("#createContext", function() {
 
     it("should throw if devices = null",function() {
-      if (testUtils.checkImplementation() == "osx") {
-          console.warn("[DRIVER ISSUE = OSX] OSX returns INVALID_DEVICE instead of INVALID_VALUE");
-          ex = cl.INVALID_DEVICE.message;
-      } else { 
-         ex = cl.INVALID_VALUE.message;
-      }
-
+      ex = cl.INVALID_VALUE.message;
       cl.createContext.bind(cl.createContext,null, null, null, null)
         .should.throw(ex);
     });
@@ -51,18 +43,13 @@ describe("Context", function() {
 
     it("should throw cl.CL_INVALID_DEVICE_TYPE if type is unknown", function () {
         var ex;
-        if (testUtils.checkImplementation() == "osx") {
-          console.warn("[DRIVER ISSUE = OSX] OSX returns INVALID_VALUE instead of INVALID_DEVICE_TYPE");
-          ex = cl.INVALID_VALUE.message;
-        } else if (testUtils.checkImplementation() == "amd"){
-          ex = cl.INVALID_DEVICE_TYPE.message;
-        } 
+        ex = cl.INVALID_DEVICE_TYPE.message;
 
         var properties= [
           cl.CONTEXT_PLATFORM, platform
         ];
 
-        testUtils.bind(cl.createContextFromType, properties, 0, null, null)
+      U.bind(cl.createContextFromType, properties, 0, null, null)
           .should.throw(ex);
      });
 
@@ -85,7 +72,7 @@ describe("Context", function() {
 
     var testForType = function(clKey, _assert) {
       it("should return the good type for " + clKey, function () {
-        testUtils.withContext(function (ctx) {
+        U.withContext(function (ctx) {
           var val = cl.getContextInfo(ctx, cl[clKey]);
           _assert(val);
           console.log(clKey +" = " + val);

@@ -1,25 +1,21 @@
-var cl = require('../lib/opencl'),
-  should = require('chai').should(),
-  util = require('util'),
-  testUtils = require("../lib/test_utils"),
-  log = console.log,
-  assert = require("chai").assert,
-  fs = require("fs");
-
-testUtils.initMainDevice();
-
+var cl = require('../lib/opencl');
+var should = require('chai').should();
+var util = require('util');
+var U = require("./utils/utils");
+var log = console.log;
+var assert = require("chai").assert;
+var fs = require("fs");
 
 var squareKern = fs.readFileSync(__dirname + "/kernels/square.cl").toString();
 var squareCpyKern = fs.readFileSync(__dirname + "/kernels/square_cpy.cl").toString();
-
 
 describe("Kernel", function () {
 
   describe("#createKernel", function () {
 
     it("should return a valid kernel", function () {
-      testUtils.withContext(function(ctx){
-        testUtils.withProgram(ctx, squareKern, function(prg){
+      U.withContext(function(ctx){
+        U.withProgram(ctx, squareKern, function(prg){
           var k = cl.createKernel(prg, "square");
 
           assert.isNotNull(k);
@@ -30,9 +26,9 @@ describe("Kernel", function () {
     });
 
     it("should fail as kernel does not exists", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
-          testUtils.bind(cl.createKernel, prg, "i_do_not_exist").should.throw();
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, squareKern, function (prg) {
+          U.bind(cl.createKernel, prg, "i_do_not_exist").should.throw();
         });
       });
     });
@@ -43,8 +39,8 @@ describe("Kernel", function () {
   describe("#createKernelsInProgram", function () {
 
     it("should return two valid kernels", function() {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, [squareKern, squareCpyKern].join("\n"), function (prg) {
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, [squareKern, squareCpyKern].join("\n"), function (prg) {
           var kerns = cl.createKernelsInProgram(prg, 2);
 
           assert.isNotNull(kerns);
@@ -67,8 +63,8 @@ describe("Kernel", function () {
   describe("#retainKernel", function () {
 
     it("should increment reference count", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
 
           var before = cl.getKernelInfo(k, cl.KERNEL_REFERENCE_COUNT);
@@ -85,8 +81,8 @@ describe("Kernel", function () {
   describe("#releaseKernel", function () {
 
     it("should decrement reference count", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
           var before = cl.getKernelInfo(k, cl.KERNEL_REFERENCE_COUNT);
 
@@ -105,8 +101,8 @@ describe("Kernel", function () {
   describe("#setKernelArg", function () {
 
     it("should successfully accept a memobject as first argument", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
           var mem = cl.createBuffer(ctx, 0, 8, null);
 
@@ -118,11 +114,11 @@ describe("Kernel", function () {
     });
 
     it("should fail when passed a scalar type as first argument (expected : memobject)", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
 
-          testUtils.bind(cl.setKernelArg, k, 0, 5)
+          U.bind(cl.setKernelArg, k, 0, 5)
             .should.throw(cl.INVALID_MEM_OBJECT.message);
 
           cl.releaseKernel(k);
@@ -131,11 +127,11 @@ describe("Kernel", function () {
     });
 
     it("should fail when passed a vector type as first argument (expected : memobject)", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
 
-          testUtils.bind(cl.setKernelArg, k, 0, [5, 10, 15])
+          U.bind(cl.setKernelArg, k, 0, [5, 10, 15])
             .should.throw(cl.INVALID_MEM_OBJECT.message);
 
           cl.releaseKernel(k);
@@ -144,8 +140,8 @@ describe("Kernel", function () {
     });
 
     it("should successfully accept an integer as third argument", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
 
           assert(cl.setKernelArg(k, 2, 5) == cl.SUCCESS);
@@ -156,11 +152,11 @@ describe("Kernel", function () {
     });
 
     it("should fail when passed a char as third argument (expected : integer)", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
 
-          testUtils.bind(cl.setKernelArg, k, 2, "a")
+          U.bind(cl.setKernelArg, k, 2, "a")
             .should.throw(cl.INVALID_ARG_VALUE.message);
 
           cl.releaseKernel(k);
@@ -169,11 +165,11 @@ describe("Kernel", function () {
     });
 
     it("should fail when passed a vector as third argument (expected : integer)", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
 
-          testUtils.bind(cl.setKernelArg, k, 2, [5, 10, 15])
+          U.bind(cl.setKernelArg, k, 2, [5, 10, 15])
             .should.throw(cl.INVALID_ARG_VALUE.message);
 
           cl.releaseKernel(k);
@@ -183,12 +179,12 @@ describe("Kernel", function () {
 
 
     it("should fail when passed a memobject as third argument (expected : integer)", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
           var mem = cl.createBuffer(ctx, 0, 8, null);
 
-          testUtils.bind(cl.setKernelArg, k, 2, mem)
+          U.bind(cl.setKernelArg, k, 2, mem)
             .should.throw(cl.INVALID_ARG_VALUE.message);
 
           cl.releaseKernel(k);
@@ -199,11 +195,11 @@ describe("Kernel", function () {
 
 
     it("should fail when passed a fourth argument on a kernel that only have three", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
 
-          testUtils.bind(cl.setKernelArg, k, 3, 5)
+          U.bind(cl.setKernelArg, k, 3, 5)
             .should.throw(cl.INVALID_ARG_INDEX.message);
 
           cl.releaseKernel(k);
@@ -217,8 +213,8 @@ describe("Kernel", function () {
 
     var testForType = function(clKey, _assert) {
       it("should return the good type for " + clKey, function () {
-        testUtils.withContext(function (ctx) {
-          testUtils.withProgram(ctx, squareKern, function (prg) {
+        U.withContext(function (ctx) {
+          U.withProgram(ctx, squareKern, function (prg) {
             var k = cl.createKernel(prg, "square");
 
             var val = cl.getKernelInfo(k, cl[clKey]);
@@ -237,8 +233,8 @@ describe("Kernel", function () {
     testForType("KERNEL_PROGRAM", assert.isObject.bind(assert));
 
     it("should return the corresponding number of arguments", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
           var nb_args = cl.getKernelInfo(k, cl.KERNEL_NUM_ARGS);
 
@@ -250,8 +246,8 @@ describe("Kernel", function () {
     });
 
     it("should return the corresponding kernel name", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
           var name = cl.getKernelInfo(k, cl.KERNEL_FUNCTION_NAME);
 
@@ -263,8 +259,8 @@ describe("Kernel", function () {
     });
 
     it("should return the corresponding context", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
           var c = cl.getKernelInfo(k, cl.KERNEL_CONTEXT);
 
@@ -274,8 +270,8 @@ describe("Kernel", function () {
     });
 
     it("should return the corresponding program", function () {
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
           var p = cl.getKernelInfo(k, cl.KERNEL_PROGRAM);
 
@@ -289,8 +285,8 @@ describe("Kernel", function () {
   describe("#getKernelArgInfo", function () {
     var testForType = function(clKey, _assert) {
       it("should return the good type for " + clKey, function () {
-        testUtils.withContext(function (ctx) {
-          testUtils.withProgram(ctx, squareKern, function (prg) {
+        U.withContext(function (ctx) {
+          U.withProgram(ctx, squareKern, function (prg) {
             var k = cl.createKernel(prg, "square");
 
             var val = cl.getKernelArgInfo(k, 0, cl[clKey]);
@@ -306,8 +302,8 @@ describe("Kernel", function () {
     testForType("KERNEL_ARG_TYPE_QUALIFIER", assert.isNumber.bind(assert));
 
     it("should return the corresponding names", function(){
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
           var n1 = cl.getKernelArgInfo(k, 0, cl.KERNEL_ARG_NAME);
           var n2 = cl.getKernelArgInfo(k, 1, cl.KERNEL_ARG_NAME);
@@ -322,8 +318,8 @@ describe("Kernel", function () {
 
 
     it("should return the corresponding types", function(){
-      testUtils.withContext(function (ctx) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx) {
+        U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
           var n1 = cl.getKernelArgInfo(k, 0, cl.KERNEL_ARG_TYPE_NAME);
           var n2 = cl.getKernelArgInfo(k, 1, cl.KERNEL_ARG_TYPE_NAME);
@@ -341,8 +337,8 @@ describe("Kernel", function () {
 
     var testForType = function(clKey, _assert) {
       it("should return the good type for " + clKey, function () {
-        testUtils.withContext(function (ctx, device) {
-          testUtils.withProgram(ctx, squareKern, function (prg) {
+        U.withContext(function (ctx, device) {
+          U.withProgram(ctx, squareKern, function (prg) {
             var k = cl.createKernel(prg, "square");
 
             var val = cl.getKernelWorkGroupInfo(k, device, cl[clKey]);
@@ -361,8 +357,8 @@ describe("Kernel", function () {
 
 
     it("should throw INVALID_VALUE when looking for KERNEL_GLOBAL_WORK_SIZE", function(){
-      testUtils.withContext(function (ctx, device) {
-        testUtils.withProgram(ctx, squareKern, function (prg) {
+      U.withContext(function (ctx, device) {
+        U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
           cl.getKernelWorkGroupInfo.bind(cl.getKernelWorkGroupInfo,k, device, cl.KERNEL_GLOBAL_WORK_SIZE)
             .should.throw(cl.INVALID_VALUE.message);

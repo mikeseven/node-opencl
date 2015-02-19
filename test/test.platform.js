@@ -1,10 +1,8 @@
-var cl=require('../lib/opencl'),
-    should=require('chai').should(),
-    assert=require('chai').assert,
-    util=require('util'),
-    log=console.log;
-
-require("../lib/test_utils").initMainDevice();
+var cl = require('../lib/opencl');
+var should = require('chai').should();
+var assert = require('chai').assert;
+var util = require('util');
+var log = console.log;
 
 describe("Platform", function() {
   var platforms=cl.getPlatformIDs();
