@@ -4,6 +4,7 @@ var assert = require('chai').assert;
 var util = require('util');
 var U = require("./utils/utils");
 var log = console.log;
+var versions = require("./utils/versions");
 
 describe("Context", function() {
 

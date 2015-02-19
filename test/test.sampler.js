@@ -1,14 +1,13 @@
 var cl = require('../lib/opencl');
 var should = require('chai').should();
 var util = require('util');
-var withContext = require("./utils/utils").withContext;
-var checkVersion = require("./utils/utils").checkVersion;
+var U =  require("./utils/utils");
 var assert = require("chai").assert;
 var chai = require("chai");
 var log = console.log;
 
 var makeSampler = function (context) {
-  if (checkVersion("1.*")) {
+  if (U.checkVersion("1.x")) {
     return cl.createSampler(context, cl.TRUE, cl.ADDRESS_NONE, cl.FILTER_LINEAR);
   } else {
     return cl.createSamplerWithProperties(context,
@@ -18,76 +17,67 @@ var makeSampler = function (context) {
   }
 };
 
-
 describe("Sampler", function () {
   describe("#createSampler", function () {
 
     var f = cl.createSampler;
 
-    if (checkVersion("2.*")) {
-      it("should be undefined as createSampler does not exist in OpenCL 2.0", function () {
-        assert(f === undefined);
-      });
-    } else {
-      it("should create a sampler when passed valid arguments", function () {
-        withContext(function (context) {
-          var sampler = f(context, cl.TRUE, cl.ADDRESS_NONE, cl.FILTER_LINEAR);
-          assert.isObject(sampler);
-          assert.isNotNull(sampler);
-          cl.releaseSampler(sampler);
-        });
-      });
+    versions(["2.0"]).hasUndefined(f);
 
-      it("should throw cl.INVALID_CONTEXT when passed an invalid context", function () {
-        f.bind(f, null, cl.TRUE, cl.ADDRESS_NONE, cl.FILTER_LINEAR).should.throw(cl.INVALID_CONTEXT.message);
+    versions(["1.x"]).it("should create a sampler when passed valid arguments", function () {
+      U.withContext(function (context) {
+        var sampler = f(context, cl.TRUE, cl.ADDRESS_NONE, cl.FILTER_LINEAR);
+        assert.isObject(sampler);
+        assert.isNotNull(sampler);
+        cl.releaseSampler(sampler);
       });
-    }
+    });
+
+    versions(["1.x"]).it("should throw cl.INVALID_CONTEXT when passed an invalid context", function () {
+      U.bind(f, null, cl.TRUE, cl.ADDRESS_NONE, cl.FILTER_LINEAR).should.throw(cl.INVALID_CONTEXT.message);
+    });
+
   });
 
   describe("#createSamplerWithProperties", function () {
     var f = cl.createSamplerWithProperties;
 
-    if (checkVersion("1.*")) {
-      it("should be undefined as createSamplerWithProperties does not exist in OpenCL 2.x", function () {
-        assert(f === undefined);
+    versions(["1.x"]).hasUndefined(f);
+
+    versions(["2.x"]).it("should throw cl.INVALID_CONTEXT when passed an invalid context", function () {
+      U.bind(f, null, []).should.throw(cl.INVALID_CONTEXT.message);
+    });
+
+    versions(["2.x"]).it("should throw cl.INVALID_VALUE when passed an invalid property", function () {
+      U.withContext(function(ctx) {
+        U.bind(f, ctx, [cl.SAMPLER_FILTER_MODE, "salut"]).should.throw(cl.INVALID_VALUE.message);
       });
-    } else {
+    });
 
-      it("should throw cl.INVALID_CONTEXT when passed an invalid context", function () {
-        f.bind(f, null, []).should.throw(cl.INVALID_CONTEXT.message);
+    versions(["2.x"]).it("should return a sampler if given no properties", function () {
+      U.withContext(function(ctx){
+        var sm = cl.createSamplerWithProperties(ctx, []);
+        assert.isObject(sm);
+
+        cl.releaseSampler(sm);
       });
+    });
 
-      it("should throw cl.INVALID_VALUE when passed an invalid property", function () {
-        withContext(function(ctx) {
-          f.bind(f, ctx, [cl.SAMPLER_FILTER_MODE, "salut"]).should.throw(cl.INVALID_VALUE.message);
-        });
+    versions(["2.x"]).it("should return a sampler when given properties", function () {
+      U.withContext(function(ctx){
+        var sm = cl.createSamplerWithProperties(ctx,
+          [cl.SAMPLER_NORMALIZED_COORDS, true,
+            cl.SAMPLER_ADDRESSING_MODE, cl.ADDRESS_NONE,
+            cl.SAMPLER_FILTER_MODE, cl.FILTER_LINEAR]);
+
+        assert.isObject(sm);
+        assert(cl.getSamplerInfo(sm, cl.SAMPLER_NORMALIZED_COORDS) == true);
+        assert(cl.getSamplerInfo(sm, cl.SAMPLER_ADDRESSING_MODE) == cl.ADDRESS_NONE);
+        assert(cl.getSamplerInfo(sm, cl.SAMPLER_FILTER_MODE) == cl.FILTER_LINEAR);
+
+        cl.releaseSampler(sm);
       });
-
-      it("should return a sampler if given no properties", function () {
-        withContext(function(ctx){
-          var sm = cl.createSamplerWithProperties(ctx, []);
-          assert.isObject(sm);
-
-          cl.releaseSampler(sm);
-        });
-      });
-
-      it("should return a sampler when given properties", function () {
-        withContext(function(ctx){
-          var sm = cl.createSamplerWithProperties(ctx,
-            [cl.SAMPLER_NORMALIZED_COORDS, true,
-              cl.SAMPLER_ADDRESSING_MODE, cl.ADDRESS_NONE,
-              cl.SAMPLER_FILTER_MODE, cl.FILTER_LINEAR]);
-
-          assert.isObject(sm);
-          assert(cl.getSamplerInfo(sm, cl.SAMPLER_NORMALIZED_COORDS) == true);
-          assert(cl.getSamplerInfo(sm, cl.SAMPLER_ADDRESSING_MODE) == cl.ADDRESS_NONE);
-          assert(cl.getSamplerInfo(sm, cl.SAMPLER_FILTER_MODE) == cl.FILTER_LINEAR);
-
-          cl.releaseSampler(sm);
-        });
-      });
-    }
+    });
 
   });
 
@@ -97,7 +87,7 @@ describe("Sampler", function () {
 
     it("should increase the reference count when passed a valid argument", function () {
 
-      withContext(function (context) {
+      U.withContext(function (context) {
         var sampler = makeSampler(context);
         var count = cl.getSamplerInfo(sampler, cl.SAMPLER_REFERENCE_COUNT);
         assert.isNumber(count);
@@ -120,7 +110,7 @@ describe("Sampler", function () {
     var f = cl.releaseSampler;
 
     it("should decrease reference count when passed a valid argument", function () {
-      withContext(function (context) {
+      U.withContext(function (context) {
         var sampler = makeSampler(context);
         var count = cl.getSamplerInfo(sampler, cl.SAMPLER_REFERENCE_COUNT);
         assert.isNumber(count);
@@ -136,7 +126,7 @@ describe("Sampler", function () {
     var f = cl.getSamplerInfo;
 
     it("should return CL_SAMPLER_REFERENCE_COUNT", function() {
-      withContext(function(context) {
+      U.withContext(function(context) {
         var sampler = makeSampler(context);
         var ret = f(sampler, cl.SAMPLER_REFERENCE_COUNT);
 
@@ -148,7 +138,7 @@ describe("Sampler", function () {
     });
 
     it("should return CL_SAMPLER_NORMALIZED_COORDS", function() {
-      withContext(function(context) {
+      U.withContext(function(context) {
         var sampler = makeSampler(context);
         var ret = f(sampler, cl.SAMPLER_NORMALIZED_COORDS);
 
@@ -160,7 +150,7 @@ describe("Sampler", function () {
     });
 
     it("should return CL_SAMPLER_ADDRESSING_MODE", function() {
-      withContext(function(context) {
+      U.withContext(function(context) {
         var sampler = makeSampler(context);
         var ret = f(sampler, cl.SAMPLER_ADDRESSING_MODE);
 
@@ -172,7 +162,7 @@ describe("Sampler", function () {
     });
 
     it("should return CL_SAMPLER_FILTER_MODE", function() {
-      withContext(function(context) {
+      U.withContext(function(context) {
         var sampler = makeSampler(context);
         var ret = f(sampler, cl.SAMPLER_FILTER_MODE);
 

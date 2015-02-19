@@ -48,14 +48,14 @@ module.exports = {
       return cl.VERSION_1_1 && !cl.VERSION_1_2 && !cl.VERSION_2_0;
     } else if (v == "1.2") {
       return cl.VERSION_1_1 && cl.VERSION_1_2 && !cl.VERSION_2_0
-    } else if (v == "1.*") {
+    } else if (v == "1.x") {
       return (cl.VERSION_1_1 || cl.VERSION_1_2) && !cl.VERSION_2_0;
     } else if (v == "2.0") {
       return cl.VERSION_1_1 && cl.VERSION_1_2 && cl.VERSION_2_0;
-    } else if (v == "2.*") {
+    } else if (v == "2.x") {
       return cl.VERSION_1_1 && cl.VERSION_1_2 && cl.VERSION_2_0;
     } else {
-      console.error("Unknown version : " + v);
+      console.error("Unknown version : '" + v + "'");
       return false;
     }
   }
