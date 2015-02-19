@@ -46,14 +46,14 @@ describe("CommandQueue", function() {
   describe("#createCommandQueueWithProperties", function() {
     var f = cl.createCommandQueueWithProperties;
 
-    if (testUtils.checkVersion("1.*")) {
+    if (U.checkVersion("1.*")) {
       it ("should be undefined as createCommandQueueWithProperties does not exist in OpenCL 1.x", function () {
         assert(f === undefined);
       });
     } else {
 
       it("should create a valid command queue", function () {
-        testUtils.withContext(function(ctx, device){
+        U.withContext(function(ctx, device){
           var cq = f(ctx, device, []);
           isValidCQ(cq);
           cl.releaseCommandQueue(cq);
@@ -61,18 +61,18 @@ describe("CommandQueue", function() {
       });
 
       it("should fail given an invalid property", function () {
-        testUtils.withContext(function(ctx, device) {
+        U.withContext(function(ctx, device) {
 
-          testUtils.bind(f, ctx, device, ["TEST"])
+          U.bind(f, ctx, device, ["TEST"])
             .should.throw(cl.INVALID_VALUE.message);
 
         });
       });
 
       it("should fail given an invalid device", function() {
-        testUtils.withContext(function(ctx, device){
+        U.withContext(function(ctx, device){
 
-          testUtils.bind(f, ctx, "TEST", [])
+          U.bind(f, ctx, "TEST", [])
             .should.throw(cl.INVALID_DEVICE.message);
 
         });
