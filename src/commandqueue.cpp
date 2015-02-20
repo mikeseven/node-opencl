@@ -58,7 +58,7 @@ NAN_METHOD(CreateCommandQueueWithProperties) {
         THROW_ERR(CL_INVALID_VALUE);
     }
     cl_uint prop_id = properties->Get(i)->Uint32Value();
-    cl_properties.push_back(prop_id);
+g    cl_properties.push_back(prop_id);
 
     if(prop_id == CL_QUEUE_PROPERTIES) {
       if (!properties->Get(i+1)->IsNumber()) {
@@ -168,8 +168,10 @@ NAN_METHOD(Flush) {
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  CHECK_ERR(::clFlush(q->getRaw()));
-  NanReturnUndefined();
+  cl_int err = ::clFlush(q->getRaw());
+
+  CHECK_ERR(err);
+  NanReturnValue(JS_INT(err));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -181,8 +183,10 @@ NAN_METHOD(Finish) {
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  CHECK_ERR(::clFinish(q->getRaw()));
-  NanReturnUndefined();
+  cl_int err = ::clFinish(q->getRaw());
+
+  CHECK_ERR(err);
+  NanReturnValue(JS_INT(err));
 }
 
 // /* Enqueued Commands APIs */
@@ -198,7 +202,7 @@ NAN_METHOD(Finish) {
 //                     cl_event *          /* event */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueReadBuffer) {
   NanScope();
-  REQ_ARGS(8);
+  REQ_ARGS(6);
 
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
@@ -219,8 +223,10 @@ NAN_METHOD(EnqueueReadBuffer) {
     getPtrAndLen(args[5],ptr,len);
 
   std::vector<NoCLEvent> cl_events;
-  Local<Array> js_events = Local<Array>::Cast(args[6]);
-  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  if (ARG_EXISTS(6)) {
+    Local<Array> js_events = Local<Array>::Cast(args[6]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  }
 
   cl_event event=nullptr;
   if(ARG_EXISTS(7)) {

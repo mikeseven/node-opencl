@@ -5,6 +5,7 @@ var util = require('util');
 var log = console.log;
 var U = require("./utils/utils");
 var versions = require("./utils/versions");
+var Diag = require("./utils/diagnostic");
 
 var isValidCQ = function (cq) {
   assert.isNotNull(cq);
@@ -12,7 +13,17 @@ var isValidCQ = function (cq) {
 };
 
 
+var makeCommandQueue = function (ctx, device) {
+  if (U.checkVersion("1.x")) {
+    return cl.createCommandQueue(ctx, device, null);
+  } else {
+    return cl.createCommandQueueWithProperties(ctx, device, []);
+  }
+};
+
+
 describe("CommandQueue", function() {
+
 
   describe("#createCommandQueue", function() {
 
@@ -42,6 +53,7 @@ describe("CommandQueue", function() {
     });
 
   });
+
 
   describe("#createCommandQueueWithProperties", function() {
     var f = cl.createCommandQueueWithProperties;
@@ -75,47 +87,139 @@ describe("CommandQueue", function() {
 
   });
 
-  describe("# ( TODO ) retainCommandQueue", function() {
-    // FIXME
-  });
-  describe("# ( TODO ) releaseCommandQueue", function() {
-    // FIXME
+
+  describe("#retainCommandQueue", function() {
+
+    it("should have incremented ref count after call", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function(cq) {
+          var before = cl.getCommandQueueInfo(cq, cl.QUEUE_REFERENCE_COUNT);
+          cl.retainCommandQueue(cq);
+          var after = cl.getCommandQueueInfo(cq, cl.QUEUE_REFERENCE_COUNT);
+          assert(before + 1 == after);
+        });
+      });
+    });
   });
 
-  describe("# ( TODO ) getCommandQueueInfo", function() {
-    // FIXME
+  describe("#releaseCommandQueue", function() {
+
+    it("should have decremented ref count after call", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function(cq) {
+          var before = cl.getCommandQueueInfo(cq, cl.QUEUE_REFERENCE_COUNT);
+          cl.retainCommandQueue(cq);
+          cl.releaseCommandQueue(cq);
+          var after = cl.getCommandQueueInfo(cq, cl.QUEUE_REFERENCE_COUNT);
+          assert(before == after);
+        });
+      });
+    });
+
   });
 
-  describe("# ( TODO ) flush", function() {
+  describe("#getCommandQueueInfo", function() {
+    var testForType = function (clKey, _assert) {
+      it("should return the good type for " + clKey, function () {
+        U.withContext(function (ctx, device) {
+          U.withCQ(ctx, device, function (cq) {
+            var val = cl.getCommandQueueInfo(cq, cl[clKey]);
+            _assert(val);
+            console.log(clKey + " = " + val);
+          });
+        });
+      })
+    };
 
-    it("should return undefined", function () {
-      // TODO
+    testForType("QUEUE_REFERENCE_COUNT", assert.isNumber.bind(assert));
+    testForType("QUEUE_CONTEXT", assert.isObject.bind(assert));
+    testForType("QUEUE_DEVICE", assert.isObject.bind(assert));
+    testForType("QUEUE_PROPERTIES", assert.isNumber.bind(assert));
+  });
+
+  describe("#flush", function() {
+
+    it("should return success", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          assert(cl.flush(cq) == cl.SUCCESS);
+        });
+      });
     });
 
   });
 
 
-  describe("# ( TODO ) finish", function() {
+  describe("#finish", function() {
 
-    it("should return undefined", function () {
-      // TODO
+    it("should return success", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          assert(cl.finish(cq) == cl.SUCCESS);
+        });
+      });
     });
 
   });
 
-  describe("# ( TODO ) enqueueReadBuffer", function() {
+
+  describe("#enqueueReadBuffer", function() {
 
     it("should work with read only buffers", function () {
-      // TODO
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var buffer = cl.createBuffer(ctx, cl.MEM_READ_ONLY, 8, null);
+          var nbuffer = new Buffer(8);
+          var ret = cl.enqueueReadBuffer(cq, buffer, true, 0, 8, nbuffer);
+
+          assert(ret == cl.SUCCESS);
+        });
+      });
     });
 
     it("should work with write buffers", function () {
-      // TODO
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var buffer = cl.createBuffer(ctx, cl.MEM_WRITE_ONLY, 8, null);
+          var nbuffer = new Buffer(8);
+          var ret = cl.enqueueReadBuffer(cq, buffer, true, 0, 8, nbuffer);
+        });
+      });
     });
 
 
-    it("should return general exceptions", function () {
-      // TODO
+    it("should fail if buffer is null", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var nbuffer = new Buffer(8);
+          U.bind(cl.enqueueReadBuffer, cq, null, true, 0, 8, nbuffer)
+            .should.throw(cl.INVALID_MEM_OBJECT.message);
+        });
+      });
+    });
+
+
+    it("should fail if output buffer is null", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var buffer = cl.createBuffer(ctx, cl.MEM_WRITE_ONLY, 8, null);
+          U.bind(cl.enqueueReadBuffer, cq, buffer, true, 0, 8, null)
+            .should.throw(cl.INVALID_VALUE.message);
+        });
+      });
+    });
+
+
+    it("should fail if we try to read out of bound", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var buffer = cl.createBuffer(ctx, cl.MEM_READ_ONLY, 8, null);
+          var nbuffer = new Buffer(8);
+
+          U.bind(cl.enqueueReadBuffer,cq, buffer, true, 16, 1, nbuffer)
+            .should.throw(cl.INVALID_VALUE.message);
+        });
+      });
     });
 
   });
