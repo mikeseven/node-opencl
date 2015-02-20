@@ -42,17 +42,9 @@ describe("Pipes", function () {
       });
     });
 
-    it("should fail as packets size exceeds max device", function () {
-      U.withContext(function (ctx, device) {
-        var max = cl.getDeviceInfo(device, cl.DEVICE_PIPE_MAX_PACKET_SIZE);
-        U.bind(cl.createPipe, ctx, 0, max + 1, 100, null)
-          .should.throw(cl.INVALID_VALUE.message);
-      });
-    });
-
     it("should fail as properties is not null", function () {
       U.withContext(function (ctx) {
-        U.bind(cl.createPipe, ctx, 0, 8, 100, null)
+        U.bind(cl.createPipe, ctx, 0, 8, 100, ["a"])
           .should.throw(cl.INVALID_VALUE.message);
       });
     });

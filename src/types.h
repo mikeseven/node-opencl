@@ -199,6 +199,7 @@ public:
   }
 };
 
+
 // FIXME static does not seem to work great with V8 (random segfaults)
 // But we should not create a template each time we create an object
 template <typename T>
