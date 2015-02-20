@@ -260,9 +260,9 @@ describe("Program", function () {
           cl.compileProgram(prg);
 
           Diag.exclude(device)
-            .os("win32")
-            .driver("OpenCL 1.2 ") // Intel
-            .gpu("Intel(R) HD Graphics 4400")
+            .os("win32").os("darwin")
+            .driver("OpenCL 1.2 ").driver("OpenCL 1.2 (Dec 14 2014 22:29:47)")
+            .gpu("Intel(R) HD Graphics 4400").gpu("Iris")
             .because("It does not fail on bad linker options")
             .should(function () {
               cl.linkProgram(ctx, null, "-DnoCLtest=5", [prg]);

@@ -7,7 +7,7 @@ var chalk = require("chalk");
 require("./device_selection");
 var mocha = new Mocha;
 
-/*
+
 fs.readdirSync(__dirname + "/..").filter(function(file){
   return file.substr(-3) === '.js';
 }).forEach(function(file){
@@ -15,11 +15,8 @@ fs.readdirSync(__dirname + "/..").filter(function(file){
     path.join(__dirname + "/..", file)
   );
 });
-*/
 
-mocha.addFile(
-  path.join(__dirname + "/..", "test.queues.js")
-);
+
 
 // Now, you can run the tests.
 mocha.run(function(failures){

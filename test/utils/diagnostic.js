@@ -4,7 +4,7 @@ var os = require("os");
 module.exports = {};
 var EXCEPTIONS_COUNT = 0;
 
-var ErrDescription = function(device){
+var ErrDescription = function(device, platform){
   this._os = [];
   this._driver = [];
   this._gpu = [];
@@ -17,12 +17,18 @@ var ErrDescription = function(device){
   this.because = function(message){ self.message = message; return self; };
 
   var isConcerned = function(){
-    var platform = cl.getDeviceInfo(device, cl.DEVICE_PLATFORM);
-    console.log(self._gpu.indexOf(cl.getDeviceInfo(device, cl.DEVICE_NAME)) !== -1);
-    console.log(self._driver.indexOf(cl.getPlatformInfo(platform, cl.PLATFORM_VERSION)));
-    return self._os.indexOf(os.platform()) !== -1 &&
-      self._gpu.indexOf(cl.getDeviceInfo(device, cl.DEVICE_NAME)) !== -1 &&
-      self._driver.indexOf(cl.getPlatformInfo(platform, cl.PLATFORM_VERSION)) !== -1;
+
+    if (!platform) {
+      platform = cl.getDeviceInfo(device, cl.DEVICE_PLATFORM);
+    }
+
+    return true &&
+      (self._os.length == 0 ||
+        self._os.indexOf(os.platform()) !== -1) &&
+      (self._gpu.length == 0 ||
+        self._gpu.indexOf(cl.getDeviceInfo(device, cl.DEVICE_NAME)) !== -1) &&
+      (self._driver.length == 0 ||
+        self._driver.indexOf(cl.getPlatformInfo(platform, cl.PLATFORM_VERSION)) !== -1);
   };
 
   this.should = function (f) {
@@ -47,6 +53,6 @@ module.exports.exceptionsCount = function () {
   return EXCEPTIONS_COUNT;
 };
 
-module.exports.exclude = function (device) {
-  return new ErrDescription(device);
+module.exports.exclude = function (device, platform) {
+  return new ErrDescription(device, platform);
 };

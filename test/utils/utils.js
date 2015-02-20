@@ -2,7 +2,7 @@ var cl = require("../../lib/opencl");
 
 require("./device_selection");
 
-module.exports = {
+var Utils = {
   withContext: function (exec) {
     var platform = MAIN_PLATFORM_ID;
 
@@ -24,6 +24,18 @@ module.exports = {
     exec(prg);
 
     cl.releaseProgram(prg);
+  },
+
+  withCQ: function (ctx, device, exec) {
+    var cq;
+    if (Utils.checkVersion("1.x")) {
+      cq = cl.createCommandQueue(ctx, device, null);
+    } else {
+      cq = cl.createCommandQueueWithProperties(ctx, device, []);
+    }
+
+    exec(cq);
+    cl.releaseCommandQueue(cq);
   },
 
   bind : function(/*...*/) {
@@ -60,3 +72,5 @@ module.exports = {
     }
   }
 };
+
+module.exports = Utils;

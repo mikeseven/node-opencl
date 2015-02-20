@@ -5,6 +5,7 @@ var U =  require("./utils/utils");
 var assert = require("chai").assert;
 var chai = require("chai");
 var log = console.log;
+var versions = require("./utils/versions");
 
 var makeSampler = function (context) {
   if (U.checkVersion("1.x")) {
