@@ -67,6 +67,15 @@ describe("Context", function () {
         })
         .raise();
 
+      Diag.exclude(null, platform)
+        .os("linux")
+        .driver("OpenCL 2.0 AMD-APP (1642.5)")
+        .because("It returns DEVICE_NOT_FOUND instead of invalid value")
+        .should(function () {
+          U.bind(cl.createContextFromType, properties, 0, null, null)
+            .should.throw(cl.DEVICE_NOT_FOUND);
+        })
+        .raise();
 
       U.bind(cl.createContextFromType, properties, 0, null, null)
         .should.throw(cl.INVALID_DEVICE_TYPE);
