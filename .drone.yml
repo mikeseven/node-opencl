@@ -3,7 +3,7 @@ branches:
   - master
   - develop
 script:
-    - npm lint || echo "You have lint issues. For now we skip this, but soon fixing them will be mandatory for CI integration"
+    - npm run lint || echo "You have lint issues. For now we skip this, but soon fixing them will be mandatory for CI integration"
     - npm install --unsafe-perm
     - npm test
 notify:
