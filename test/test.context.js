@@ -63,7 +63,7 @@ describe("Context", function () {
         .because("It returns INVALID_DEVICE instead of invalid value")
         .should(function () {
           U.bind(cl.createContextFromType, properties, 0, null, null)
-            .should.throw(cl.INVALID_DEVICE);
+            .should.throw(cl.INVALID_DEVICE.message);
         })
         .raise();
 
@@ -73,12 +73,12 @@ describe("Context", function () {
         .because("It returns DEVICE_NOT_FOUND instead of invalid value")
         .should(function () {
           U.bind(cl.createContextFromType, properties, 0, null, null)
-            .should.throw(cl.DEVICE_NOT_FOUND);
+            .should.throw(cl.DEVICE_NOT_FOUND.message);
         })
         .raise();
 
       U.bind(cl.createContextFromType, properties, 0, null, null)
-        .should.throw(cl.INVALID_DEVICE_TYPE);
+        .should.throw(cl.INVALID_DEVICE_TYPE.message);
     });
 
     it("should create a context with a wildcard type", function () {
