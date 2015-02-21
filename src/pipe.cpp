@@ -7,6 +7,8 @@ using namespace node;
 
 namespace opencl {
 
+#ifdef CL_VERSION_2_0
+
 NAN_METHOD(CreatePipe) {
   NanScope();
   REQ_ARGS(5);
@@ -67,11 +69,15 @@ NAN_METHOD(GetPipeInfo) {
   return NanThrowError(JS_INT(CL_INVALID_VALUE));
 }
 
+#endif
+
 namespace Pipe {
 void init(Handle<Object> exports)
 {
+#ifdef CL_VERSION_2_0
   NODE_SET_METHOD(exports, "createPipe", CreatePipe);
   NODE_SET_METHOD(exports, "getPipeInfo", GetPipeInfo);
+#endif
 }
 } // namespace Pipe
 
