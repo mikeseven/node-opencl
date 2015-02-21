@@ -106,7 +106,7 @@ describe("Kernel", function () {
           var k = cl.createKernel(prg, "square");
           var mem = cl.createBuffer(ctx, 0, 8, null);
 
-          assert(cl.setKernelArg(k, 0, mem) == cl.SUCCESS);
+          assert(cl.setKernelArg(k, 0, "float*", mem) == cl.SUCCESS);
 
           cl.releaseKernel(k);
         });
@@ -118,7 +118,7 @@ describe("Kernel", function () {
         U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
 
-          U.bind(cl.setKernelArg, k, 0, 5)
+          U.bind(cl.setKernelArg, k, 0, "float*", 5)
             .should.throw(cl.INVALID_MEM_OBJECT.message);
 
           cl.releaseKernel(k);
@@ -131,7 +131,7 @@ describe("Kernel", function () {
         U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
 
-          U.bind(cl.setKernelArg, k, 0, [5, 10, 15])
+          U.bind(cl.setKernelArg, k, 0, "float*", [5, 10, 15])
             .should.throw(cl.INVALID_MEM_OBJECT.message);
 
           cl.releaseKernel(k);
@@ -144,7 +144,7 @@ describe("Kernel", function () {
         U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
 
-          assert(cl.setKernelArg(k, 2, 5) == cl.SUCCESS);
+          assert(cl.setKernelArg(k, 2, "uint", 5) == cl.SUCCESS);
 
           cl.releaseKernel(k);
         });
@@ -156,7 +156,7 @@ describe("Kernel", function () {
         U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
 
-          U.bind(cl.setKernelArg, k, 2, "a")
+          U.bind(cl.setKernelArg, k, 2, "uint", "a")
             .should.throw(cl.INVALID_ARG_VALUE.message);
 
           cl.releaseKernel(k);
@@ -169,7 +169,7 @@ describe("Kernel", function () {
         U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
 
-          U.bind(cl.setKernelArg, k, 2, [5, 10, 15])
+          U.bind(cl.setKernelArg, k, 2, "uint", [5, 10, 15])
             .should.throw(cl.INVALID_ARG_VALUE.message);
 
           cl.releaseKernel(k);
@@ -184,7 +184,7 @@ describe("Kernel", function () {
           var k = cl.createKernel(prg, "square");
           var mem = cl.createBuffer(ctx, 0, 8, null);
 
-          U.bind(cl.setKernelArg, k, 2, mem)
+          U.bind(cl.setKernelArg, k, 2, "uint", mem)
             .should.throw(cl.INVALID_ARG_VALUE.message);
 
           cl.releaseKernel(k);
@@ -199,7 +199,7 @@ describe("Kernel", function () {
         U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
 
-          U.bind(cl.setKernelArg, k, 3, 5)
+          U.bind(cl.setKernelArg, k, 3, "uint", 5)
             .should.throw(cl.INVALID_ARG_INDEX.message);
 
           cl.releaseKernel(k);
