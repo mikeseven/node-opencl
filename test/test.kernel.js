@@ -41,7 +41,7 @@ describe("Kernel", function () {
     it("should return two valid kernels", function() {
       U.withContext(function (ctx) {
         U.withProgram(ctx, [squareKern, squareCpyKern].join("\n"), function (prg) {
-          var kerns = cl.createKernelsInProgram(prg, 2);
+          var kerns = cl.createKernelsInProgram(prg);
 
           assert.isNotNull(kerns);
           assert.isDefined(kerns);

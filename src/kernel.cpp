@@ -29,29 +29,31 @@ NAN_METHOD(CreateKernel) {
 //                          cl_uint *      /* num_kernels_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(CreateKernelsInProgram) {
   NanScope();
-  REQ_ARGS(2);
+  REQ_ARGS(1);
 
   // Arg 1 - Program
   NOCL_UNWRAP(program, NoCLProgram, args[0]);
 
-  // Arg 2 - Number of kernels
-  cl_uint nkernels = 0;
-  if (args[1]->IsUint32()) {
-    nkernels = args[1]->Uint32Value();
-  } else {
-    THROW_ERR(CL_INVALID_VALUE)
+
+  cl_uint numkernels;
+  CHECK_ERR(::clCreateKernelsInProgram(program->getRaw(), NULL, NULL, &numkernels));
+
+  // --
+
+  cl_kernel * kernels = new cl_kernel[numkernels];
+  CHECK_ERR(::clCreateKernelsInProgram(program->getRaw(), numkernels, kernels, NULL));
+
+  if (numkernels == 0) {
+    THROW_ERR(CL_INVALID_VALUE);
   }
-
-
-  unique_ptr<cl_kernel[]> kernels(new cl_kernel[nkernels]);
-
-  CHECK_ERR(::clCreateKernelsInProgram(program->getRaw(), nkernels, kernels.get(), NULL));
 
   Local<Array> karr = NanNew<Array>();
 
-  for(cl_uint i=0;i<nkernels;i++) {
+  for(cl_uint i = 0; i < numkernels;i++) {
     karr->Set(i,NOCL_WRAP(NoCLKernel, kernels[i]));
   }
+
+  delete kernels;
 
   NanReturnValue(karr);
 }
