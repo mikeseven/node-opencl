@@ -38,14 +38,12 @@ NAN_METHOD(CreateKernelsInProgram) {
   cl_uint numkernels;
   CHECK_ERR(::clCreateKernelsInProgram(program->getRaw(), NULL, NULL, &numkernels));
 
-  // --
-
-  cl_kernel * kernels = new cl_kernel[numkernels];
-  CHECK_ERR(::clCreateKernelsInProgram(program->getRaw(), numkernels, kernels, NULL));
-
   if (numkernels == 0) {
     THROW_ERR(CL_INVALID_VALUE);
   }
+
+  cl_kernel * kernels = new cl_kernel[numkernels];
+  CHECK_ERR(::clCreateKernelsInProgram(program->getRaw(), numkernels, kernels, NULL));
 
   Local<Array> karr = NanNew<Array>();
 
