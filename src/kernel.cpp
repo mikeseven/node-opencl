@@ -31,11 +31,13 @@ NAN_METHOD(CreateKernelsInProgram) {
   NanScope();
   REQ_ARGS(1);
 
+
   // Arg 1 - Program
   NOCL_UNWRAP(program, NoCLProgram, args[0]);
 
 
   cl_uint numkernels;
+
   CHECK_ERR(::clCreateKernelsInProgram(program->getRaw(), NULL, NULL, &numkernels));
 
   if (numkernels == 0) {
