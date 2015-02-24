@@ -197,7 +197,7 @@ NAN_METHOD(Finish) {
 //                     cl_event *          /* event */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueReadBuffer) {
   NanScope();
-  REQ_ARGS(8);
+  REQ_ARGS(6);
 
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
@@ -218,8 +218,11 @@ NAN_METHOD(EnqueueReadBuffer) {
     getPtrAndLen(args[5],ptr,len);
 
   std::vector<NoCLEvent> cl_events;
-  Local<Array> js_events = Local<Array>::Cast(args[6]);
-  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+
+  if (ARG_EXISTS(6)) {
+    Local<Array> js_events = Local<Array>::Cast(args[6]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  }
 
   cl_event event=nullptr;
   if(ARG_EXISTS(7)) {
