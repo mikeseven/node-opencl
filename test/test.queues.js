@@ -12,7 +12,6 @@ var isValidCQ = function (cq) {
   assert.isDefined(cq);
 };
 
-
 var makeCommandQueue = function (ctx, device) {
   if (U.checkVersion("1.x")) {
     return cl.createCommandQueue(ctx, device, null);

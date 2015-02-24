@@ -112,14 +112,14 @@ describe("Sampler", function () {
 
     it("should decrease reference count when passed a valid argument", function () {
       U.withContext(function (context) {
-        var sampler = makeSampler(context);
-        var count = cl.getSamplerInfo(sampler, cl.SAMPLER_REFERENCE_COUNT);
-        assert.isNumber(count);
-        assert.strictEqual(count, 1);
-        f(sampler);
+        var sm = makeSampler(context);
+        var before = cl.getSamplerInfo(sm, cl.SAMPLER_REFERENCE_COUNT);
+        cl.retainSampler(sm);
+        f(sm);
+        var after = cl.getSamplerInfo(sm, cl.SAMPLER_REFERENCE_COUNT);
+        assert(before == after);
       });
     });
-
   });
 
   describe("#getSamplerInfo", function () {
