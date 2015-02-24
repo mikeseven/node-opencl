@@ -41,7 +41,6 @@ NAN_METHOD(CreateCommandQueue) {
 NAN_METHOD(CreateCommandQueueWithProperties) {
   NanScope();
   REQ_ARGS(3);
-  REQ_ARGS(3);
 
   // Arg 1
   NOCL_UNWRAP(context, NoCLContext, args[0]);
@@ -1170,7 +1169,7 @@ NAN_METHOD(EnqueueMigrateMemObjects) {
 //                        cl_event *       /* event */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueNDRangeKernel) {
   NanScope();
-  REQ_ARGS(8);
+  REQ_ARGS(6);
 
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
@@ -1180,23 +1179,54 @@ NAN_METHOD(EnqueueNDRangeKernel) {
 
 
   cl_uint work_dim=args[2]->Uint32Value();
-  size_t global_work_offset[]={0,0,0};
-  size_t global_work_size[]={0,0,0};
-  size_t local_work_size[]={0,0,0};
-  Local<Array> arr= Local<Array>::Cast(args[3]);
-  uint32_t i;
-  for(i=0;i<arr->Length();i++)
-      global_work_offset[i]=arr->Get(i)->Uint32Value();
-  arr= Local<Array>::Cast(args[4]);
-  for(i=0;i<arr->Length();i++)
-      global_work_size[i]=arr->Get(i)->Uint32Value();
-  arr= Local<Array>::Cast(args[5]);
-  for(i=0;i<arr->Length();i++)
-      local_work_size[i]=arr->Get(i)->Uint32Value();
+
+  std::vector<size_t> cl_work_offset;
+  std::vector<size_t> cl_work_global;
+  std::vector<size_t> cl_work_local;
+
+
+  if (ARG_EXISTS(3)) {
+    Local<Array> js_work_offset = Local<Array>::Cast(args[3]);
+
+    if (js_work_offset->Length() != work_dim) {
+      THROW_ERR(CL_INVALID_GLOBAL_OFFSET);
+    }
+
+    for (unsigned int i = 0; i < work_dim; ++ i) {
+      cl_work_offset.push_back(js_work_offset->Get(i)->Uint32Value());
+    }
+  }
+
+  if (ARG_EXISTS(4)) {
+    Local<Array> js_work_global = Local<Array>::Cast(args[4]);
+
+    if (js_work_global->Length() != work_dim) {
+      THROW_ERR(CL_INVALID_GLOBAL_WORK_SIZE);
+    }
+
+    for (unsigned int i = 0; i < work_dim; ++ i) {
+      cl_work_global.push_back(js_work_global->Get(i)->Uint32Value());
+    }
+  }
+
+
+  if (ARG_EXISTS(5)) {
+    Local<Array> js_work_local = Local<Array>::Cast(args[5]);
+
+    if (js_work_local->Length() != work_dim) {
+      THROW_ERR(CL_INVALID_WORK_GROUP_SIZE);
+    }
+
+    for (unsigned int i = 0; i < work_dim; ++ i) {
+      cl_work_local.push_back(js_work_local->Get(i)->Uint32Value());
+    }
+  }
 
   std::vector<NoCLEvent> cl_events;
-  Local<Array> js_events = Local<Array>::Cast(args[6]);
-  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  if (ARG_EXISTS(6)) {
+    Local<Array> js_events = Local<Array>::Cast(args[6]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  }
 
   cl_event event=nullptr;
   if(ARG_EXISTS(7)) {
@@ -1205,10 +1235,14 @@ NAN_METHOD(EnqueueNDRangeKernel) {
   }
 
   CHECK_ERR(::clEnqueueNDRangeKernel(
-    q->getRaw(),k->getRaw(),work_dim,
-    global_work_offset,global_work_size,local_work_size,
-    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-    event ? &event : nullptr));
+    q->getRaw(),
+    k->getRaw(),
+    1,
+    cl_work_offset.size() ? cl_work_offset.data() : NULL,
+    cl_work_global.size() ? cl_work_global.data() : NULL,
+    cl_work_local.size() ? cl_work_local.data() : NULL,
+    NULL, NULL, NULL
+  ));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
 }
