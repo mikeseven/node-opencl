@@ -179,6 +179,12 @@ NAN_METHOD(GetDeviceInfo) {
   case CL_DEVICE_REFERENCE_COUNT:
   case CL_DEVICE_PARTITION_MAX_SUB_DEVICES:
 #endif
+  // OpenCL 1.2 constants
+#ifdef CL_VERSION_2_0
+  case CL_DEVICE_MAX_PIPE_ARGS:
+  case CL_DEVICE_PIPE_MAX_ACTIVE_RESERVATIONS:
+  case CL_DEVICE_PIPE_MAX_PACKET_SIZE:
+#endif
   {
     cl_uint param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_uint), &param_value, NULL));

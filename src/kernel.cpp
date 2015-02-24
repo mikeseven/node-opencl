@@ -29,29 +29,31 @@ NAN_METHOD(CreateKernel) {
 //                          cl_uint *      /* num_kernels_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(CreateKernelsInProgram) {
   NanScope();
-  REQ_ARGS(2);
+  REQ_ARGS(1);
+
 
   // Arg 1 - Program
   NOCL_UNWRAP(program, NoCLProgram, args[0]);
 
-  // Arg 2 - Number of kernels
-  cl_uint nkernels = 0;
-  if (args[1]->IsUint32()) {
-    nkernels = args[1]->Uint32Value();
-  } else {
-    THROW_ERR(CL_INVALID_VALUE)
+
+  cl_uint numkernels;
+
+  CHECK_ERR(::clCreateKernelsInProgram(program->getRaw(), NULL, NULL, &numkernels));
+
+  if (numkernels == 0) {
+    THROW_ERR(CL_INVALID_VALUE);
   }
 
-
-  unique_ptr<cl_kernel[]> kernels(new cl_kernel[nkernels]);
-
-  CHECK_ERR(::clCreateKernelsInProgram(program->getRaw(), nkernels, kernels.get(), NULL));
+  cl_kernel * kernels = new cl_kernel[numkernels];
+  CHECK_ERR(::clCreateKernelsInProgram(program->getRaw(), numkernels, kernels, NULL));
 
   Local<Array> karr = NanNew<Array>();
 
-  for(cl_uint i=0;i<nkernels;i++) {
+  for(cl_uint i = 0; i < numkernels;i++) {
     karr->Set(i,NOCL_WRAP(NoCLKernel, kernels[i]));
   }
+
+  delete kernels;
 
   NanReturnValue(karr);
 }
@@ -87,7 +89,7 @@ NAN_METHOD(ReleaseKernel) {
 //                const void * /* arg_value */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(SetKernelArg) {
   NanScope();
-  REQ_ARGS(3);
+  REQ_ARGS(4);
 
   // Arg 0
   NOCL_UNWRAP(k, NoCLKernel, args[0]);
@@ -95,31 +97,29 @@ NAN_METHOD(SetKernelArg) {
   // Arg 1
   unsigned int idx = args[1]->Uint32Value();
 
-  size_t nchars = 0;
-  CHECK_ERR(::clGetKernelArgInfo(k->getRaw(), idx, CL_KERNEL_ARG_TYPE_NAME, 0, NULL, &nchars));
-  unique_ptr<char[]> name(new char[nchars]);
-  CHECK_ERR(::clGetKernelArgInfo(k->getRaw(), idx, CL_KERNEL_ARG_TYPE_NAME, nchars, name.get(), NULL));
-
   // Arg 2
+  String::Utf8Value name(args[2]);
+
+  // Arg 3
   size_t ptr_size = 0;
   void * ptr_data = NULL;
 
   // Boolean
-  if (strcmp(name.get(), "bool") == 0) {
+  if (strcmp(*name, "bool") == 0) {
     ptr_size = sizeof(cl_bool);
     ptr_data = new cl_bool;
 
-    *((cl_bool *)ptr_data) = args[2]->BooleanValue() ? 1 : 0;
+    *((cl_bool *)ptr_data) = args[3]->BooleanValue() ? 1 : 0;
   }
 
   #define CONVERT_NUMBER(NAME, TYPE, PRED, CONV) \
-    if (strcmp(name.get(), NAME) == 0) { \
-      if (!args[2]->PRED()){\
+    if (strcmp(*name, NAME) == 0) { \
+      if (!args[3]->PRED()){\
         THROW_ERR(CL_INVALID_ARG_VALUE) \
       }\
       ptr_data = new TYPE;\
       ptr_size = sizeof(TYPE); \
-      *((TYPE *)ptr_data) = args[2]->CONV();\
+      *((TYPE *)ptr_data) = args[3]->CONV();\
     }
 
   CONVERT_NUMBER("char", cl_short, IsInt32, ToInt32()->Value);
@@ -137,11 +137,11 @@ NAN_METHOD(SetKernelArg) {
 
 
   #define CONVERT_VECT(NAME, TYPE, I, PRED, COND) \
-    if (strcmp(name.get(), "NAME ## I") == 0) { \
-      if (!args[2]->IsArray()) {\
+    if (strcmp(*name, "NAME ## I") == 0) { \
+      if (!args[3]->IsArray()) {\
         THROW_ERR(CL_INVALID_ARG_VALUE);\
       }\
-      Local<Array> arr = Local<Array>::Cast(args[2]);\
+      Local<Array> arr = Local<Array>::Cast(args[3]);\
       if (arr->Length() != I) {\
         THROW_ERR(CL_INVALID_ARG_SIZE);\
       }\
@@ -177,16 +177,16 @@ NAN_METHOD(SetKernelArg) {
   bool dont_delete = false;
 
   // Otherwise it should be a native type
-  if (strcmp(name.get(), "sampler_t") == 0) {
-    NOCL_UNWRAP(sw , NoCLSampler, args[2]);
+  if (strcmp(*name, "sampler_t") == 0) {
+    NOCL_UNWRAP(sw , NoCLSampler, args[3]);
     ptr_data = sw->getRaw();
     ptr_size = sizeof(cl_sampler);
     dont_delete = true;
   }
 
   // And if it ends with a star it is a memobject
-  if ('*' == name.get()[(strlen(name.get()) - 1)]){
-    NOCL_UNWRAP(mem , NoCLMem, args[2]);
+  if ('*' == (*name)[(strlen(*name) - 1)]){
+    NOCL_UNWRAP(mem , NoCLMem, args[3]);
     ptr_data = mem->getRaw();
     ptr_size = sizeof(cl_mem);
     dont_delete = true;

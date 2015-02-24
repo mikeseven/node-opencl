@@ -51,21 +51,34 @@ describe("Context", function () {
 
     it("should throw cl.CL_INVALID_DEVICE_TYPE if type is unknown", function () {
 
-      Diag.exclude(null, platform)
-        .os("darwin")
-        .driver("OpenCL 1.2 (Dec 14 2014 22:29:47)")
-        .because("It returns INVALID_DEVICE instead of invalid value")
-        .raise();
-
-      var ex;
-      ex = cl.INVALID_DEVICE_TYPE.message;
+      var ex = cl.INVALID_DEVICE_TYPE.message;
 
       var properties = [
         cl.CONTEXT_PLATFORM, platform
       ];
 
+      Diag.exclude(null, platform)
+        .os("darwin")
+        .driver("OpenCL 1.2 (Dec 14 2014 22:29:47)")
+        .because("It returns INVALID_DEVICE instead of invalid value")
+        .should(function () {
+          U.bind(cl.createContextFromType, properties, 0, null, null)
+            .should.throw(cl.INVALID_DEVICE.message);
+        })
+        .raise();
+
+      Diag.exclude(null, platform)
+        .os("linux")
+        .driver("OpenCL 2.0 AMD-APP (1642.5)")
+        .because("It returns DEVICE_NOT_FOUND instead of invalid value")
+        .should(function () {
+          U.bind(cl.createContextFromType, properties, 0, null, null)
+            .should.throw(cl.DEVICE_NOT_FOUND.message);
+        })
+        .raise();
+
       U.bind(cl.createContextFromType, properties, 0, null, null)
-        .should.throw(ex);
+        .should.throw(cl.INVALID_DEVICE_TYPE.message);
     });
 
     it("should create a context with a wildcard type", function () {

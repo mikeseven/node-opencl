@@ -4,6 +4,7 @@ var assert = require('chai').assert;
 var util = require('util');
 var log = console.log;
 var Diag = require("./utils/diagnostic");
+var U = require("./utils/utils.js");
 
 describe("Device", function() {
   var platforms=cl.getPlatformIDs();
@@ -140,6 +141,12 @@ describe("Device", function() {
       testInteger(device, "DEVICE_MAX_PARAMETER_SIZE");
       testInteger(device, "DEVICE_MAX_WORK_GROUP_SIZE");
       testInteger(device, "DEVICE_PROFILING_TIMER_RESOLUTION");
+
+      if (U.checkVersion("2.x")) {
+        testInteger(device, "DEVICE_PIPE_MAX_PACKET_SIZE");
+        testInteger(device, "DEVICE_MAX_PIPE_ARGS");
+        testInteger(device, "DEVICE_PIPE_MAX_ACTIVE_RESERVATIONS");
+      }
 
       if(cl.CL_VERSION_1_2) {
         testInteger(device, "DEVICE_IMAGE_MAX_BUFFER_SIZE");

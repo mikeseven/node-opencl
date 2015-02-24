@@ -93,9 +93,8 @@ describe("MemObj", function() {
         var buffer = cl.createBuffer(context, cl.MEM_WRITE_ONLY, 8, null);
 
         Diag.exclude(device)
-          .os("win32")
+          .os("win32").os("linux")
           .driver("OpenCL 2.0 AMD-APP (1642.5)")
-          .gpu("Intel(R) Core(TM) i7-4600U CPU @ 2.10GHz")
           .because("It creates the subbuffer, ignoring read only constraint")
           .should(function () {
             var buf = f(buffer, cl.MEM_READ_WRITE, cl.BUFFER_CREATE_TYPE_REGION, {"origin": 0, "size": 2});

@@ -17,6 +17,7 @@
         'src/memobj.cpp',
         'src/sampler.cpp',
         'src/commandqueue.cpp',
+        'src/pipe.cpp',
         'src/manager.cpp'
       ],
       'include_dirs' : [
