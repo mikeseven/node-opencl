@@ -258,7 +258,7 @@ NAN_METHOD(EnqueueReadBuffer) {
 //                         cl_event *          /* event */) CL_API_SUFFIX__VERSION_1_1;
 NAN_METHOD(EnqueueReadBufferRect) {
   NanScope();
-  REQ_ARGS(13);
+  REQ_ARGS(11);
 
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
@@ -298,8 +298,11 @@ NAN_METHOD(EnqueueReadBufferRect) {
     getPtrAndLen(args[10],ptr,len);
 
   std::vector<NoCLEvent> cl_events;
-  Local<Array> js_events = Local<Array>::Cast(args[11]);
-  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+
+  if (ARG_EXISTS(11)) {
+    Local<Array> js_events = Local<Array>::Cast(args[6]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  }
 
   cl_event event=nullptr;
   if(ARG_EXISTS(12)) {
@@ -328,7 +331,7 @@ NAN_METHOD(EnqueueReadBufferRect) {
 //                      cl_event *         /* event */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueWriteBuffer) {
   NanScope();
-  REQ_ARGS(8);
+  REQ_ARGS(6);
 
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
@@ -349,9 +352,12 @@ NAN_METHOD(EnqueueWriteBuffer) {
     getPtrAndLen(args[5],ptr,len);
 
   std::vector<NoCLEvent> cl_events;
-  Local<Array> js_events = Local<Array>::Cast(args[6]);
-  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
 
+  if (ARG_EXISTS(6)) {
+    Local<Array> js_events = Local<Array>::Cast(args[6]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+
+  }
   cl_event event=nullptr;
   if(ARG_EXISTS(7)) {
     NOCL_UNWRAP(evt, NoCLEvent, args[7]);
@@ -383,7 +389,7 @@ NAN_METHOD(EnqueueWriteBuffer) {
 //                          cl_event *          /* event */) CL_API_SUFFIX__VERSION_1_1;
 NAN_METHOD(EnqueueWriteBufferRect) {
   NanScope();
-  REQ_ARGS(13);
+  REQ_ARGS(11);
 
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
@@ -422,8 +428,11 @@ NAN_METHOD(EnqueueWriteBufferRect) {
     getPtrAndLen(args[10],ptr,len);
 
   std::vector<NoCLEvent> cl_events;
-  Local<Array> js_events = Local<Array>::Cast(args[11]);
-  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  if (ARG_EXISTS(12)) {
+    Local<Array> js_events = Local<Array>::Cast(args[11]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  }
+
 
   cl_event event=nullptr;
   if(ARG_EXISTS(12)) {

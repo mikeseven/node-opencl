@@ -224,37 +224,127 @@ describe("CommandQueue", function() {
   });
 
 
-  describe("# ( TODO ) enqueueReadBufferRect", function() {
-    it("should work with read write buffers", function () {
-      // TODO
-    });
+  describe("#enqueueReadBufferRect", function() {
 
-    it("should work with write buffers", function () {
-      // TODO
-    });
-
-  });
-
-
-  describe("# ( TODO ) enqueueWriteBuffer", function() {
     it("should work with read only buffers", function () {
-      // TODO
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var buffer = cl.createBuffer(ctx, cl.MEM_READ_ONLY, 200, null);
+          var nbuffer = new Buffer(200);
+          var ret = cl.enqueueReadBufferRect(cq, buffer, true,
+            [0, 0, 0], [0, 0, 0], [1, 1, 1],
+            2 * 4, 0, 8 * 4, 0, nbuffer);
+
+          assert(ret == cl.SUCCESS);
+        });
+      });
     });
 
-    it("should work with write buffers", function () {
-      // TODO
+    it("should fail if buffer is null", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var nbuffer = new Buffer(8);
+          U.bind(cl.enqueueReadBuffer, cq, null, true,
+            [0, 0, 0], [0, 0, 0], [4, 4, 1],
+            2 * 4, 0, 8 * 4, 0, nbuffer)
+            .should.throw(cl.INVALID_MEM_OBJECT.message);
+        });
+      });
+    });
+
+
+    it("should fail if output buffer is null", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var buffer = cl.createBuffer(ctx, cl.MEM_WRITE_ONLY, 8, null);
+          U.bind(cl.enqueueReadBufferRect, cq, buffer, true,
+            [0, 0, 0], [0, 0, 0], [4, 4, 1],
+            2 * 4, 0, 8 * 4, 0, null)
+            .should.throw(cl.INVALID_VALUE.message);
+        });
+      });
     });
 
   });
 
 
-  describe("# ( TODO ) enqueueWriteBufferRect", function() {
-    it("should work with read write buffers", function () {
-      // TODO
+  describe("#enqueueWriteBuffer", function() {
+
+    it("should work with read only buffers", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var buffer = cl.createBuffer(ctx, cl.MEM_READ_ONLY, 8, null);
+          var nbuffer = new Buffer(8);
+          var ret = cl.enqueueWriteBuffer(cq, buffer, true, 0, 8, nbuffer);
+
+          assert(ret == cl.SUCCESS);
+        });
+      });
     });
 
-    it("should work with write buffers", function () {
-      // TODO
+    it("should fail if buffer is null", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var nbuffer = new Buffer(8);
+          U.bind(cl.enqueueWriteBuffer, cq, null, true, 0, 8, nbuffer)
+            .should.throw(cl.INVALID_MEM_OBJECT.message);
+        });
+      });
+    });
+
+
+    it("should fail if output buffer is null", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var buffer = cl.createBuffer(ctx, cl.MEM_WRITE_ONLY, 8, null);
+          U.bind(cl.enqueueWriteBuffer, cq, buffer, true, 0, 8, null)
+            .should.throw(cl.INVALID_VALUE.message);
+        });
+      });
+    });
+
+  });
+
+
+  describe("#enqueueWriteBufferRect", function() {
+
+    it("should work with read only buffers", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var buffer = cl.createBuffer(ctx, cl.MEM_READ_ONLY, 200, null);
+          var nbuffer = new Buffer(200);
+          var ret = cl.enqueueWriteBufferRect(cq, buffer, true,
+            [0, 0, 0], [0, 0, 0], [1, 1, 1],
+            2 * 4, 0, 8 * 4, 0, nbuffer);
+
+          assert(ret == cl.SUCCESS);
+        });
+      });
+    });
+
+    it("should fail if buffer is null", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var nbuffer = new Buffer(8);
+          U.bind(cl.enqueueWriteBufferRect, cq, null, true,
+            [0, 0, 0], [0, 0, 0], [4, 4, 1],
+            2 * 4, 0, 8 * 4, 0, nbuffer)
+            .should.throw(cl.INVALID_MEM_OBJECT.message);
+        });
+      });
+    });
+
+
+    it("should fail if output buffer is null", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var buffer = cl.createBuffer(ctx, cl.MEM_WRITE_ONLY, 8, null);
+          U.bind(cl.enqueueWriteBufferRect, cq, buffer, true,
+            [0, 0, 0], [0, 0, 0], [4, 4, 1],
+            2 * 4, 0, 8 * 4, 0, null)
+            .should.throw(cl.INVALID_VALUE.message);
+        });
+      });
     });
 
   });
