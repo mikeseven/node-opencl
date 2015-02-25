@@ -693,7 +693,7 @@ NAN_METHOD(EnqueueReadImage) {
 //                     cl_event *          /* event */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueWriteImage) {
   NanScope();
-  REQ_ARGS(10);
+  REQ_ARGS(8);
 
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
@@ -720,14 +720,16 @@ NAN_METHOD(EnqueueWriteImage) {
   void *ptr=nullptr;
   int len=0;
   if(args[7]->IsUndefined() || args[7]->IsNull()) {
-    CHECK_ERR(CL_INVALID_VALUE);
+    THROW_ERR(CL_INVALID_VALUE);
   }
   else
     getPtrAndLen(args[7],ptr,len);
 
   std::vector<NoCLEvent> cl_events;
-  Local<Array> js_events = Local<Array>::Cast(args[8]);
-  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  if (ARG_EXISTS(8)) {
+    Local<Array> js_events = Local<Array>::Cast(args[8]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  }
 
   cl_event event=nullptr;
   if(ARG_EXISTS(9)) {
