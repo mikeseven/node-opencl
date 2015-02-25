@@ -813,7 +813,7 @@ NAN_METHOD(EnqueueFillImage) {
 //                    cl_event *           /* event */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueCopyImage) {
   NanScope();
-  REQ_ARGS(8);
+  REQ_ARGS(6);
 
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
@@ -839,8 +839,10 @@ NAN_METHOD(EnqueueCopyImage) {
       region[i]=arr->Get(i)->Uint32Value();
 
   std::vector<NoCLEvent> cl_events;
-  Local<Array> js_events = Local<Array>::Cast(args[6]);
-  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  if (ARG_EXISTS(6)) {
+    Local<Array> js_events = Local<Array>::Cast(args[6]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  }
 
   cl_event event=nullptr;
   if(ARG_EXISTS(7)) {
