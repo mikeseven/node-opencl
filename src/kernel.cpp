@@ -38,7 +38,7 @@ NAN_METHOD(CreateKernelsInProgram) {
 
   cl_uint numkernels;
 
-  CHECK_ERR(::clCreateKernelsInProgram(program->getRaw(), NULL, NULL, &numkernels));
+  CHECK_ERR(::clCreateKernelsInProgram(program->getRaw(), 0, NULL, &numkernels));
 
   if (numkernels == 0) {
     THROW_ERR(CL_INVALID_VALUE);

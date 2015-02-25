@@ -1262,7 +1262,7 @@ NAN_METHOD(EnqueueNDRangeKernel) {
     cl_work_offset.size() ? cl_work_offset.data() : NULL,
     cl_work_global.size() ? cl_work_global.data() : NULL,
     cl_work_local.size() ? cl_work_local.data() : NULL,
-    NULL, NULL, NULL
+    0, NULL, NULL
   ));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
