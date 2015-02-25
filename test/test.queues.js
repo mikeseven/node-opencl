@@ -164,7 +164,7 @@ describe("CommandQueue", function() {
 
   describe("#enqueueReadBuffer", function() {
 
-    it("should work with read only buffers", function () {
+    it("should work with valid buffers", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           var buffer = cl.createBuffer(ctx, cl.MEM_READ_ONLY, 8, null);
@@ -175,17 +175,6 @@ describe("CommandQueue", function() {
         });
       });
     });
-
-    it("should work with write buffers", function () {
-      U.withContext(function (ctx, device) {
-        U.withCQ(ctx, device, function (cq) {
-          var buffer = cl.createBuffer(ctx, cl.MEM_WRITE_ONLY, 8, null);
-          var nbuffer = new Buffer(8);
-          var ret = cl.enqueueReadBuffer(cq, buffer, true, 0, 8, nbuffer);
-        });
-      });
-    });
-
 
     it("should fail if buffer is null", function () {
       U.withContext(function (ctx, device) {
@@ -226,7 +215,7 @@ describe("CommandQueue", function() {
 
   describe("#enqueueReadBufferRect", function() {
 
-    it("should work with read only buffers", function () {
+    it("should work with valid buffers", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           var buffer = cl.createBuffer(ctx, cl.MEM_READ_ONLY, 200, null);
@@ -270,7 +259,7 @@ describe("CommandQueue", function() {
 
   describe("#enqueueWriteBuffer", function() {
 
-    it("should work with read only buffers", function () {
+    it("should work with valid buffers", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           var buffer = cl.createBuffer(ctx, cl.MEM_READ_ONLY, 8, null);
@@ -308,7 +297,7 @@ describe("CommandQueue", function() {
 
   describe("#enqueueWriteBufferRect", function() {
 
-    it("should work with read only buffers", function () {
+    it("should work with valid buffers", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           var buffer = cl.createBuffer(ctx, cl.MEM_READ_ONLY, 200, null);
