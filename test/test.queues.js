@@ -338,7 +338,7 @@ describe("CommandQueue", function() {
 
   });
 
-  describe("# ( TODO ) enqueueFillBuffer", function() {
+  versions(["1.2", "2.0"]).describe("# ( TODO ) enqueueFillBuffer", function() {
     // FIXME
   });
 
@@ -459,7 +459,7 @@ describe("CommandQueue", function() {
   });
 
 
-  describe("# ( TODO ) enqueueFillImage", function() {
+  versions(["1.2", "2.0"]).describe("# ( TODO ) enqueueFillImage", function() {
     // FIXME
   });
 
@@ -584,7 +584,10 @@ describe("CommandQueue", function() {
   });
 
   describe("# ( TODO ) enqueueTask", function() {
-    // TODO
+
+    versions(["2.x"]).hasUndefined(cl.enqueueTask);
+
+    // versions(["1.x"])
   });
 
   describe("#enqueueNativeKernel", function() {
@@ -596,11 +599,11 @@ describe("CommandQueue", function() {
   });
 
   describe("# ( TODO ) enqueueMarkerWithWaitList", function() {
-    // TODO
+    versions(["1.1"]).hasUndefined(cl.enqueueMarkerWithWaitList);
   });
 
   describe("# ( TODO ) enqueueBarrierWithWaitList", function() {
-    // TODO
+    versions(["1.1"]).hasUndefined(cl.enqueueBarrierWithWaitList);
   });
 
 });

@@ -5,6 +5,7 @@ var util = require('util');
 var log = console.log;
 var Diag = require("./utils/diagnostic");
 var U = require("./utils/utils.js");
+var versions = require("./utils/versions");
 
 describe("Device", function() {
   var platforms=cl.getPlatformIDs();
@@ -180,7 +181,8 @@ describe("Device", function() {
       })
 
     });
-    describe("#createSubDevices() for "+device_vendor+" "+device_name,function() {
+
+    versions(["1.2", "2.0"]).describe("#createSubDevices() for "+device_vendor+" "+device_name,function() {
 
       it("should return an array of sub-devices", function() {
 

@@ -6,6 +6,7 @@ var assert = require("chai").assert;
 var fs = require("fs");
 var U = require("./utils/utils");
 var Diag = require("./utils/diagnostic");
+var versions = require("./utils/versions");
 
 var squareKern = fs.readFileSync(__dirname + "/kernels/square.cl").toString();
 var squareCpyKern = fs.readFileSync(__dirname + "/kernels/square_cpy.cl").toString();
@@ -194,7 +195,7 @@ describe("Program", function () {
     });
   });
 
-  describe("#compileProgram", function () {
+  versions(["1.2", "2.0"]).describe("#compileProgram", function () {
     it("should build a program with no input headers", function () {
       U.withContext(function (ctx) {
         var prg = cl.createProgramWithSource(ctx, squareKern);
@@ -229,7 +230,7 @@ describe("Program", function () {
     });
   });
 
-  describe("#linkProgram", function () {
+  versions(["1.2", "2.0"]).describe("#linkProgram", function () {
 
 
     it("should fail as context is invalid", function () {
@@ -314,7 +315,7 @@ describe("Program", function () {
 
   });
 
-  describe("#unloadPlatformCompiler", function () {
+  versions(["1.2", "2.0"]).describe("#unloadPlatformCompiler", function () {
     it("should work when using a valid platform", function() {
       U.withContext(function (ctx, device, platform) {
         cl.unloadPlatformCompiler(platform);

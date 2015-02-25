@@ -1536,7 +1536,7 @@ void init(Handle<Object> exports)
   NODE_SET_METHOD(exports, "enqueueBarrierWithWaitList", EnqueueBarrierWithWaitList);
 #elif defined(CL_VERSION_1_1)
   NODE_SET_METHOD(exports, "enqueueMarker", EnqueueMarker);
-  NODE_SET_METHOD(exports, "EnqueueWaitForEvents", EnqueueWaitForEvents);
+  NODE_SET_METHOD(exports, "enqueueWaitForEvents", EnqueueWaitForEvents);
   NODE_SET_METHOD(exports, "enqueueBarrier", EnqueueBarrier);
 #endif
 }

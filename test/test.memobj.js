@@ -6,6 +6,7 @@ var assert = require('chai').assert;
 var U = require("./utils/utils");
 var log = console.log;
 var Diag = require("./utils/diagnostic");
+var versions = require("./utils/versions");
 
 describe("MemObj", function() {
 
@@ -122,7 +123,8 @@ describe("MemObj", function() {
       "image_array_size": 1
     };
 
-    it("should create an image", function() {
+    versions(["1.2", "2.x"]).it("should create an image", function() {
+
       U.withContext(function (context, device, platform) {
 
         var image = cl.createImage(context, 0, imageFormat, imageDesc, null);
