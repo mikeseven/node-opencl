@@ -587,8 +587,12 @@ describe("CommandQueue", function() {
     // TODO
   });
 
-  describe("# ( TODO ) enqueueNativeKernel", function() {
-    // TODO
+  describe("#enqueueNativeKernel", function() {
+
+    it("should always throw since it is not supported", function () {
+      U.bind(cl.enqueueNativeKernel).should.throw();
+    });
+
   });
 
   describe("# ( TODO ) enqueueMarkerWithWaitList", function() {

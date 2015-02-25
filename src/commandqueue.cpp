@@ -1300,6 +1300,7 @@ NAN_METHOD(EnqueueTask) {
 }
 #endif
 
+
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clEnqueueNativeKernel(cl_command_queue  /* command_queue */,
 //             void (CL_CALLBACK * /*user_func*/)(void *),
@@ -1315,9 +1316,12 @@ NAN_METHOD(EnqueueTask) {
 // Note: only available if CL_EXEC_NATIVE_KERNEL capability
 NAN_METHOD(EnqueueNativeKernel) {
   NanScope();
-  // TODO
+
+  NanThrowError("enqueueNativeKernel is not supported by Node OpenCL");
+
   NanReturnUndefined();
 }
+
 
 #ifdef CL_VERSION_1_2
 // extern CL_API_ENTRY cl_int CL_API_CALL
