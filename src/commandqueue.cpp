@@ -871,7 +871,7 @@ NAN_METHOD(EnqueueCopyImage) {
 //                            cl_event *       /* event */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueCopyImageToBuffer) {
   NanScope();
-  REQ_ARGS(8);
+  REQ_ARGS(6);
 
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
@@ -880,7 +880,7 @@ NAN_METHOD(EnqueueCopyImageToBuffer) {
   NOCL_UNWRAP(src_image, NoCLMem, args[1]);
 
   // Arg 2
-  NOCL_UNWRAP(dst_buffer, NoCLMem, args[1]);
+  NOCL_UNWRAP(dst_buffer, NoCLMem, args[2]);
 
   size_t src_origin[]={0,0,0};
   size_t region[]={1,1,1};
@@ -895,8 +895,10 @@ NAN_METHOD(EnqueueCopyImageToBuffer) {
   size_t dst_offset = args[5]->Uint32Value();
 
   std::vector<NoCLEvent> cl_events;
-  Local<Array> js_events = Local<Array>::Cast(args[6]);
-  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  if (ARG_EXISTS(6)) {
+    Local<Array> js_events = Local<Array>::Cast(args[6]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  }
 
   cl_event event=nullptr;
   if(ARG_EXISTS(7)) {
@@ -925,7 +927,7 @@ NAN_METHOD(EnqueueCopyImageToBuffer) {
 //                            cl_event *       /* event */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueCopyBufferToImage) {
   NanScope();
-  REQ_ARGS(8);
+  REQ_ARGS(6);
 
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
@@ -942,6 +944,7 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(args[4]);
   uint32_t i;
+
   for(i=0;i<arr->Length();i++)
       dst_origin[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(args[5]);
@@ -949,12 +952,14 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
       region[i]=arr->Get(i)->Uint32Value();
 
   std::vector<NoCLEvent> cl_events;
-  Local<Array> js_events = Local<Array>::Cast(args[6]);
-  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  if(ARG_EXISTS(6)) {
+    Local<Array> js_events = Local<Array>::Cast(args[7]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  }
 
   cl_event event=nullptr;
   if(ARG_EXISTS(7)) {
-    NOCL_UNWRAP(evt, NoCLEvent, args[7]);
+    NOCL_UNWRAP(evt, NoCLEvent, args[8]);
     event = evt->getRaw();
   }
 
