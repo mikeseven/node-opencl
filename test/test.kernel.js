@@ -264,7 +264,7 @@ describe("Kernel", function () {
           var k = cl.createKernel(prg, "square");
           var c = cl.getKernelInfo(k, cl.KERNEL_CONTEXT);
 
-          assert.isObject(c);
+          assert(c.equals(ctx));
         });
       });
     });
@@ -275,7 +275,7 @@ describe("Kernel", function () {
           var k = cl.createKernel(prg, "square");
           var p = cl.getKernelInfo(k, cl.KERNEL_PROGRAM);
 
-          assert.isObject(p);
+          assert(p.equals(prg));
         });
       });
     });

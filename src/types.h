@@ -67,17 +67,29 @@ Local<ObjectTemplate> & GetNodeOpenCLObjectGenericTemplate();
   TYPE * VAR = NoCLUnwrap<TYPE>(EXPR);\
   if (VAR == NULL) { NanThrowError(opencl::getExceptionMessage(TYPE::getErrorCode()).c_str(), TYPE::getErrorCode()); NanReturnUndefined(); }
 
-template <typename T, unsigned int elid, int err>
-class NoCLObject {
-protected:
-  T raw;
-public:
 
-  NoCLObject(T raw) : raw(raw) {
+class NoCLObjectGen {
+
+protected:
+  const void * raw;
+
+public:
+  const void * getUncastedRaw() {
+    return raw;
   }
 
-  T getRaw() {
-    return this->raw;
+};
+
+template <typename T, unsigned int elid, int err>
+class NoCLObject : public NoCLObjectGen {
+public:
+
+  NoCLObject(T raw) {
+    this->raw = raw;
+  }
+
+  const T getRaw() {
+    return (T) this->raw;
   }
 
   static unsigned int GetId() {
@@ -199,12 +211,17 @@ public:
   }
 };
 
+NAN_METHOD(Equals);
 
 // FIXME static does not seem to work great with V8 (random segfaults)
 // But we should not create a template each time we create an object
 template <typename T>
 Local<Object> NoCLWrapCLObject(T * elm) {
   Local<ObjectTemplate> tpl = NanNew<ObjectTemplate>();
+
+  tpl->Set(NanNew<v8::String>("equals"),
+    NanNew<FunctionTemplate>(Equals, NanNew<v8::External>(elm)));
+
   tpl->SetInternalFieldCount(2);
   Local<Object> obj = tpl->NewInstance();
 
