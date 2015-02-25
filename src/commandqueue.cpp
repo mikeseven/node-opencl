@@ -57,7 +57,7 @@ NAN_METHOD(CreateCommandQueueWithProperties) {
         THROW_ERR(CL_INVALID_VALUE);
     }
     cl_uint prop_id = properties->Get(i)->Uint32Value();
-g    cl_properties.push_back(prop_id);
+    cl_properties.push_back(prop_id);
 
     if(prop_id == CL_QUEUE_PROPERTIES) {
       if (!properties->Get(i+1)->IsNumber()) {
