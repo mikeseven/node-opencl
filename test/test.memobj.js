@@ -177,6 +177,23 @@ describe("MemObj", function() {
       });
     });
 
+    it("should not fail if a release is asked twice", function (done) {
+      U.withContext(function (context, device, platform) {
+
+        Diag.exclude(device)
+          .because("It segfaults everywhere")
+          .raise();
+
+        var buffer = cl.createBuffer(context, 0, 8, null);
+        f(buffer);
+
+        setTimeout(function () {
+          f(buffer);
+          done();
+        }, 1500);
+      });
+    });
+
     it("should throw cl.INVALID_MEM_OBJECT if mem object is invalid", function () {
       U.withContext(function (context, device, platform) {
         f.bind(f, null).should.throw(cl.INVALID_MEM_OBJECT.message);
