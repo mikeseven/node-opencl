@@ -6,6 +6,7 @@ var log = console.log;
 var U = require("./utils/utils");
 var versions = require("./utils/versions");
 var Diag = require("./utils/diagnostic");
+var fs = require("fs");
 
 var isValidCQ = function (cq) {
   assert.isNotNull(cq);
@@ -997,42 +998,183 @@ describe("CommandQueue", function() {
   });
 
   describe("# ( TODO ) enqueueMapBuffer", function() {
-    // FIXME
   });
 
   describe("# ( TODO ) enqueueMapImage", function() {
-    // FIXME
   });
 
   describe("# ( TODO ) enqueueMapBuffer", function() {
-    // FIXME
   });
 
   describe("# ( TODO ) enqueueUnmapMemObject", function() {
-    // FIXME
   });
 
   describe("# ( TODO ) enqueueMigrateMemObjects", function() {
-    // FIXME
   });
 
-  describe("# ( TODO ) enqueueNDRangeKernel", function() {
+  describe("#enqueueNDRangeKernel", function() {
 
-    it("should work with a valid call", function () {
-      // TODO
+    var inputs = new Buffer(10000 * 4);
+    var outputs = new Buffer(10000 * 4);
+
+    for (var i = 0; i < 10000; ++ i) {
+      inputs.writeUInt32LE(i, i * 4);
+    }
+
+    it("should throw with a valid call but with no bound args", function () {
+      U.withContext(function (ctx, device) {
+        U.withProgram(ctx, fs.readFileSync(__dirname  + "/kernels/square.cl").toString(),
+        function (prg) {
+          cl.buildProgram(prg);
+          var kern = cl.createKernel(prg, "square");
+
+          var inputsMem = cl.createBuffer(
+            ctx, cl.MEM_COPY_HOST_PTR, 10000 * 4, inputs);
+          var outputsMem = cl.createBuffer(
+            ctx, cl.MEM_COPY_HOST_PTR, 10000 * 4, outputs);
+
+          cl.setKernelArg(kern, 0, "uint*", inputsMem);
+          cl.setKernelArg(kern, 1, "uint*", outputsMem);
+          cl.setKernelArg(kern, 2, "uint", 10000);
+
+          U.withCQ(ctx, device, function (cq) {
+
+            cl.enqueueNDRangeKernel(
+              cq, kern, 1, null, [100], null);
+
+          });
+        })
+      })
     });
 
-    it("should work for kernels with __attribute", function () {
-      // TODO
+    it("should fail with null global size", function () {
+      U.withContext(function (ctx, device) {
+        U.withProgram(ctx, fs.readFileSync(__dirname  + "/kernels/square.cl").toString(),
+          function (prg) {
+            cl.buildProgram(prg);
+            var kern = cl.createKernel(prg, "square");
+
+            var inputsMem = cl.createBuffer(
+              ctx, cl.MEM_COPY_HOST_PTR, 10000 * 4, inputs);
+            var outputsMem = cl.createBuffer(
+              ctx, cl.MEM_COPY_HOST_PTR, 10000 * 4, outputs);
+
+            cl.setKernelArg(kern, 0, "uint*", inputsMem);
+            cl.setKernelArg(kern, 1, "uint*", outputsMem);
+            cl.setKernelArg(kern, 2, "uint", 10000);
+
+            U.withCQ(ctx, device, function (cq) {
+
+              U.bind(cl.enqueueNDRangeKernel,
+                cq, kern, 1, null, null, null)
+                .should.throw(cl.INVALID_GLOBAL_WORK_SIZE.message);
+
+            });
+          })
+      })
+    });
+
+    it("should fail if kern is invalid", function () {
+      U.withContext(function (ctx, device) {
+        U.withProgram(ctx, fs.readFileSync(__dirname  + "/kernels/square.cl").toString(),
+          function (prg) {
+            cl.buildProgram(prg);
+            var kern = cl.createKernel(prg, "square");
+
+            var inputsMem = cl.createBuffer(
+              ctx, cl.MEM_COPY_HOST_PTR, 10000 * 4, inputs);
+            var outputsMem = cl.createBuffer(
+              ctx, cl.MEM_COPY_HOST_PTR, 10000 * 4, outputs);
+
+            cl.setKernelArg(kern, 0, "uint*", inputsMem);
+            cl.setKernelArg(kern, 1, "uint*", outputsMem);
+            cl.setKernelArg(kern, 2, "uint", 10000);
+
+            U.withCQ(ctx, device, function (cq) {
+
+              U.bind(cl.enqueueNDRangeKernel,
+                cq, null, 1, null, [100], null)
+                .should.throw(cl.INVALID_KERNEL.message);
+
+            });
+          })
+      })
+    });
+
+
+    it("should fail if given dimensions does not match arrays", function () {
+      U.withContext(function (ctx, device) {
+        U.withProgram(ctx, fs.readFileSync(__dirname  + "/kernels/square.cl").toString(),
+          function (prg) {
+            cl.buildProgram(prg);
+            var kern = cl.createKernel(prg, "square");
+
+            var inputsMem = cl.createBuffer(
+              ctx, cl.MEM_COPY_HOST_PTR, 10000 * 4, inputs);
+            var outputsMem = cl.createBuffer(
+              ctx, cl.MEM_COPY_HOST_PTR, 10000 * 4, outputs);
+
+            cl.setKernelArg(kern, 0, "uint*", inputsMem);
+            cl.setKernelArg(kern, 1, "uint*", outputsMem);
+            cl.setKernelArg(kern, 2, "uint", 10000);
+            U.withCQ(ctx, device, function (cq) {
+
+              U.bind(cl.enqueueNDRangeKernel,
+                cq, kern, 1, null, [100, 200], null)
+                .should.throw(cl.INVALID_GLOBAL_WORK_SIZE.message);
+
+            });
+          })
+      })
     });
 
   });
 
   describe("# ( TODO ) enqueueTask", function() {
 
+    var inputs = new Buffer(10000 * 4);
+    var outputs = new Buffer(10000 * 4);
+
+    for (var i = 0; i < 10000; ++ i) {
+      inputs.writeUInt32LE(i, i * 4);
+    }
+
     versions(["2.x"]).hasUndefined(cl.enqueueTask);
 
-    // versions(["1.x"])
+    versions(["1.x"]).it("should work with a valid call", function () {
+      U.withContext(function (ctx, device) {
+        U.withProgram(ctx, fs.readFileSync(__dirname  + "/kernels/square_one.cl").toString(),
+          function (prg) {
+            cl.buildProgram(prg);
+
+            var kern = cl.createKernel(prg, "square_one");
+
+            cl.setKernelArg(kern, 0, "uint", 1);
+            cl.setKernelArg(kern, 1, "uint", 2);
+
+            U.withCQ(ctx, device, function (cq) {
+              cl.enqueueTask(cq, kern);
+            });
+          })
+      })
+    });
+
+    versions(["1.x"]).it("should fail if kern is invalid", function () {
+      U.withContext(function (ctx, device) {
+        U.withProgram(ctx, fs.readFileSync(__dirname  + "/kernels/square_one.cl").toString(),
+          function (prg) {
+
+            U.withCQ(ctx, device, function (cq) {
+
+              U.bind(cl.enqueueTask,
+                cq, null)
+                .should.throw(cl.INVALID_KERNEL.message);
+
+            });
+          })
+      })
+    });
+
   });
 
   describe("#enqueueNativeKernel", function() {
