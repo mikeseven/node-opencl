@@ -50,5 +50,9 @@
     "chai": "*",
     "chalk": "^0.5.1",
     "mocha": "*"
-  }
+  },
+  "engines" : {
+    "node" : ">=0.12"
+  },
+  "engineStrict" : true
 }
