@@ -1183,13 +1183,13 @@ NAN_METHOD(EnqueueUnmapMemObject) {
 //                            cl_event *             /* event */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(EnqueueMigrateMemObjects) {
   NanScope();
-  REQ_ARGS(5);
+  REQ_ARGS(3);
 
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
   if(args[1]->IsNull() || args[1]->IsUndefined() || !args[1]->IsArray()) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
+    THROW_ERR(CL_INVALID_VALUE);
   }
 
   Local<Array> arr=Local<Array>::Cast(args[1]);
@@ -1197,6 +1197,8 @@ NAN_METHOD(EnqueueMigrateMemObjects) {
   unique_ptr<cl_mem[]> mem_objects(new cl_mem[num_mem_objects]);
   for(size_t i=0;i<num_mem_objects;i++) {
     Local<Value> mem=arr->Get(i);
+    if (mem->IsNull() || mem->IsUndefined())
+      THROW_ERR(CL_INVALID_MEM_OBJECT);
     NOCL_UNWRAP(obj, NoCLMem, mem);
     mem_objects[i]=obj->getRaw();
   }
@@ -1204,8 +1206,10 @@ NAN_METHOD(EnqueueMigrateMemObjects) {
   cl_mem_migration_flags flags=args[2]->Uint32Value();
 
   std::vector<NoCLEvent> cl_events;
-  Local<Array> js_events = Local<Array>::Cast(args[3]);
-  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  if(ARG_EXISTS(3)) {
+    Local<Array> js_events = Local<Array>::Cast(args[3]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  }
 
   cl_event event=nullptr;
   if(ARG_EXISTS(4)) {
