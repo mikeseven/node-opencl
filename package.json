@@ -15,6 +15,18 @@
     {
       "name": "Mikael Bourges-Sevenier",
       "email": "mikeseven@gmail.com"
+    },
+    {
+      "name": "Fabien Cellier",
+      "email": "fabien.cellier@gmail.com"
+    },
+    {
+      "name": "Frédéric Langlade",
+      "email": "fred@ioweb.fr"
+    },
+    {
+      "name": "Adrien Plagnol",
+      "email": "adrien@ioweb.fr"
     }
   ],
   "licenses": [
@@ -37,7 +49,7 @@
     "install": "node-gyp rebuild --msvs_version=2013",
     "clean": "rm -rf build node_modules",
     "lint": "eslint lib test",
-    "test": "node test/utils/runner.js"
+    "test": "mocha test"
   },
   "dependencies": {
     "bindings": "^1.2.1",

@@ -5,7 +5,7 @@ var util = require('util');
 var log = console.log;
 var U = require("./utils/utils");
 var versions = require("./utils/versions");
-var Diag = require("./utils/diagnostic");
+var skip = require("./utils/diagnostic");
 var fs = require("fs");
 
 var isValidCQ = function (cq) {

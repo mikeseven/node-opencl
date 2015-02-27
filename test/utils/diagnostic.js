@@ -1,58 +1,44 @@
 var cl = require("../../lib/opencl");
 var os = require("os");
 
-module.exports = {};
-var EXCEPTIONS_COUNT = 0;
+module.exports = function() {
+  var _vendors = [];
+  var _oss = [];
+  var platformVendor = cl.getPlatformInfo(global.MAIN_PLATFORM_ID, cl.PLATFORM_VENDOR);
+  var osName = os.platform();
 
-var ErrDescription = function(device, platform){
-  this._os = [];
-  this._driver = [];
-  this._gpu = [];
-  this.message = null;
+  var match = function(){
+    var vmatch = _vendors.length == 0 || _vendors.some(function (v) {
+        return platformVendor == v;
+    });
 
-  var self = this;
-  this.os = function(os) { self._os.push(os); return self; };
-  this.driver = function(driver) { self._driver.push(driver); return self; };
-  this.gpu = function(gpu) { self._gpu.push(gpu); return self; };
-  this.because = function(message){ self.message = message; return self; };
+    var omatch = _oss.length == 0 || _oss.some(function (o) {
+        return osName == o;
+    });
 
-  var isConcerned = function(){
+    return vmatch && omatch;
+  };
 
-    if (!platform) {
-      platform = cl.getDeviceInfo(device, cl.DEVICE_PLATFORM);
+  var obj = {
+    vendor: function (v) {
+      _vendors.push(v);
+      return obj;
+    },
+
+    os : function (o) {
+      _oss.push(o);
+      return obj;
+    },
+
+    it : function (desc) {
+      if (match()) {
+        console.warn("Cancelling " + desc + " because of known driver issue");
+        it.skip.apply(it, arguments);
+      } else {
+        it.apply(it, arguments);
+      }
     }
-
-    return true &&
-      (self._os.length == 0 ||
-        self._os.indexOf(os.platform()) !== -1) &&
-      (self._gpu.length == 0 ||
-        self._gpu.indexOf(cl.getDeviceInfo(device, cl.DEVICE_NAME)) !== -1) &&
-      (self._driver.length == 0 ||
-        self._driver.indexOf(cl.getPlatformInfo(platform, cl.PLATFORM_VERSION)) !== -1);
   };
 
-  this.should = function (f) {
-    if (!isConcerned()) return self;
-    try {
-      f();
-    } catch(e) {
-      throw new Error("A known driver issue has not been triggered");
-    }
-    return self;
-  };
-
-  this.raise = function() {
-    if (!isConcerned()) return self;
-    EXCEPTIONS_COUNT++;
-    throw new Error("Driver issue : " + this.message);
-  };
-
-};
-
-module.exports.exceptionsCount = function () {
-  return EXCEPTIONS_COUNT;
-};
-
-module.exports.exclude = function (device, platform) {
-  return new ErrDescription(device, platform);
+  return obj;
 };

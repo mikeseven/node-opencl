@@ -5,7 +5,7 @@ var log = console.log;
 var assert = require("chai").assert;
 var fs = require("fs");
 var U = require("./utils/utils");
-var Diag = require("./utils/diagnostic");
+var skip = require("./utils/diagnostic");
 var versions = require("./utils/versions");
 
 var squareKern = fs.readFileSync(__dirname + "/kernels/square.cl").toString();
@@ -255,20 +255,10 @@ describe("Program", function () {
       });
     });
 
-    it("should fail as options sent to the linker are invalid", function () {
+    skip().it("should fail as options sent to the linker are invalid", function () {
       U.withContext(function (ctx, device) {
         U.withProgram(ctx, squareKern, function (prg) {
           cl.compileProgram(prg);
-
-          Diag.exclude(device)
-            .os("win32").os("darwin")
-            .driver("OpenCL 1.2 ").driver("OpenCL 1.2 (Dec 14 2014 22:29:47)")
-            .gpu("Intel(R) HD Graphics 4400").gpu("Iris")
-            .because("It does not fail on bad linker options")
-            .should(function () {
-              cl.linkProgram(ctx, null, "-DnoCLtest=5", [prg]);
-            })
-            .raise();
 
           U.bind(cl.linkProgram,ctx, null, "-DnoCLtest=5", [prg])
             .should.throw(cl.INVALID_LINKER_OPTIONS.message);

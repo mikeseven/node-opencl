@@ -5,7 +5,7 @@ var util = require('util');
 var U = require("./utils/utils");
 var log = console.log;
 var versions = require("./utils/versions");
-var Diag = require("./utils/diagnostic");
+var skip = require("./utils/diagnostic");
 
 describe("Context", function () {
 
@@ -16,14 +16,8 @@ describe("Context", function () {
   var device = devices[global.MAIN_DEVICE_IDX];
 
   describe("#createContext", function () {
-    it("should throw if devices = null", function () {
 
-      Diag.exclude(null, platform)
-        .os("darwin")
-        .driver("OpenCL 1.2 (Dec 14 2014 22:29:47)")
-        .because("It returns INVALID_DEVICE instead of invalid value")
-        .raise();
-
+    skip().vendor("Apple").it("should throw if devices = null", function () {
       ex = cl.INVALID_VALUE.message;
       cl.createContext.bind(cl.createContext, null, null, null, null)
         .should.throw(ex);
@@ -49,33 +43,13 @@ describe("Context", function () {
 
   describe("#createContextFromType", function () {
 
-    it("should throw cl.CL_INVALID_DEVICE_TYPE if type is unknown", function () {
+    skip().it("should throw cl.CL_INVALID_DEVICE_TYPE if type is unknown", function () {
 
       var ex = cl.INVALID_DEVICE_TYPE.message;
 
       var properties = [
         cl.CONTEXT_PLATFORM, platform
       ];
-
-      Diag.exclude(null, platform)
-        .os("darwin")
-        .driver("OpenCL 1.2 (Dec 14 2014 22:29:47)")
-        .because("It returns INVALID_DEVICE instead of invalid value")
-        .should(function () {
-          U.bind(cl.createContextFromType, properties, 0, null, null)
-            .should.throw(cl.INVALID_DEVICE.message);
-        })
-        .raise();
-
-      Diag.exclude(null, platform)
-        .os("linux")
-        .driver("OpenCL 2.0 AMD-APP (1642.5)")
-        .because("It returns DEVICE_NOT_FOUND instead of invalid value")
-        .should(function () {
-          U.bind(cl.createContextFromType, properties, 0, null, null)
-            .should.throw(cl.DEVICE_NOT_FOUND.message);
-        })
-        .raise();
 
       U.bind(cl.createContextFromType, properties, 0, null, null)
         .should.throw(cl.INVALID_DEVICE_TYPE.message);

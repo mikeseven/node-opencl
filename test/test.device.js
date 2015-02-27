@@ -3,7 +3,7 @@ var should = require('chai').should();
 var assert = require('chai').assert;
 var util = require('util');
 var log = console.log;
-var Diag = require("./utils/diagnostic");
+var skip = require("./utils/diagnostic");
 var U = require("./utils/utils.js");
 var versions = require("./utils/versions");
 
@@ -184,14 +184,7 @@ describe("Device", function() {
 
     versions(["1.2", "2.0"]).describe("#createSubDevices() for "+device_vendor+" "+device_name,function() {
 
-      it("should return an array of sub-devices", function() {
-
-        Diag.exclude(device)
-          .os("win32")
-          .driver("OpenCL 1.2 ") // Intel
-          .gpu("Intel(R) HD Graphics 4400")
-          .because("It crashes as MAX_INTEGER is returned as sub-devices available")
-          .raise();
+      skip().vendor("Intel").it("should return an array of sub-devices", function() {
 
         var subdevices;
         try {

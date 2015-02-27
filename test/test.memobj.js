@@ -5,7 +5,7 @@ var util = require('util');
 var assert = require('chai').assert;
 var U = require("./utils/utils");
 var log = console.log;
-var Diag = require("./utils/diagnostic");
+var skip = require("./utils/diagnostic");
 var versions = require("./utils/versions");
 
 describe("MemObj", function() {
@@ -177,13 +177,8 @@ describe("MemObj", function() {
       });
     });
 
-    it("should not fail if a release is asked twice", function (done) {
+    skip().it("should not fail if a release is asked twice", function (done) {
       U.withContext(function (context, device, platform) {
-
-        Diag.exclude(device)
-          .because("It segfaults everywhere")
-          .raise();
-
         var buffer = cl.createBuffer(context, 0, 8, null);
         f(buffer);
 
@@ -233,22 +228,11 @@ describe("MemObj", function() {
       });
     });
 
-    it("should return CL_MEM_FLAGS", function () {
+    skip().vendor("Intel").it("should return CL_MEM_FLAGS", function () {
       U.withContext(function (context, device, platform) {
         var buffer = cl.createBuffer(context, 0, 8, null);
         var ret = f(buffer, cl.MEM_FLAGS);
         assert.isNumber(ret);
-
-        Diag.exclude(device)
-          .os("win32")
-          .driver("OpenCL 1.2 ") // Intel
-          .gpu("Intel(R) HD Graphics 4400")
-          .because("It returns 1 instead of 0")
-          .should(function () {
-            assert.strictEqual(ret, 1);
-          })
-          .raise();
-
         assert.strictEqual(ret, 0);
         cl.releaseMemObject(buffer);
       });
