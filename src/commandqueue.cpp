@@ -999,7 +999,7 @@ NAN_METHOD(EnqueueMapBuffer) {
   NanScope();
   REQ_ARGS(8);
 
-  NanThrowError("Not implemented yet");
+  return NanThrowError("Not implemented yet");
 
 //  // Arg 0
 //  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
@@ -1070,7 +1070,7 @@ NAN_METHOD(EnqueueMapImage) {
   NanScope();
   REQ_ARGS(10);
 
-  NanThrowError("Not implemented yet");
+  return NanThrowError("Not implemented yet");
 
   // NOTE
   // An implementation with common Node buffers is available in EnqueueMapBUffer
@@ -1143,7 +1143,7 @@ NAN_METHOD(EnqueueUnmapMemObject) {
   NanScope();
   REQ_ARGS(5);
 
-  NanThrowError("Not implemented yet");
+  return NanThrowError("Not implemented yet");
 
 //  // Arg 0
 //  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
