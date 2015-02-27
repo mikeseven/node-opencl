@@ -1156,7 +1156,7 @@ describe("CommandQueue", function() {
   describe("# ( TODO ) enqueueUnmapMemObject", function() {
   });
 
-  describe("# ( TODO ) enqueueMigrateMemObjects", function() {
+  describe("#enqueueMigrateMemObjects", function() {
     var imageFormat = {"channel_order": cl.RGBA, "channel_data_type": cl.UNSIGNED_INT8};
     var imageDesc = {
       "type": cl.MEM_OBJECT_IMAGE2D,
@@ -1177,9 +1177,6 @@ describe("CommandQueue", function() {
           // cq, mem objects, flags
           var ret = cl.enqueueMigrateMemObjects(cq, [image, buffer], cl.MIGRATE_MEM_OBJECT_HOST);
 
-          cl.releaseMemObject(image);
-          cl.releaseMemObject(buffer);
-
           assert.strictEqual(ret, cl.SUCCESS);
         });
       });
@@ -1193,9 +1190,6 @@ describe("CommandQueue", function() {
 
           // cq, mem objects, flags
           var ret = cl.enqueueMigrateMemObjects(cq, [image, buffer], cl.MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED);
-
-          cl.releaseMemObject(image);
-          cl.releaseMemObject(buffer);
 
           assert.strictEqual(ret, cl.SUCCESS);
         });
@@ -1220,8 +1214,6 @@ describe("CommandQueue", function() {
 
           U.bind(cl.enqueueMigrateMemObjects, cq, [image, buffer], cl.MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED)
             .should.throw(cl.INVALID_MEM_OBJECT.message);
-
-          cl.releaseMemObject(image);
         });
       });
     });
