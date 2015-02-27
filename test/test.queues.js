@@ -339,8 +339,11 @@ describe("CommandQueue", function() {
 
   });
 
-  versions(["1.2", "2.0"]).describe("# ( TODO ) enqueueFillBuffer", function() {
-    // FIXME
+  versions(["1.2", "2.0"]).describe("#enqueueFillBuffer", function() {
+    it("should fill a buffer with given pattern", function() {
+      //var buffer = cl.createBuffer(ctx, cl.MEM_COPY_HOST_PTR, 32, new Buffer(32));
+      //cl.fillBuffer()
+    });
   });
 
   describe("#enqueueCopyBuffer", function() {
@@ -427,7 +430,7 @@ describe("CommandQueue", function() {
 
           assert.strictEqual(ret, cl.SUCCESS);
 
-          var ret = cl.enqueueCopyBufferRect(cq, buffer, dst,
+          ret = cl.enqueueCopyBufferRect(cq, buffer, dst,
             [1, 2, 0], [2, 2, 2], [4, 4, 1],
             0, 0,
             0, 0);
@@ -449,14 +452,14 @@ describe("CommandQueue", function() {
 
           assert.strictEqual(ret, cl.SUCCESS);
 
-          var ret = cl.enqueueCopyBufferRect(cq, buffer, dst,
+          ret = cl.enqueueCopyBufferRect(cq, buffer, dst,
             [0, 0, 0], [2, 2, 0], [4, 4, 1],
             0, 0,
             0, 0);
 
           assert.strictEqual(ret, cl.SUCCESS);
 
-          var ret = cl.enqueueCopyBufferRect(cq, buffer, dst,
+          ret = cl.enqueueCopyBufferRect(cq, buffer, dst,
             [0, 0, 0], [1, 2, 1], [4, 4, 1],
             0, 0,
             0, 0);
@@ -478,14 +481,14 @@ describe("CommandQueue", function() {
 
           assert.strictEqual(ret, cl.SUCCESS);
 
-          var ret = cl.enqueueCopyBufferRect(cq, buffer, dst,
+          ret = cl.enqueueCopyBufferRect(cq, buffer, dst,
             [0, 0, 0], [0, 0, 0], [1, 4, 1],
             0, 0,
             0, 0);
 
           assert.strictEqual(ret, cl.SUCCESS);
 
-          var ret = cl.enqueueCopyBufferRect(cq, buffer, dst,
+          ret = cl.enqueueCopyBufferRect(cq, buffer, dst,
             [0, 0, 0], [0, 0, 0], [5, 1, 1],
             0, 0,
             0, 0);
@@ -508,7 +511,7 @@ describe("CommandQueue", function() {
 
           assert.strictEqual(ret, cl.SUCCESS);
 
-          var ret = cl.enqueueCopyBufferRect(cq, buffer, dst,
+          ret = cl.enqueueCopyBufferRect(cq, buffer, dst,
             [0, 0, 0], [0, 0, 0], [2, 4, 1],
             2, 0,
             0, 0);
@@ -530,7 +533,7 @@ describe("CommandQueue", function() {
 
           assert.strictEqual(ret, cl.SUCCESS);
 
-          var ret = cl.enqueueCopyBufferRect(cq, buffer, dst,
+          ret = cl.enqueueCopyBufferRect(cq, buffer, dst,
             [0, 0, 0], [0, 0, 0], [2, 4, 1],
             2, 2*4,
             0, 0);
@@ -554,7 +557,7 @@ describe("CommandQueue", function() {
 
 
           var buffer2 = cl.createBuffer(ctx, cl.MEM_USE_HOST_PTR, 64, new Buffer(64));
-          var ret = cl.enqueueCopyBufferRect(cq, buffer2, dst,
+          ret = cl.enqueueCopyBufferRect(cq, buffer2, dst,
             [0, 0, 0], [0, 0, 0], [2, 4, 1],
             0, 0,
             0, 0);
@@ -1130,7 +1133,7 @@ describe("CommandQueue", function() {
 
   });
 
-  describe("# ( TODO ) enqueueTask", function() {
+  describe("#enqueueTask", function() {
 
     var inputs = new Buffer(10000 * 4);
     var outputs = new Buffer(10000 * 4);
