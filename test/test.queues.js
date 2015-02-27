@@ -340,9 +340,64 @@ describe("CommandQueue", function() {
   });
 
   versions(["1.2", "2.0"]).describe("#enqueueFillBuffer", function() {
-    it("should fill a buffer with given pattern", function() {
-      //var buffer = cl.createBuffer(ctx, cl.MEM_COPY_HOST_PTR, 32, new Buffer(32));
-      //cl.fillBuffer()
+    it("should fill a buffer with a scallar integer pattern", function() {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function(cq) {
+          var array = new Buffer([0,0,0,0,0,0,0,0]);
+
+          // INTEGER SCALAR
+          var pattern = 2;
+
+          var buffer = cl.createBuffer(ctx, cl.MEM_USE_HOST_PTR, 32, array);
+          var ret = cl.enqueueFillBuffer(cq, buffer, 2, 0, 16);
+          assert.strictEqual(ret, cl.SUCCESS);
+        });
+      });
+    });
+
+    it("should fill a buffer with a scallar float pattern", function() {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function(cq) {
+          var array = new Buffer([0,0,0,0,0,0,0,0]);
+
+          // FLOAT SCALAR
+          var pattern = 2.5;
+
+          var buffer = cl.createBuffer(ctx, cl.MEM_USE_HOST_PTR, 32, array);
+          var ret = cl.enqueueFillBuffer(cq, buffer, 2.5, 0, 16);
+          assert.strictEqual(ret, cl.SUCCESS);
+        });
+      });
+    });
+
+    it("should fill a buffer with a vector pattern", function() {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function(cq) {
+          var array = new Buffer([0,0,0,0,0,0,0,0]);
+
+          // INTEGER VECTOR
+          var pattern = new Buffer([1,2]);
+
+          var buffer = cl.createBuffer(ctx, cl.MEM_USE_HOST_PTR, 32, array);
+          var ret = cl.enqueueFillBuffer(cq, buffer, pattern, 0, 16);
+          assert.strictEqual(ret, cl.SUCCESS);
+        });
+      });
+    });
+
+    it("should fill a buffer with a vector pattern", function() {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function(cq) {
+          var array = new Buffer([0,0,0,0,0,0,0,0]);
+
+          // FLOAT VECTOR
+          var pattern = new Buffer([1.5,2.5]);
+
+          var buffer = cl.createBuffer(ctx, cl.MEM_USE_HOST_PTR, 32, array);
+          var ret = cl.enqueueFillBuffer(cq, buffer, pattern, 0, 16);
+          assert.strictEqual(ret, cl.SUCCESS);
+        });
+      });
     });
   });
 
@@ -764,10 +819,102 @@ describe("CommandQueue", function() {
   });
 
 
-  versions(["1.2", "2.0"]).describe("# ( TODO ) enqueueFillImage", function() {
-    // FIXME
-  });
+  versions(["1.2", "2.0"]).describe("#enqueueFillImage", function() {
 
+    var imageFormat = {"channel_order": cl.RGBA, "channel_data_type": cl.UNSIGNED_INT8};
+    var imageDesc = {
+      "type": cl.MEM_OBJECT_IMAGE2D,
+      "width": 8,
+      "height": 8,
+      "depth": 2,
+      "image_array_size": 1,
+      "image_row_pitch": 8,
+      "image_slice_pitch": 64
+    };
+
+    it("should fill image with color", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var color = new Buffer([0.5,0.5,0.5,0.5]);
+
+          var ret = cl.enqueueFillImage(cq, image, color, [0,0,0], [8,8,1]);
+
+          assert.strictEqual(ret, cl.SUCCESS);
+        });
+      });
+    });
+
+    it("should throw cl.INVALID_VALUE if color is null", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var color = null
+
+          U.bind(cl.enqueueFillImage, cq, image, color, [0,0,0], [8,8,1])
+            .should.throw(cl.INVALID_VALUE.message);
+        });
+      });
+    });
+
+    it("should throw cl.INVALID_VALUE if region is out of bounds", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var color = new Buffer([0.5, 0.5, 0.5, 0.5]);
+          var outOfBoundsRegion = [9,9,1];
+
+          U.bind(cl.enqueueFillImage, cq, image, color, [0,0,0], outOfBoundsRegion)
+            .should.throw(cl.INVALID_VALUE.message);
+        });
+      });
+    });
+
+    it("should throw cl.INVALID_VALUE if origin is invalid", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var color = new Buffer([0.5, 0.5, 0.5, 0.5]);
+
+          // origin[2] must be 0
+          var invalidOrigin = [0,0,1];
+
+          U.bind(cl.enqueueFillImage, cq, image, color, invalidOrigin, [8,8,1])
+            .should.throw(cl.INVALID_VALUE.message);
+        });
+      });
+    });
+
+    it("should throw cl.INVALID_VALUE if region is invalid", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var color = new Buffer([0.5, 0.5, 0.5, 0.5]);
+
+          // origin[2] must be 1
+          var invalidRegion = [8,8,0];
+
+          U.bind(cl.enqueueFillImage, cq, image, color, [0,0,0], invalidRegion)
+            .should.throw(cl.INVALID_VALUE.message);
+        });
+      });
+    });
+
+    it("should throw cl.INVALID_MEM_OBJECT if image is not a valid image object", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var image = null;
+          var color = new Buffer([0.5, 0.5, 0.5, 0.5]);
+
+          // origin[2] must be 1
+          var invalidRegion = [8,8,0];
+
+          U.bind(cl.enqueueFillImage, cq, image, color, [0,0,0], invalidRegion)
+            .should.throw(cl.INVALID_MEM_OBJECT.message);
+        });
+      });
+    });
+  });
 
   describe("#enqueueCopyImage", function() {
 
