@@ -153,7 +153,7 @@ class NoCLContext : public NoCLObject<cl_context, 2, CL_INVALID_CONTEXT> {
 public:
   NoCLContext(cl_context raw) : NoCLObject(raw) {
   }
-};;
+};
 
 class NoCLProgram : public NoCLObject<cl_program, 3, CL_INVALID_PROGRAM> {
 

@@ -10,6 +10,7 @@
         'src/common.cpp',
         'src/context.cpp',
         'src/device.cpp',
+        'src/event.cpp',
         'src/platform.cpp',
         'src/types.cpp',
         'src/program.cpp',

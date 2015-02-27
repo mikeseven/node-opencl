@@ -1,4 +1,3 @@
-#include <AVFoundation/AVFoundation.h>
 #include "event.h"
 #include "types.h"
 
@@ -96,9 +95,9 @@ NAN_METHOD(RetainEvent) {
   REQ_ARGS(1);
 
   NOCL_UNWRAP(ev, NoCLEvent, args[0]);
-  cl_int count=clRetainEvent(ev->getRaw());
-
-  NanReturnValue(JS_INT(count));
+  cl_int err=clRetainEvent(ev->getRaw());
+  CHECK_ERR(err)
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -109,9 +108,10 @@ NAN_METHOD(ReleaseEvent) {
 
   // Arg 0
   NOCL_UNWRAP(ev, NoCLEvent, args[0]);
-  cl_int count=clReleaseEvent(ev->getRaw());
+  cl_int err=clReleaseEvent(ev->getRaw());
 
-  NanReturnValue(JS_INT(count));
+  CHECK_ERR(err)
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -127,7 +127,7 @@ NAN_METHOD(SetUserEventStatus) {
   cl_int exec_status=args[1]->Uint32Value();
   CHECK_ERR(::clSetUserEventStatus(ev->getRaw(),exec_status));
 
-  NanReturnUndefined(); // TODO should we return err?
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // /* Profiling APIs */
@@ -170,6 +170,76 @@ NAN_METHOD(GetEventProfilingInfo) {
   return NanThrowError(JS_INT(CL_INVALID_VALUE));
 }
 
+class NoCLEventCLCallback:public NanAsyncLaunch {
+ public:
+   NoCLEventCLCallback(NanCallback* callback,const v8::Local<v8::Object> &userData,const v8::Local<v8::Object> &noCLEvent):NanAsyncLaunch(),callback(callback){
+       NanScope();
+       v8::Local<v8::Object> obj = NanNew<v8::Object>();
+       NanAssignPersistent(persistentHandle, obj);
+       v8::Local<v8::Object>  handle = NanNew(persistentHandle);
+       handle->Set(kIndex, noCLEvent);
+       handle->Set(kIndex+1, userData);
+
+   }
+
+   ~NoCLEventCLCallback() {
+       NanScope();
+       if (!persistentHandle.IsEmpty())
+         NanDisposePersistent(persistentHandle);
+       if (callback)
+         delete callback;
+   }
+
+   void CallBackIsDone(int status) {
+     mCLCallbackStatus = status;
+     this->FireAndForget();
+   }
+
+   void Execute() {
+     NanEscapableScope();
+     v8::Local<v8::Object> handle = NanNew(persistentHandle);
+     v8::Local<v8::Object> noCLEvent = (handle->Get(kIndex)).As<v8::Object>();
+     v8::Local<v8::Object> userData= (handle->Get(kIndex+1)).As<v8::Object>();
+     Handle<Value> argv[] = {
+         NanNew(noCLEvent),
+         NanNew(JS_INT(mCLCallbackStatus)),
+         NanNew(userData)
+     };
+     callback->Call(3,argv);
+   }
+
+ private:
+   NanCallback* callback;
+   Persistent<Object> persistentHandle;
+   static const uint32_t kIndex = 0;
+   int mCLCallbackStatus;
+
+};
+
+void CL_CALLBACK notifyCB (cl_event event, cl_int event_command_exec_status, void *user_data) {
+    NoCLEventCLCallback* asyncCB = static_cast<NoCLEventCLCallback*>(user_data);
+    asyncCB->CallBackIsDone(event_command_exec_status);
+}
+
+NAN_METHOD(SetEventCallback){
+  NanScope();
+  REQ_ARGS(4);
+  NOCL_UNWRAP(event, NoCLEvent, args[0]);
+  cl_int callbackStatusType = args[1]->Int32Value();
+  Local<Function> callbackHandle = args[2].As<Function>();
+  NanCallback *callback = new NanCallback(callbackHandle);
+  Local<Object> userData = args[3].As<Object>();
+
+  NoCLEventCLCallback* asyncCB = new NoCLEventCLCallback(callback,userData,args[0].As<Object>());
+
+  CHECK_ERR(clSetEventCallback(event->getRaw(),callbackStatusType,notifyCB,asyncCB));
+
+  NanReturnValue(JS_INT(CL_SUCCESS));
+
+}
+
+
+
 namespace Event {
 void init(Handle<Object> exports)
 {
@@ -179,6 +249,7 @@ void init(Handle<Object> exports)
   NODE_SET_METHOD(exports, "retainEvent", RetainEvent);
   NODE_SET_METHOD(exports, "releaseEvent", ReleaseEvent);
   NODE_SET_METHOD(exports, "setUserEventStatus", SetUserEventStatus);
+  NODE_SET_METHOD(exports, "setEventCallback", SetEventCallback);
   NODE_SET_METHOD(exports, "getEventProfilingInfo", GetEventProfilingInfo);
 }
 } // namespace Event
