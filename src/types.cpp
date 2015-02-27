@@ -14,7 +14,6 @@ NAN_METHOD(Equals) {
   }
 
   Local<Object> otherObj = args[0]->ToObject();
-
   NoCLObjectGen * other = static_cast<NoCLObjectGen *>(NanGetInternalFieldPointer(otherObj, 0));
 
   bool res = self->getUncastedRaw() == other->getUncastedRaw();
