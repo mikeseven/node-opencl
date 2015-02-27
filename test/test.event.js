@@ -3,50 +3,51 @@ var cl=require('../lib/opencl'),
     assert = require("chai").assert,
     util=require('util'),
     log=console.log,
-    Diag = require("./utils/diagnostic");
+    skip = require("./utils/diagnostic");
     U = require("./utils/utils.js");
 
 
-var isValidCQ = function (cq) {
-  assert.isNotNull(cq);
-  assert.isDefined(cq);
+var isValid = function (e) {
+  assert.isNotNull(e);
+  assert.isDefined(e);
 };
 
 
 describe("Event", function() {
+
   describe("#createUserEvent",function() {
     it("should create user Event",function(){
       U.withContext(function(ctx) {
         var uEvent = cl.createUserEvent(ctx);
-        isValidCQ(uEvent);
+        isValid(uEvent);
         cl.releaseEvent(uEvent);
       })
     });
   });
 
-  var platform = MAIN_PLATFORM_ID;
-
-  var properties= [
-    cl.CONTEXT_PLATFORM, platform
-  ];
-  var device=global.MAIN_DEVICE_ID;
-  var ctx=cl.createContext(properties, [device], null, null);
-
   describe("#getEventInfo",function(){
-    var uEvent = cl.createUserEvent(ctx);
-    
     function testNumber(info,name,expected) {
-      it("should equal "+info,function(){
-        var result = cl.getEventInfo(uEvent,eval("cl."+name));
-        assert.isNumber(result);
-        assert.strictEqual(result,expected);
+      it("should return the good value for " + name, function () {
+        U.withContext(function (ctx) {
+          var uEvent = cl.createUserEvent(ctx);
+          var val = cl.getEventInfo(uEvent, cl[name]);
+          assert.isNumber(val);
+          assert.strictEqual(expected, val);
+          console.log(name + " = " + val);
+          cl.releaseEvent(uEvent);
+        });
       });
     }
+
     function testObject(info,name) {
-      it("should be able to retrieve "+info,function(){
-        var result = cl.getEventInfo(uEvent,eval("cl."+name));
-        isValidCQ(uEvent);
-        assert.isObject(result);
+      it("should return the good value for " + name, function () {
+        U.withContext(function (ctx) {
+          var uEvent = cl.createUserEvent(ctx);
+          var val = cl.getEventInfo(uEvent, cl[name]);
+          assert.isObject(val);
+          console.log(name + " = " + val);
+          cl.releaseEvent(uEvent);
+        })
       });
     }
     
@@ -55,65 +56,71 @@ describe("Event", function() {
     testNumber("event type to UserEvent","EVENT_COMMAND_TYPE",cl.COMMAND_USER);
     testObject("the context","EVENT_CONTEXT");
     testObject("the command queue","EVENT_COMMAND_QUEUE");
-    cl.releaseEvent(uEvent);
-
 
   });
 
   describe("#setUserEventStatus",function(){
-    var uEvent;
-    beforeEach(function(){
-      uEvent = cl.createUserEvent(ctx);
-    });
-    afterEach(function(){
-      cl.releaseEvent(uEvent);
-    });
+
     it("should set the status to the good value",function(){
-      cl.setUserEventStatus(uEvent,cl.COMPLETE);
-      var result = cl.getEventInfo(uEvent,cl.EVENT_COMMAND_EXECUTION_STATUS);
-      assert.strictEqual(result,cl.COMPLETE);
+      U.withContext(function (ctx) {
+        var uEvent = cl.createUserEvent(ctx);
+        cl.setUserEventStatus(uEvent,cl.COMPLETE);
+        var result = cl.getEventInfo(uEvent,cl.EVENT_COMMAND_EXECUTION_STATUS);
+        assert.strictEqual(result,cl.COMPLETE);
+        cl.releaseEvent(uEvent);
+      });
     });
-    
     
     //bug in amd driver? 
-    it("should throw an error for invalid value",function(){
-      cl.setUserEventStatus.bind(cl.setUserEvent,uEvent,-1).should.throw(cl.INVALID_VALUE.message);
+    skip().it("should throw an error for invalid value",function(){
+      U.withContext(function (ctx) {
+        var uEvent = cl.createUserEvent(ctx);
+        cl.setUserEventStatus.bind(cl.setUserEvent,uEvent,-1).should.throw(cl.INVALID_VALUE.message);
+        cl.releaseEvent(uEvent);
+      });
     });
-    it("should throw an error because 2 change of the values for the same user event",function(){
-      cl.setUserEventStatus(uEvent,cl.COMPLETE);
-      cl.setUserEventStatus.bind(cl.setUserEvent,uEvent,cl.COMPLETE).should.throw(cl.INVALID_VALUE.message);
+
+    skip().it("should throw an error because 2 change of the values for the same user event",function(){
+      U.withContext(function (ctx) {
+        var uEvent = cl.createUserEvent(ctx);
+        cl.setUserEventStatus(uEvent,cl.COMPLETE);
+        cl.setUserEventStatus.bind(cl.setUserEvent,uEvent,cl.COMPLETE).should.throw(cl.INVALID_VALUE.message);
+        cl.releaseEvent(uEvent);
+      });
     });
   });
-  describe("#Retain/Release",function(){
-    var uEvent =cl.createUserEvent(ctx);
-    it("Should increment and decrement refcount for event",function(){
-      assert.strictEqual(cl.retainEvent(uEvent),cl.SUCCESS);
-      var result = cl.getEventInfo(uEvent,cl.EVENT_REFERENCE_COUNT);
-      assert.strictEqual(result,2);
-      
-      cl.releaseEvent(uEvent);
-      result = cl.getEventInfo(uEvent,cl.EVENT_REFERENCE_COUNT);
-      assert.strictEqual(result,1);
 
+  describe("#Retain/Release",function(){
+    it("Should increment and decrement refcount for event",function(){
+      U.withContext(function (ctx) {
+        var uEvent = cl.createUserEvent(ctx);
+        assert.strictEqual(cl.retainEvent(uEvent),cl.SUCCESS);
+        var result = cl.getEventInfo(uEvent,cl.EVENT_REFERENCE_COUNT);
+        assert.strictEqual(result,2);
+
+        cl.releaseEvent(uEvent);
+        result = cl.getEventInfo(uEvent,cl.EVENT_REFERENCE_COUNT);
+        assert.strictEqual(result,1);
+        cl.releaseEvent(uEvent);
+      });
     });
-    cl.releaseEvent(uEvent);
   });
 
   describe("#setEventCallback",function(){
       it("callback should be called",function(done){
-        var myCallback = function(mEvent,status,userData){
-          var mctx =cl.getEventInfo(mEvent,cl.EVENT_CONTEXT);
-          cl.releaseEvent(mEvent);
-          cl.releaseContext(mctx);
-          userData.done();
-        };
-        var mctx=cl.createContext(properties, [device], null, null);
-        var mEvent =cl.createUserEvent(mctx); 
-        cl.setEventCallback(mEvent,cl.COMPLETE,myCallback,{done:done});
-        cl.setUserEventStatus(mEvent,cl.COMPLETE);
+        U.withAsyncContext(function (ctx, device, platform, ctxDone) {
+          var myCallback = function(mEvent,status,userData){
+            var mctx =cl.getEventInfo(mEvent,cl.EVENT_CONTEXT);
+            cl.releaseEvent(mEvent);
+            userData.done();
+            ctxDone();
+          };
+          var mEvent =cl.createUserEvent(ctx);
+          cl.setEventCallback(mEvent,cl.COMPLETE,myCallback,{done:done});
+          cl.setUserEventStatus(mEvent,cl.COMPLETE);
+        })
       });
          
   });
 
-  cl.releaseContext(ctx);
 });

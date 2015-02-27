@@ -17,6 +17,20 @@ var Utils = {
     cl.releaseContext(ctx);
   },
 
+  withAsyncContext: function (exec) {
+    var platform = MAIN_PLATFORM_ID;
+
+    var properties= [
+      cl.CONTEXT_PLATFORM, platform
+    ];
+    var device=global.MAIN_DEVICE_ID;
+
+    var ctx=cl.createContext(properties, [device], null, null);
+    exec(ctx, device, platform, function(){
+      cl.releaseContext(ctx);
+    });
+  },
+
   withProgram: function (ctx, source, exec) {
     var prg = cl.createProgramWithSource(ctx, source);
     var ret = cl.buildProgram(prg, undefined, "-cl-kernel-arg-info");
