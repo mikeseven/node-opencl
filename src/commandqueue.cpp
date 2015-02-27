@@ -922,7 +922,7 @@ NAN_METHOD(EnqueueCopyImage) {
   NOCL_UNWRAP(src_image, NoCLMem, args[1]);
 
   // Arg 2
-  NOCL_UNWRAP(dst_image, NoCLMem, args[1]);
+  NOCL_UNWRAP(dst_image, NoCLMem, args[2]);
 
   size_t src_origin[]={0,0,0};
   size_t dst_origin[]={0,0,0};
