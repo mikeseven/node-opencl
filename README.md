@@ -101,6 +101,7 @@ TODO
 - Map and unmap
 - Memory cleanup on process exit
 - SVM
+- Async buildProgram
 
 # Contributions Guidelines
 
