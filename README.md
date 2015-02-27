@@ -85,13 +85,28 @@ that changes depending on what kind of value is returned :
 - Instead of a 64 bits integer representing nanoseconds time, we return an array with [milliseconds, nanoseconds]
 - Instead of a 64 bits integer reprensenting bytes, we return an array with [megabytes, bytes]
 
+## Differences between Node-OpenCL and WebCL
+
+### Raw data type
+
+Buffers are used mostly everywhere in Node.JS. WebCL natively uses TypedArray, but Node OpenCL uses buffers since
+they provide a lot more features and copying them into a TyoedArray is hence not needed.
+
+### Memory management
+
+TODO
+
+# Not working yet
+
+- Map and unmap
+- Memory cleanup on process exit
+- SVM
 
 # Contributions Guidelines
 
 Pull requests are welcome ! When you do a PR on this project, you need to respect the following rules : 
 
 - Your JS files must be compliant with the eslint rules
-- Your C++ files must be compliant with the cpplint rules
 - All tests should pass on as much platforms as possible
 
 For this last step we do understand that it can be pretty difficult so you can do a PR that do not respect this last rule and we will provide you
@@ -99,7 +114,7 @@ the results of tests on platforms listed in the Tested Configurations part.
 
 # Getting involved
 
-This project has two goals  :
+This project has two goals :
 
 - Providing a low level wrapper for OpenCL APIs
 - Allow users to check for bugs related to drivers on their platforms, by running unit tests.
