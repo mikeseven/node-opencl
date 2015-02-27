@@ -461,29 +461,41 @@ NAN_METHOD(EnqueueWriteBufferRect) {
 //                     cl_event *         /* event */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(EnqueueFillBuffer) {
   NanScope();
-  REQ_ARGS(7);
+  REQ_ARGS(5);
 
-  // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  // Arg 1
   NOCL_UNWRAP(buffer, NoCLMem, args[1]);
 
-
   void *pattern=nullptr;
+  cl_double scalar_pattern_double;
+  cl_int scalar_pattern_int;
   int len=0;
   if(args[2]->IsUndefined() || args[2]->IsNull()) {
-    CHECK_ERR(CL_INVALID_VALUE);
+    THROW_ERR(CL_INVALID_VALUE);
   }
-  else
-    getPtrAndLen(args[2],pattern,len);
+  else if (args[2]->IsInt32()) {
+    scalar_pattern_int = args[2]->Int32Value();
+    pattern = &scalar_pattern_int;
+    len = sizeof(cl_uint);
+  }
+  else if (args[2]->IsNumber()) {
+    scalar_pattern_double = args[2]->NumberValue();
+    pattern = &scalar_pattern_double;
+    len = sizeof(cl_double);
+  }
+  else {
+    getPtrAndLen(args[2], pattern, len);
+  }
 
   size_t offset=args[3]->Uint32Value();
   size_t size=args[4]->Uint32Value();
 
   std::vector<NoCLEvent> cl_events;
-  Local<Array> js_events = Local<Array>::Cast(args[6]);
-  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  if (ARG_EXISTS(5)) {
+    Local<Array> js_events = Local<Array>::Cast(args[5]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  }
 
   cl_event event=nullptr;
   if(ARG_EXISTS(6)) {
@@ -492,7 +504,7 @@ NAN_METHOD(EnqueueFillBuffer) {
   }
 
   CHECK_ERR(::clEnqueueFillBuffer(
-    q->getRaw(),buffer->getRaw(),pattern, len, offset, size,
+    q->getRaw(), buffer->getRaw(), pattern, len, offset, size,
     cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
@@ -756,18 +768,16 @@ NAN_METHOD(EnqueueWriteImage) {
 //                    cl_event *         /* event */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(EnqueueFillImage) {
   NanScope();
-  REQ_ARGS(7);
+  REQ_ARGS(5);
 
-  // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  // Arg 1
   NOCL_UNWRAP(image, NoCLMem, args[1]);
 
   void *fill_color=nullptr;
   int len=0;
   if(args[2]->IsUndefined() || args[2]->IsNull()) {
-    CHECK_ERR(CL_INVALID_VALUE);
+    THROW_ERR(CL_INVALID_VALUE);
   }
   else
     getPtrAndLen(args[2],fill_color,len);
@@ -783,8 +793,10 @@ NAN_METHOD(EnqueueFillImage) {
       region[i]=arr->Get(i)->Uint32Value();
 
   std::vector<NoCLEvent> cl_events;
-  Local<Array> js_events = Local<Array>::Cast(args[6]);
-  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  if(ARG_EXISTS(5)) {
+    Local<Array> js_events = Local<Array>::Cast(args[5]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  }
 
   cl_event event=nullptr;
   if(ARG_EXISTS(6)) {
@@ -1319,9 +1331,9 @@ NAN_METHOD(EnqueueTask) {
 
 
   std::vector<NoCLEvent> cl_events;
-  Local<Array> js_events = Local<Array>::Cast(args[2]);
+  Local<Array> js_events;
   if (ARG_EXISTS(6)) {
-    Local<Array> js_events = Local<Array>::Cast(args[6]);
+    js_events = Local<Array>::Cast(args[6]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
   cl_event event=nullptr;
