@@ -52,7 +52,18 @@ describe("Event", function() {
     }
     
     testNumber("event status to cl.SUBMITTED","EVENT_COMMAND_EXECUTION_STATUS",cl.SUBMITTED);
-    testNumber("ref count to one","EVENT_REFERENCE_COUNT",1);
+
+    skip().vendor("AMD").it("should return the good value for EVENT_REFERENCE_COUNT", function () {
+      U.withContext(function (ctx) {
+        var uEvent = cl.createUserEvent(ctx);
+        var val = cl.getEventInfo(uEvent, cl.EVENT_REFERENCE_COUNT);
+        assert.isNumber(val);
+        assert.strictEqual(1, val);
+        console.log(name + " = " + val);
+        cl.releaseEvent(uEvent);
+      });
+    });
+
     testNumber("event type to UserEvent","EVENT_COMMAND_TYPE",cl.COMMAND_USER);
     testObject("the context","EVENT_CONTEXT");
     testObject("the command queue","EVENT_COMMAND_QUEUE");
@@ -90,20 +101,32 @@ describe("Event", function() {
     });
   });
 
-  describe("#Retain/Release",function(){
-    it("Should increment and decrement refcount for event",function(){
-      U.withContext(function (ctx) {
-        var uEvent = cl.createUserEvent(ctx);
-        assert.strictEqual(cl.retainEvent(uEvent),cl.SUCCESS);
-        var result = cl.getEventInfo(uEvent,cl.EVENT_REFERENCE_COUNT);
-        assert.strictEqual(result,2);
+  describe("#retainEvent", function() {
 
-        cl.releaseEvent(uEvent);
-        result = cl.getEventInfo(uEvent,cl.EVENT_REFERENCE_COUNT);
-        assert.strictEqual(result,1);
-        cl.releaseEvent(uEvent);
+    it("should have incremented ref count after call", function () {
+      U.withContext(function (ctx, device) {
+        var uEvent = cl.createUserEvent(ctx);
+        var before = cl.getEventInfo(uEvent, cl.EVENT_REFERENCE_COUNT);
+        cl.retainEvent(uEvent);
+        var after = cl.getEventInfo(uEvent, cl.EVENT_REFERENCE_COUNT);
+        assert(before + 1 == after);
       });
     });
+  });
+
+  describe("#releaseEvent", function() {
+
+    it("should have decremented ref count after call", function () {
+      U.withContext(function (ctx, device) {
+        var uEvent = cl.createUserEvent(ctx);
+        var before = cl.getEventInfo(uEvent, cl.EVENT_REFERENCE_COUNT);
+        cl.retainEvent(uEvent);
+        cl.releaseEvent(uEvent);
+        var after = cl.getEventInfo(uEvent, cl.EVENT_REFERENCE_COUNT);
+        assert(before == after);
+      });
+    });
+
   });
 
   describe("#setEventCallback",function(){

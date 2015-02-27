@@ -1,10 +1,17 @@
 var cl = require("../../lib/opencl");
 var os = require("os");
 
+var vendors = {
+  "Advanced Micro Devices, Inc." : "AMD",
+  "Apple" : "Apple",
+  "Intel" : "Intel",
+  "nVidia": "nVidia"
+};
+
 module.exports = function() {
   var _vendors = [];
   var _oss = [];
-  var platformVendor = cl.getPlatformInfo(global.MAIN_PLATFORM_ID, cl.PLATFORM_VENDOR);
+  var platformVendor = vendors[cl.getPlatformInfo(global.MAIN_PLATFORM_ID, cl.PLATFORM_VENDOR)];
   var osName = os.platform();
 
   var match = function(){

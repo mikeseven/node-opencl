@@ -1254,7 +1254,8 @@ describe("CommandQueue", function() {
       })
     });
 
-    it("should fail with null global size", function () {
+    // AMD : It returns invalid value ...
+    skip().vendor("AMD").it("should fail with null global size", function () {
       U.withContext(function (ctx, device) {
         U.withProgram(ctx, fs.readFileSync(__dirname  + "/kernels/square.cl").toString(),
           function (prg) {
