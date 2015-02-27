@@ -3,3 +3,5 @@ node_modules
 build
 .idea/
 docker/amd-app-sdk.tar.bz2
+*~
+*.swp
