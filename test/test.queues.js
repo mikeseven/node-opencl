@@ -1421,12 +1421,47 @@ describe("CommandQueue", function() {
 
   });
 
-  describe("# ( TODO ) enqueueMarkerWithWaitList", function() {
+  describe("#enqueueMarkerWithWaitList", function() {
     versions(["1.1"]).hasUndefined(cl.enqueueMarkerWithWaitList);
+
+    it("should enqueue marker with event wait list", function() {
+
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+
+          var array = new Buffer([0, 0, 0, 0, 0, 0, 0, 0]);
+
+          var buffer = cl.createBuffer(ctx, cl.MEM_USE_HOST_PTR, 32, array);
+          var event = cl.enqueueFillBuffer(cq, buffer, new Buffer([1, 2]), 0, 16, null, true);
+
+          var ret = cl.enqueueMarkerWithWaitList(cq, [event], true);
+
+          assert.isObject(ret);
+        });
+      });
+    });
   });
 
-  describe("# ( TODO ) enqueueBarrierWithWaitList", function() {
+  describe("#enqueueBarrierWithWaitList", function() {
     versions(["1.1"]).hasUndefined(cl.enqueueBarrierWithWaitList);
+
+    it("should enqueue barrier with event wait list", function() {
+
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+
+          var array = new Buffer([0, 0, 0, 0, 0, 0, 0, 0]);
+
+          var buffer = cl.createBuffer(ctx, cl.MEM_USE_HOST_PTR, 32, array);
+          var event = cl.enqueueFillBuffer(cq, buffer, new Buffer([1, 2]), 0, 16, null, true);
+
+          var ret = cl.enqueueBarrierWithWaitList(cq, [event], true);
+
+          assert.isObject(ret);
+        });
+      });
+    });
+
   });
 
 });
