@@ -211,6 +211,34 @@ describe("CommandQueue", function() {
       });
     });
 
+    it("should return an event", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var buffer = cl.createBuffer(ctx, cl.MEM_READ_ONLY, 8, null);
+          var nbuffer = new Buffer(8);
+          var ret = cl.enqueueReadBuffer(cq, buffer, true, 0, 8, nbuffer, null, true);
+
+          assert.isObject(ret);
+        });
+      });
+    });
+
+    it("should fire the event", function (done) {
+      U.withAsyncContext(function (ctx, device, platform, ctxDone) {
+        var cq = makeCommandQueue(ctx, device);
+
+        var buffer = cl.createBuffer(ctx, cl.MEM_READ_ONLY, 8, null);
+        var nbuffer = new Buffer(8);
+        var ret = cl.enqueueReadBuffer(cq, buffer, true, 0, 8, nbuffer, null, true);
+
+        cl.setEventCallback(ret, cl.COMPLETE, function(){
+          ctxDone();
+          done();
+        }, {});
+
+      });
+    })
+
   });
 
 

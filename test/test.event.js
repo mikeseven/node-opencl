@@ -53,13 +53,14 @@ describe("Event", function() {
     
     testNumber("event status to cl.SUBMITTED","EVENT_COMMAND_EXECUTION_STATUS",cl.SUBMITTED);
 
+    // AMD It returns 2
     skip().vendor("AMD").it("should return the good value for EVENT_REFERENCE_COUNT", function () {
       U.withContext(function (ctx) {
         var uEvent = cl.createUserEvent(ctx);
         var val = cl.getEventInfo(uEvent, cl.EVENT_REFERENCE_COUNT);
         assert.isNumber(val);
         assert.strictEqual(1, val);
-        console.log(name + " = " + val);
+        console.log("EVENT_REFERENCE_COUNT" + " = " + val);
         cl.releaseEvent(uEvent);
       });
     });

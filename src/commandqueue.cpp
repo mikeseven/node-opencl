@@ -228,17 +228,28 @@ NAN_METHOD(EnqueueReadBuffer) {
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
 
+  //::clGetCommandQueueInfo(q->getRaw(),param_name,sizeof(cl_context), &val, nullptr)
   cl_event event=nullptr;
-  if(ARG_EXISTS(7)) {
-    NOCL_UNWRAP(evt, NoCLEvent, args[7]);
-    event = evt->getRaw();
+  if(ARG_EXISTS(7) && args[7]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
   CHECK_ERR(::clEnqueueReadBuffer(
     q->getRaw(),buffer->getRaw(),blocking_read,offset,size,ptr,
     cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
-  NanReturnValue(JS_INT(CL_SUCCESS));
+
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -305,9 +316,14 @@ NAN_METHOD(EnqueueReadBufferRect) {
   }
 
   cl_event event=nullptr;
-  if(ARG_EXISTS(12)) {
-    NOCL_UNWRAP(evt, NoCLEvent, args[12]);
-    event = evt->getRaw();
+  if(ARG_EXISTS(12) && args[12]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
   CHECK_ERR(::clEnqueueReadBufferRect(
@@ -316,7 +332,11 @@ NAN_METHOD(EnqueueReadBufferRect) {
     cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -359,9 +379,14 @@ NAN_METHOD(EnqueueWriteBuffer) {
 
   }
   cl_event event=nullptr;
-  if(ARG_EXISTS(7)) {
-    NOCL_UNWRAP(evt, NoCLEvent, args[7]);
-    event = evt->getRaw();
+  if(ARG_EXISTS(7) && args[7]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
   CHECK_ERR(::clEnqueueWriteBuffer(
@@ -369,7 +394,11 @@ NAN_METHOD(EnqueueWriteBuffer) {
     cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -435,9 +464,14 @@ NAN_METHOD(EnqueueWriteBufferRect) {
 
 
   cl_event event=nullptr;
-  if(ARG_EXISTS(12)) {
-    NOCL_UNWRAP(evt, NoCLEvent, args[12]);
-    event = evt->getRaw();
+  if(ARG_EXISTS(12) && args[12]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
   CHECK_ERR(::clEnqueueWriteBufferRect(
@@ -446,7 +480,11 @@ NAN_METHOD(EnqueueWriteBufferRect) {
     cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -498,9 +536,14 @@ NAN_METHOD(EnqueueFillBuffer) {
   }
 
   cl_event event=nullptr;
-  if(ARG_EXISTS(6)) {
-    NOCL_UNWRAP(evt, NoCLEvent, args[6]);
-    event = evt->getRaw();
+  if(ARG_EXISTS(6) && args[6]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
   CHECK_ERR(::clEnqueueFillBuffer(
@@ -508,7 +551,11 @@ NAN_METHOD(EnqueueFillBuffer) {
     cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -547,9 +594,14 @@ NAN_METHOD(EnqueueCopyBuffer) {
   }
 
   cl_event event=nullptr;
-  if(ARG_EXISTS(7)) {
-    NOCL_UNWRAP(evt, NoCLEvent, args[7]);
-    event = evt->getRaw();
+  if(ARG_EXISTS(7) && args[7]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
   CHECK_ERR(::clEnqueueCopyBuffer(q->getRaw(),
@@ -610,9 +662,14 @@ NAN_METHOD(EnqueueCopyBufferRect) {
   }
 
   cl_event event=nullptr;
-  if(ARG_EXISTS(11)) {
-    NOCL_UNWRAP(evt, NoCLEvent, args[11]);
-    event = evt->getRaw();
+  if(ARG_EXISTS(11) && args[11]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
   CHECK_ERR(::clEnqueueCopyBufferRect(
@@ -622,7 +679,11 @@ NAN_METHOD(EnqueueCopyBufferRect) {
     cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -678,9 +739,14 @@ NAN_METHOD(EnqueueReadImage) {
   }
 
   cl_event event=nullptr;
-  if(ARG_EXISTS(9)) {
-    NOCL_UNWRAP(evt, NoCLEvent, args[9]);
-    event = evt->getRaw();
+  if(ARG_EXISTS(9) && args[9]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
   CHECK_ERR(::clEnqueueReadImage(q->getRaw(),image->getRaw(),blocking_read,
@@ -688,7 +754,11 @@ NAN_METHOD(EnqueueReadImage) {
     cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -744,9 +814,14 @@ NAN_METHOD(EnqueueWriteImage) {
   }
 
   cl_event event=nullptr;
-  if(ARG_EXISTS(9)) {
-    NOCL_UNWRAP(evt, NoCLEvent, args[9]);
-    event = evt->getRaw();
+  if(ARG_EXISTS(9) && args[9]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
   CHECK_ERR(::clEnqueueWriteImage(q->getRaw(),image->getRaw(),blocking_write,
@@ -754,7 +829,11 @@ NAN_METHOD(EnqueueWriteImage) {
     cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -799,9 +878,14 @@ NAN_METHOD(EnqueueFillImage) {
   }
 
   cl_event event=nullptr;
-  if(ARG_EXISTS(6)) {
-    NOCL_UNWRAP(evt, NoCLEvent, args[6]);
-    event = evt->getRaw();
+  if(ARG_EXISTS(6) && args[6]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
   CHECK_ERR(::clEnqueueFillImage(
@@ -810,7 +894,11 @@ NAN_METHOD(EnqueueFillImage) {
     cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -857,9 +945,14 @@ NAN_METHOD(EnqueueCopyImage) {
   }
 
   cl_event event=nullptr;
-  if(ARG_EXISTS(7)) {
-    NOCL_UNWRAP(evt, NoCLEvent, args[7]);
-    event = evt->getRaw();
+  if(ARG_EXISTS(7) && args[7]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
   CHECK_ERR(::clEnqueueCopyImage(
@@ -868,7 +961,11 @@ NAN_METHOD(EnqueueCopyImage) {
     cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -913,9 +1010,14 @@ NAN_METHOD(EnqueueCopyImageToBuffer) {
   }
 
   cl_event event=nullptr;
-  if(ARG_EXISTS(7)) {
-    NOCL_UNWRAP(evt, NoCLEvent, args[7]);
-    event = evt->getRaw();
+  if(ARG_EXISTS(7) && args[7]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
   CHECK_ERR(::clEnqueueCopyImageToBuffer(
@@ -924,7 +1026,11 @@ NAN_METHOD(EnqueueCopyImageToBuffer) {
     cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -970,9 +1076,14 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
   }
 
   cl_event event=nullptr;
-  if(ARG_EXISTS(7)) {
-    NOCL_UNWRAP(evt, NoCLEvent, args[8]);
-    event = evt->getRaw();
+  if(ARG_EXISTS(7) && args[7]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
   CHECK_ERR(::clEnqueueCopyBufferToImage(
@@ -981,7 +1092,11 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
     cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY void * CL_API_CALL
@@ -1212,9 +1327,14 @@ NAN_METHOD(EnqueueMigrateMemObjects) {
   }
 
   cl_event event=nullptr;
-  if(ARG_EXISTS(4)) {
-    NOCL_UNWRAP(evt, NoCLEvent, args[4]);
-    event = evt->getRaw();
+  if(ARG_EXISTS(4) && args[4]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
   CHECK_ERR(::clEnqueueMigrateMemObjects(
@@ -1223,7 +1343,11 @@ NAN_METHOD(EnqueueMigrateMemObjects) {
     cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -1298,9 +1422,14 @@ NAN_METHOD(EnqueueNDRangeKernel) {
   }
 
   cl_event event=nullptr;
-  if(ARG_EXISTS(7)) {
-    NOCL_UNWRAP(evt, NoCLEvent, args[7]);
-    event = evt->getRaw();
+  if(ARG_EXISTS(7) && args[7]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
   CHECK_ERR(::clEnqueueNDRangeKernel(
@@ -1313,7 +1442,11 @@ NAN_METHOD(EnqueueNDRangeKernel) {
     0, NULL, NULL
   ));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 #ifndef CL_VERSION_2_0
@@ -1336,14 +1469,20 @@ NAN_METHOD(EnqueueTask) {
 
   std::vector<NoCLEvent> cl_events;
   Local<Array> js_events;
-  if (ARG_EXISTS(6)) {
-    js_events = Local<Array>::Cast(args[6]);
+  if (ARG_EXISTS(2)) {
+    js_events = Local<Array>::Cast(args[2]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
+
   cl_event event=nullptr;
-  if(ARG_EXISTS(3)) {
-    NOCL_UNWRAP(evt, NoCLEvent, args[3]);
-    event = evt->getRaw();
+  if(ARG_EXISTS(3) && args[3]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
   CHECK_ERR(::clEnqueueTask(
@@ -1351,7 +1490,11 @@ NAN_METHOD(EnqueueTask) {
     cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 #endif
 
@@ -1396,18 +1539,26 @@ NAN_METHOD(EnqueueMarkerWithWaitList) {
   NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
 
   cl_event event=nullptr;
-  if(ARG_EXISTS(2)) {
-    NOCL_UNWRAP(evt, NoCLEvent, args[2]);
-    event = evt->getRaw();
-  }
+  if(ARG_EXISTS(2) && args[2]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
 
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
+  }
 
   CHECK_ERR(::clEnqueueMarkerWithWaitList(
     q->getRaw(),
     cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -1427,16 +1578,25 @@ NAN_METHOD(EnqueueBarrierWithWaitList) {
   NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
 
   cl_event event=nullptr;
-  if(ARG_EXISTS(2)) {
-    NOCL_UNWRAP(evt, NoCLEvent, args[2]);
-    event = evt->getRaw();
+  if(ARG_EXISTS(2) && args[2]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
   CHECK_ERR(::clEnqueueBarrierWithWaitList(q->getRaw(),
     cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // // Deprecated OpenCL 1.1 APIs
