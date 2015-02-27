@@ -1153,13 +1153,78 @@ describe("CommandQueue", function() {
   describe("# ( TODO ) enqueueMapImage", function() {
   });
 
-  describe("# ( TODO ) enqueueMapBuffer", function() {
-  });
-
   describe("# ( TODO ) enqueueUnmapMemObject", function() {
   });
 
   describe("# ( TODO ) enqueueMigrateMemObjects", function() {
+    var imageFormat = {"channel_order": cl.RGBA, "channel_data_type": cl.UNSIGNED_INT8};
+    var imageDesc = {
+      "type": cl.MEM_OBJECT_IMAGE2D,
+      "width": 8,
+      "height": 8,
+      "depth": 2,
+      "image_array_size": 1,
+      "image_row_pitch": 8,
+      "image_slice_pitch": 64
+    };
+
+    it("should migrate mem objects with flag cl.MIGRATE_MEM_OBJECT_HOST", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var image = cl.createImage(ctx, cl.MEM_COPY_HOST_PTR, imageFormat, imageDesc, new Buffer(64));
+          var buffer = cl.createBuffer(ctx, cl.MEM_HOST_READ_ONLY, 64, null);
+
+          // cq, mem objects, flags
+          var ret = cl.enqueueMigrateMemObjects(cq, [image, buffer], cl.MIGRATE_MEM_OBJECT_HOST);
+
+          cl.releaseMemObject(image);
+          cl.releaseMemObject(buffer);
+
+          assert.strictEqual(ret, cl.SUCCESS);
+        });
+      });
+    });
+
+    it("should migrate mem objects with flag cl.MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var image = cl.createImage(ctx, cl.MEM_COPY_HOST_PTR, imageFormat, imageDesc, new Buffer(64));
+          var buffer = cl.createBuffer(ctx, cl.MEM_HOST_READ_ONLY, 64, null);
+
+          // cq, mem objects, flags
+          var ret = cl.enqueueMigrateMemObjects(cq, [image, buffer], cl.MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED);
+
+          cl.releaseMemObject(image);
+          cl.releaseMemObject(buffer);
+
+          assert.strictEqual(ret, cl.SUCCESS);
+        });
+      });
+    });
+
+    it("should throw cl.INVALID_VALUE if memObjects is null", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          // cq, mem objects, flags
+          U.bind(cl.enqueueMigrateMemObjects, cq, null, cl.MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED)
+            .should.throw(cl.INVALID_VALUE.message);
+        });
+      });
+    });
+
+    it("should throw cl.INVALID_MEM_OBJECT if any memory object is null", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var image = cl.createImage(ctx, cl.MEM_COPY_HOST_PTR, imageFormat, imageDesc, new Buffer(64));
+          var buffer = null;
+
+          U.bind(cl.enqueueMigrateMemObjects, cq, [image, buffer], cl.MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED)
+            .should.throw(cl.INVALID_MEM_OBJECT.message);
+
+          cl.releaseMemObject(image);
+        });
+      });
+    });
   });
 
   describe("#enqueueNDRangeKernel", function() {
