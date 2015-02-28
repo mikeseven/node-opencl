@@ -184,7 +184,7 @@ NAN_METHOD(GetKernelArgInfo) {
     case CL_KERNEL_ARG_TYPE_QUALIFIER: {
       cl_kernel_arg_type_qualifier num=0;
       CHECK_ERR(::clGetKernelInfo(k,param_name,sizeof(cl_kernel_arg_type_qualifier),&num, NULL));
-      NanReturnValue(JS_INT(num));
+      NanReturnValue(JS_INT(uint32_t(num)));
     }
     case CL_KERNEL_ARG_TYPE_NAME:
     case CL_KERNEL_ARG_NAME: {
@@ -226,22 +226,22 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
       size_t sz[3]{0,0,0};
       CHECK_ERR(::clGetKernelWorkGroupInfo(k,d,param_name,3*sizeof(size_t),sz, NULL));
       Local<Array> szarr = Array::New();
-      szarr->Set(0,JS_INT(sz[0]));
-      szarr->Set(1,JS_INT(sz[1]));
-      szarr->Set(2,JS_INT(sz[2]));
+      szarr->Set(0,JS_INT(uint32_t(sz[0])));
+      szarr->Set(1,JS_INT(uint32_t(sz[1])));
+      szarr->Set(2,JS_INT(uint32_t(sz[2])));
       NanReturnValue(szarr);
     }
     case CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE:
     case CL_KERNEL_WORK_GROUP_SIZE: {
       size_t sz=0;
       CHECK_ERR(::clGetKernelWorkGroupInfo(k,d,param_name,sizeof(size_t),&sz, NULL));
-      NanReturnValue(JS_INT(sz));
+      NanReturnValue(JS_INT(uint32_t(sz)));
     }
     case CL_KERNEL_LOCAL_MEM_SIZE:
     case CL_KERNEL_PRIVATE_MEM_SIZE: {
       cl_ulong sz=0;
       CHECK_ERR(::clGetKernelWorkGroupInfo(k,d,param_name,sizeof(cl_ulong),&sz, NULL));
-      NanReturnValue(JS_INT(sz));
+      NanReturnValue(JS_INT(uint32_t(sz)));
     }
   }
 

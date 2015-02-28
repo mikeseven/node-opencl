@@ -247,14 +247,14 @@ NAN_METHOD(GetMemObjectInfo) {
     case CL_MEM_FLAGS: {
       cl_mem_flags val;
       CHECK_ERR(::clGetMemObjectInfo(mem,param_name,sizeof(cl_mem_flags), &val, NULL))
-      NanReturnValue(JS_INT(val));
+      NanReturnValue(JS_INT(uint32_t(val)));
     }
     case CL_MEM_SIZE:
     case CL_MEM_OFFSET:
     {
       size_t val;
       CHECK_ERR(::clGetMemObjectInfo(mem,param_name,sizeof(size_t), &val, NULL))
-      NanReturnValue(JS_INT(val));
+      NanReturnValue(JS_INT(uint32_t(val)));
     }
     case CL_MEM_MAP_COUNT:
     case CL_MEM_REFERENCE_COUNT:
@@ -317,7 +317,7 @@ NAN_METHOD(GetImageInfo) {
     {
       size_t val;
       CHECK_ERR(::clGetImageInfo(mem,param_name,sizeof(size_t), &val, NULL))
-      NanReturnValue(JS_INT(val));
+      NanReturnValue(JS_INT(uint32_t(val)));
     }
     case CL_IMAGE_BUFFER: {
       cl_mem val;
