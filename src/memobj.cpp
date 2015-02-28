@@ -1,4 +1,6 @@
 #include "memobj.h"
+#include "types.h"
+#include "common.h"
 #include <node_buffer.h>
 
 using namespace node;
@@ -16,41 +18,45 @@ NAN_METHOD(CreateBuffer) {
   NanScope();
   REQ_ARGS(4);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_CONTEXT));
-  }
-  cl_context context=Unwrap<cl_context>(args[0]);
-  cl_mem_flags flags = args[1]->Uint32Value();
-  size_t size = args[2]->Uint32Value();
-  void *host_ptr = NULL;
+  // Arg 0
+  NOCL_UNWRAP(context, NoCLContext, args[0]);
 
-  if(!args[3]->IsNull() && !args[3]->IsUndefined()) {
+  // Arg 1
+  cl_mem_flags flags = args[1]->Uint32Value();
+
+  // Arg 2
+  size_t size = args[2]->Uint32Value();
+
+  // Arg 3
+  void *host_ptr = NULL;
+  if(ARG_EXISTS(3)) {
     if(args[3]->IsArray()) {
-      // JS Array
-      Local<Array> arr=Local<Array>::Cast(args[3]);
-      host_ptr=arr->GetIndexedPropertiesExternalArrayData();
+      THROW_ERR(CL_INVALID_MEM_OBJECT);
     }
-    else if(args[3]->IsObject()) {
+    if(args[3]->IsObject()) {
       Local<Object> obj=args[3]->ToObject();
-      String::AsciiValue name(obj->GetConstructorName());
-      if(!strcmp("Buffer",*name))
+      String::Utf8Value name(obj->GetConstructorName());
+      if(strcmp("Buffer",*name))
         host_ptr=Buffer::Data(obj);
-      else {
+      else if(strcmp("Array",*name)) {
         // TypedArray
-        assert(obj->HasIndexedPropertiesInExternalArrayData());
+        if (!obj->HasIndexedPropertiesInExternalArrayData()) {
+          THROW_ERR(CL_INVALID_MEM_OBJECT);
+        }
         host_ptr=obj->GetIndexedPropertiesExternalArrayData();
-        // printf("external array data type %d\n",obj->GetIndexedPropertiesExternalArrayDataType());
+      } else {
+        THROW_ERR(CL_INVALID_MEM_OBJECT);
       }
     }
     else
-      NanThrowError("Invalid memory object");
+    THROW_ERR(CL_INVALID_MEM_OBJECT);
   }
 
   cl_int ret=CL_SUCCESS;
-  cl_mem mem = ::clCreateBuffer(context, flags, size, host_ptr, &ret);
+  cl_mem mem = ::clCreateBuffer(context->getRaw(), flags, size, host_ptr, &ret);
   CHECK_ERR(ret);
 
-  NanReturnValue(Wrap(mem));
+  NanReturnValue(NOCL_WRAP(NoCLMem, mem));
 }
 
 // extern CL_API_ENTRY cl_mem CL_API_CALL
@@ -63,11 +69,13 @@ NAN_METHOD(CreateSubBuffer) {
   NanScope();
   REQ_ARGS(4);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem buffer=Unwrap<cl_mem>(args[0]);
+  // Arg 0
+  NOCL_UNWRAP(buffer, NoCLMem, args[0]);
+
+  // Arg 1
   cl_mem_flags flags = args[1]->Uint32Value();
+
+  // Arg 2
   cl_buffer_create_type buffer_create_type = args[2]->Uint32Value();
 
   if(buffer_create_type==CL_BUFFER_CREATE_TYPE_REGION) {
@@ -77,13 +85,14 @@ NAN_METHOD(CreateSubBuffer) {
     buffer_create_info.size = obj->Get(JS_STR("size"))->Uint32Value();
 
     cl_int ret=CL_SUCCESS;
-    cl_mem mem = ::clCreateSubBuffer(buffer, flags, buffer_create_type, &buffer_create_info, &ret);
+    cl_mem mem = ::clCreateSubBuffer(buffer->getRaw(), flags, buffer_create_type, &buffer_create_info, &ret);
     CHECK_ERR(ret);
 
-    NanReturnValue(Wrap(mem));
+    NanReturnValue(NOCL_WRAP(NoCLMem, mem));
   }
 
-  return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  CHECK_ERR(CL_INVALID_VALUE);
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_mem CL_API_CALL
@@ -97,17 +106,19 @@ NAN_METHOD(CreateImage) {
   NanScope();
   REQ_ARGS(5);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_CONTEXT));
-  }
-  cl_context context=Unwrap<cl_context>(args[0]);
+  // Arg 0
+  NOCL_UNWRAP(context, NoCLContext, args[0]);
+
+  // Arg 1
   cl_mem_flags flags = args[1]->Uint32Value();
 
+  // Arg 2
   Local<Object> obj = args[2]->ToObject();
   cl_image_format image_format;
   image_format.image_channel_order = obj->Get(JS_STR("channel_order"))->IsUndefined() ? 0 : obj->Get(JS_STR("channel_order"))->Uint32Value();
   image_format.image_channel_data_type = obj->Get(JS_STR("channel_data_type"))->IsUndefined() ? 0 : obj->Get(JS_STR("channel_data_type"))->Uint32Value();
 
+  // Arg 3
   obj = args[3]->ToObject();
   cl_image_desc desc;
   memset(&desc,0,sizeof(cl_image_desc));
@@ -126,7 +137,8 @@ NAN_METHOD(CreateImage) {
 
   void *host_ptr = NULL;
 
-  if(!args[4]->IsNull() && !args[4]->IsUndefined()) {
+  // Arg 4
+  if(ARG_EXISTS(4)) {
     if(args[4]->IsArray()) {
       // JS Array
       Local<Array> arr=Local<Array>::Cast(args[4]);
@@ -134,12 +146,14 @@ NAN_METHOD(CreateImage) {
     }
     else if(args[4]->IsObject()) {
       Local<Object> obj=args[4]->ToObject();
-      String::AsciiValue name(obj->GetConstructorName());
+      String::Utf8Value name(obj->GetConstructorName());
       if(!strcmp("Buffer",*name))
         host_ptr=Buffer::Data(obj);
       else {
         // TypedArray
-        assert(obj->HasIndexedPropertiesInExternalArrayData());
+        if(!obj->HasIndexedPropertiesInExternalArrayData()) {
+          THROW_ERR(CL_INVALID_MEM_OBJECT)
+        }
         host_ptr=obj->GetIndexedPropertiesExternalArrayData();
         // printf("external array data type %d\n",obj->GetIndexedPropertiesExternalArrayDataType());
       }
@@ -149,10 +163,10 @@ NAN_METHOD(CreateImage) {
   }
 
   cl_int ret=CL_SUCCESS;
-  cl_mem mem = ::clCreateImage(context, flags, &image_format, &desc, host_ptr, &ret);
+  cl_mem mem = ::clCreateImage(context->getRaw(), flags, &image_format, &desc, host_ptr, &ret);
   CHECK_ERR(ret);
 
-  NanReturnValue(Wrap(mem));
+  NanReturnValue(NOCL_WRAP(NoCLMem, mem));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -161,14 +175,12 @@ NAN_METHOD(RetainMemObject) {
   NanScope();
   REQ_ARGS(1);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
+  NOCL_UNWRAP(mem, NoCLMem, args[0]);
 
-  cl_mem mem = Unwrap<cl_mem>(args[0]);
-  cl_int count=clRetainMemObject(mem);
+  cl_int ret=clRetainMemObject(mem->getRaw());
 
-  NanReturnValue(JS_INT(count));
+  CHECK_ERR(ret);
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -177,14 +189,11 @@ NAN_METHOD(ReleaseMemObject) {
   NanScope();
   REQ_ARGS(1);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
+  NOCL_UNWRAP(mem, NoCLMem, args[0]);
+  cl_int ret=clReleaseMemObject(mem->getRaw());
 
-  cl_mem mem = Unwrap<cl_mem>(args[0]);
-  cl_int count=clReleaseMemObject(mem);
-
-  NanReturnValue(JS_INT(count));
+  CHECK_ERR(ret);
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -198,22 +207,24 @@ NAN_METHOD(GetSupportedImageFormats) {
   NanScope();
   REQ_ARGS(3);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_CONTEXT));
-  }
-  cl_context context=Unwrap<cl_context>(args[0]);
+  // Arg 0
+  NOCL_UNWRAP(context, NoCLContext, args[0]);
+
+  // Arg 1
   cl_mem_flags flags = args[1]->Uint32Value();
+
+  // Arg 2
   cl_mem_object_type image_type = args[2]->Uint32Value();
 
   cl_uint numEntries=0;
-  CHECK_ERR(::clGetSupportedImageFormats(context, flags, image_type, 0, NULL, &numEntries));
+  CHECK_ERR(::clGetSupportedImageFormats(context->getRaw(), flags, image_type, 0, NULL, &numEntries));
 
   unique_ptr<cl_image_format[]> image_formats(new cl_image_format[numEntries]);
-  CHECK_ERR(::clGetSupportedImageFormats(context, flags, image_type, numEntries, image_formats.get(), NULL));
+  CHECK_ERR(::clGetSupportedImageFormats(context->getRaw(), flags, image_type, numEntries, image_formats.get(), NULL));
 
-  Local<Array> imageFormats = Array::New();
+  Local<Array> imageFormats = NanNew<Array>();
   for (uint32_t i=0; i<numEntries; i++) {
-    Local<Object> format = Object::New();
+    Local<Object> format = NanNew<Object>();
     format->Set(JS_STR("channel_order"), JS_INT(image_formats[i].image_channel_order));
     format->Set(JS_STR("channel_data_type"), JS_INT(image_formats[i].image_channel_data_type));
     imageFormats->Set(i, format);
@@ -232,51 +243,52 @@ NAN_METHOD(GetMemObjectInfo) {
   NanScope();
   REQ_ARGS(2);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem mem=Unwrap<cl_mem>(args[0]);
+  // Arg 0
+  NOCL_UNWRAP(mem, NoCLMem, args[0]);
+
+  // Arg 1
   cl_mem_info param_name = args[1]->Uint32Value();
 
   switch(param_name) {
     case CL_MEM_TYPE: {
       cl_mem_object_type val;
-      CHECK_ERR(::clGetMemObjectInfo(mem,param_name,sizeof(cl_mem_object_type), &val, NULL))
+      CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(cl_mem_object_type), &val, NULL))
       NanReturnValue(JS_INT(val));
     }
     case CL_MEM_FLAGS: {
       cl_mem_flags val;
-      CHECK_ERR(::clGetMemObjectInfo(mem,param_name,sizeof(cl_mem_flags), &val, NULL))
+      CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(cl_mem_flags), &val, NULL))
       NanReturnValue(JS_INT(val));
     }
     case CL_MEM_SIZE:
     case CL_MEM_OFFSET:
     {
       size_t val;
-      CHECK_ERR(::clGetMemObjectInfo(mem,param_name,sizeof(size_t), &val, NULL))
+      CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(size_t), &val, NULL))
       NanReturnValue(JS_INT(val));
     }
     case CL_MEM_MAP_COUNT:
     case CL_MEM_REFERENCE_COUNT:
     {
       cl_uint val;
-      CHECK_ERR(::clGetMemObjectInfo(mem,param_name,sizeof(cl_uint), &val, NULL))
+      CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(cl_uint), &val, NULL))
       NanReturnValue(JS_INT(val));
     }
     case CL_MEM_HOST_PTR: {
       void* val;
-      CHECK_ERR(::clGetMemObjectInfo(mem,param_name,sizeof(void*), &val, NULL))
-      // TODO NanReturnValue(JS_INT(val));
+      CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(void*), &val, NULL))
+
+      NanReturnValue(NOCL_WRAP(NoCLMappedPtr, val));
     }
     case CL_MEM_CONTEXT: {
       cl_context val;
-      CHECK_ERR(::clGetMemObjectInfo(mem,param_name,sizeof(cl_context), &val, NULL))
-      // TODO NanReturnValue(JS_INT(val));
+      CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(cl_context), &val, NULL))
+      NanReturnValue(NOCL_WRAP(NoCLContext, val));
     }
     case CL_MEM_ASSOCIATED_MEMOBJECT: {
       cl_mem val;
-      CHECK_ERR(::clGetMemObjectInfo(mem,param_name,sizeof(cl_mem), &val, NULL))
-      // TODO NanReturnValue(JS_INT(val));
+      CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(cl_mem), &val, NULL))
+      NanReturnValue(NOCL_WRAP(NoCLMem, val));
     }
   }
   return NanThrowError(JS_INT(CL_INVALID_VALUE));
@@ -292,17 +304,17 @@ NAN_METHOD(GetImageInfo) {
   NanScope();
   REQ_ARGS(2);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem mem=Unwrap<cl_mem>(args[0]);
+  // Arg 0
+  NOCL_UNWRAP(mem, NoCLMem, args[0]);
+
+  // Arg 1
   cl_image_info param_name = args[1]->Uint32Value();
 
   switch(param_name) {
     case CL_IMAGE_FORMAT: {
       cl_image_format val;
-      CHECK_ERR(::clGetImageInfo(mem,param_name,sizeof(cl_image_format), &val, NULL))
-      Local<Array> arr=Array::New(2);
+      CHECK_ERR(::clGetImageInfo(mem->getRaw(),param_name,sizeof(cl_image_format), &val, NULL))
+      Local<Array> arr=NanNew<Array>(2);
       arr->Set(JS_STR("channel_order"), JS_INT(val.image_channel_order));
       arr->Set(JS_STR("channel_data_type"), JS_INT(val.image_channel_data_type));
       NanReturnValue(arr);
@@ -316,20 +328,19 @@ NAN_METHOD(GetImageInfo) {
     case CL_IMAGE_ARRAY_SIZE:
     {
       size_t val;
-      CHECK_ERR(::clGetImageInfo(mem,param_name,sizeof(size_t), &val, NULL))
+      CHECK_ERR(::clGetImageInfo(mem->getRaw(),param_name,sizeof(size_t), &val, NULL))
       NanReturnValue(JS_INT(val));
     }
     case CL_IMAGE_BUFFER: {
       cl_mem val;
-      CHECK_ERR(::clGetImageInfo(mem,param_name,sizeof(cl_mem), &val, NULL))
-      // TODO NanReturnValue(JS_INT(val));
-      break;
+      CHECK_ERR(::clGetImageInfo(mem->getRaw(),param_name,sizeof(cl_mem), &val, NULL))
+      NanReturnValue(NOCL_WRAP(NoCLMem, val));
     }
     case CL_IMAGE_NUM_MIP_LEVELS:
     case CL_IMAGE_NUM_SAMPLES:
     {
       cl_uint val;
-      CHECK_ERR(::clGetImageInfo(mem,param_name,sizeof(cl_uint), &val, NULL))
+      CHECK_ERR(::clGetImageInfo(mem->getRaw(),param_name,sizeof(cl_uint), &val, NULL))
       NanReturnValue(JS_INT(val));
     }
   }

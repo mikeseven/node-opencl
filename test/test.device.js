@@ -1,67 +1,11 @@
-var cl=require('../lib/opencl'),
-    should=require('chai').should(),
-    util=require('util'),
-    log=console.log;
-
-describe("Platform", function() {
-  var platforms=cl.getPlatformIDs();
-
-  describe("#getPlatformIDs()",function() {
-    it("should return an array",function() {
-      cl.getPlatformIDs().should.be.an.array;
-    })
-  })
-
-  function testString(platform, name) {
-    it(name+" should return a string",function(done) {
-      var val=cl.getPlatformInfo(platform,eval("cl."+name));
-      val.should.be.a.string;
-      done(log(name+" = " + val))
-    })
-  }
-
-  function testPlatform(p) {
-    describe("#getPlatformInfo() for "+cl.getPlatformInfo(p,cl.PLATFORM_VENDOR)+" "+cl.getPlatformInfo(p,cl.PLATFORM_NAME),function() {
-      testString(p, "PLATFORM_VERSION");
-      testString(p, "PLATFORM_PROFILE");
-      testString(p, "PLATFORM_NAME");
-      testString(p, "PLATFORM_VENDOR");
-      testString(p, "PLATFORM_EXTENSIONS");
-
-      // negative test cases
-      it("should throw cl.INVALID_VALUE with name=cl.DEVICE_TYPE_CPU",function() {
-        cl.getPlatformInfo.bind(cl.getPlatformInfo,p,cl.DEVICE_TYPE_CPU).should.throw(cl.INVALID_VALUE);
-      })
-      it("should throw cl.INVALID_VALUE with name=0x2000",function() {
-        cl.getPlatformInfo.bind(cl.getPlatformInfo,p,0x2000).should.throw(cl.INVALID_VALUE);
-      })
-      it("should throw cl.INVALID_VALUE with name='a string'",function() {
-        cl.getPlatformInfo.bind(cl.getPlatformInfo,p,'a string').should.throw(cl.INVALID_VALUE);
-      })
-      it("should throw cl.INVALID_VALUE with name=-123.56",function() {
-        cl.getPlatformInfo.bind(cl.getPlatformInfo,p,-123.56).should.throw(cl.INVALID_VALUE);
-      })
-      it("should throw cl.INVALID_PLATFORM with platform = null",function() {
-        cl.getPlatformInfo.bind(cl.getPlatformInfo,null,123).should.throw(cl.INVALID_PLATFORM);
-      })
-      it("should throw cl.INVALID_PLATFORM with platform = 'a string'",function() {
-        cl.getPlatformInfo.bind(cl.getPlatformInfo,'a string',123).should.throw(cl.INVALID_PLATFORM);
-      })
-      it("should throw cl.INVALID_PLATFORM with platform = 123",function() {
-        cl.getPlatformInfo.bind(cl.getPlatformInfo,123,123).should.throw(cl.INVALID_PLATFORM);
-      })
-      it("should throw cl.INVALID_PLATFORM with platform = [1,2,3]",function() {
-        cl.getPlatformInfo.bind(cl.getPlatformInfo,[1,2,3],123).should.throw(cl.INVALID_PLATFORM);
-      })
-      it("should throw cl.INVALID_PLATFORM with platform = new Array()",function() {
-        cl.getPlatformInfo.bind(cl.getPlatformInfo,new Array(),123).should.throw(cl.INVALID_PLATFORM);
-      })
-    })
-  }
-
-  for(var i=0;i<platforms.length;i++)
-    testPlatform(platforms[i]);
-})
+var cl = require('../lib/opencl');
+var should = require('chai').should();
+var assert = require('chai').assert;
+var util = require('util');
+var log = console.log;
+var skip = require("./utils/diagnostic");
+var U = require("./utils/utils.js");
+var versions = require("./utils/versions");
 
 describe("Device", function() {
   var platforms=cl.getPlatformIDs();
@@ -70,40 +14,53 @@ describe("Device", function() {
 
   describe("#getDeviceIDs()",function() {
     it("should return an array",function() {
-      cl.getDeviceIDs(platform).should.be.an.array;
+      var ids = cl.getDeviceIDs(platform);
+      assert.isArray(ids);
+      assert.isAbove(ids.length, 0);
     })
-  })
+  });
 
   function testBoolean(device, name) {
     it(name+" should return a boolean",function(done) {
       var val=cl.getDeviceInfo(device,eval("cl."+name));
-      val.should.be.a.boolean;
+      assert.isBoolean(val);
       done(log(name+" = " + val))
     })
   }
   function testInteger(device, name) {
     it(name+" should return an integer",function(done) {
       var val=cl.getDeviceInfo(device,eval("cl."+name));
-      val.should.be.a.integer;
+      assert.isNumber(val);
       done(log(name+" = " + val))
     })
   }
   function testString(device, name) {
     it(name+" should return a string",function(done) {
       var val=cl.getDeviceInfo(device,eval("cl."+name));
-      val.should.be.a.string;
+      assert.isString(val);
       done(log(name+" = " + val))
     })
   }
   function testObject(device, name) {
     it(name+" should return an object",function() {
-      cl.getDeviceInfo(device,eval("cl."+name)).should.be.an.object;
+      var info = cl.getDeviceInfo(device,eval("cl."+name));
+      assert.isObject(info);
     })
   }
   function testArray(device, name) {
     it(name+" should return an array",function(done) {
       var val=cl.getDeviceInfo(device,eval("cl."+name));
-      val.should.be.an.array;
+      assert.isArray(val);
+      done(log(name+" = " + val))
+    })
+  }
+
+  function test64Array(device, name) {
+    it(name+" should return a 2 integers array",function(done) {
+      var val=cl.getDeviceInfo(device,eval("cl."+name));
+      assert.isArray(val);
+      assert.isNumber(val[0]);
+      assert.isNumber(val[1]);
       done(log(name+" = " + val))
     })
   }
@@ -171,11 +128,11 @@ describe("Device", function() {
         testInteger(device, "DEVICE_PARTITION_MAX_SUB_DEVICES");
       }
 
-      testInteger(device, "DEVICE_GLOBAL_MEM_CACHE_SIZE");
-      testInteger(device, "DEVICE_GLOBAL_MEM_SIZE");
-      testInteger(device, "DEVICE_LOCAL_MEM_SIZE");
-      testInteger(device, "DEVICE_MAX_CONSTANT_BUFFER_SIZE");
-      testInteger(device, "DEVICE_MAX_MEM_ALLOC_SIZE");
+      test64Array(device, "DEVICE_GLOBAL_MEM_CACHE_SIZE");
+      test64Array(device, "DEVICE_GLOBAL_MEM_SIZE");
+      test64Array(device, "DEVICE_LOCAL_MEM_SIZE");
+      test64Array(device, "DEVICE_MAX_CONSTANT_BUFFER_SIZE");
+      test64Array(device, "DEVICE_MAX_MEM_ALLOC_SIZE");
 
       testInteger(device, "DEVICE_IMAGE2D_MAX_HEIGHT");
       testInteger(device, "DEVICE_IMAGE2D_MAX_WIDTH");
@@ -185,53 +142,113 @@ describe("Device", function() {
       testInteger(device, "DEVICE_MAX_PARAMETER_SIZE");
       testInteger(device, "DEVICE_MAX_WORK_GROUP_SIZE");
       testInteger(device, "DEVICE_PROFILING_TIMER_RESOLUTION");
+
+      if (U.checkVersion("2.x")) {
+        testInteger(device, "DEVICE_PIPE_MAX_PACKET_SIZE");
+        testInteger(device, "DEVICE_MAX_PIPE_ARGS");
+        testInteger(device, "DEVICE_PIPE_MAX_ACTIVE_RESERVATIONS");
+      }
+
       if(cl.CL_VERSION_1_2) {
         testInteger(device, "DEVICE_IMAGE_MAX_BUFFER_SIZE");
         testInteger(device, "DEVICE_IMAGE_MAX_ARRAY_SIZE");
       }
 
-      // negative test cases
+      //// negative test cases
       it("should throw cl.INVALID_VALUE with name=-123.56",function() {
-        cl.getDeviceInfo.bind(cl.getDeviceInfo,device,-123.56).should.throw(cl.INVALID_VALUE);
-      })
+        cl.getDeviceInfo.bind(cl.getDeviceInfo,device,-123.56).should.throw(cl.INVALID_VALUE.message);
+      });
       it("should throw cl.INVALID_VALUE with name='a string'",function() {
-        cl.getDeviceInfo.bind(cl.getDeviceInfo,device,'a string').should.throw(cl.INVALID_VALUE);
-      })
+        cl.getDeviceInfo.bind(cl.getDeviceInfo,device,'a string').should.throw(cl.INVALID_VALUE.message);
+      });
       it("should throw cl.INVALID_VALUE with name=123456",function() {
-        cl.getDeviceInfo.bind(cl.getDeviceInfo,device,123456).should.throw(cl.INVALID_VALUE);
-      })
+        cl.getDeviceInfo.bind(cl.getDeviceInfo,device,123456).should.throw(cl.INVALID_VALUE.message);
+      });
       it("should throw cl.INVALID_DEVICE with device = null",function() {
-        cl.getDeviceInfo.bind(cl.getDeviceInfo,null,123).should.throw(cl.INVALID_DEVICE);
-      })
+        cl.getDeviceInfo.bind(cl.getDeviceInfo,null,123).should.throw(cl.INVALID_DEVICE.message);
+      });
       it("should throw cl.INVALID_DEVICE with device = 'a string'",function() {
-        cl.getDeviceInfo.bind(cl.getDeviceInfo,'a string',123).should.throw(cl.INVALID_DEVICE);
-      })
+        cl.getDeviceInfo.bind(cl.getDeviceInfo,'a string',123).should.throw(cl.INVALID_DEVICE.message);
+      });
       it("should throw cl.INVALID_DEVICE with device = 123",function() {
-        cl.getDeviceInfo.bind(cl.getDeviceInfo,123,123).should.throw(cl.INVALID_DEVICE);
-      })
+        cl.getDeviceInfo.bind(cl.getDeviceInfo,123,123).should.throw(cl.INVALID_DEVICE.message);
+      });
       it("should throw cl.INVALID_DEVICE with device = [1,2,3]",function() {
-        cl.getDeviceInfo.bind(cl.getDeviceInfo,[1,2,3],123).should.throw(cl.INVALID_DEVICE);
-      })
+        cl.getDeviceInfo.bind(cl.getDeviceInfo,[1,2,3],123).should.throw(cl.INVALID_DEVICE.message);
+      });
       it("should throw cl.INVALID_DEVICE with device = new Array()",function() {
-        cl.getDeviceInfo.bind(cl.getDeviceInfo,new Array(),123).should.throw(cl.INVALID_DEVICE);
+        cl.getDeviceInfo.bind(cl.getDeviceInfo,[],123).should.throw(cl.INVALID_DEVICE.message);
       })
 
-    })
-    describe("#createSubDevices() for "+device_vendor+" "+device_name,function() {
-    })
-    describe("#retainDevice() for "+device_vendor+" "+device_name,function() {
-      it("should increase device reference count",function() {
-        cl.retainDevice(device).should.equal(0);
+    });
+
+    versions(["1.2", "2.0"]).describe("#createSubDevices() for "+device_vendor+" "+device_name,function() {
+
+      skip().vendor("Intel").it("should return an array of sub-devices", function() {
+
+        var subdevices;
+        try {
+          cl.createSubDevices(device, [cl.DEVICE_PARTITION_BY_COUNTS, 3, 1, cl.DEVICE_PARTITION_BY_COUNTS_LIST_END, 0], 2);
+          assert.isArray(subDevices);
+          assert.isAbove(subDevices.length, 0);
+        } catch (error) {
+          if (error.message === cl.DEVICE_PARTITION_FAILED.message) {
+            assert.isTrue(true);
+          }
+        }
+
       })
-    })
+
+    });
+    describe("#retainDevice() for "+device_vendor+" "+device_name,function() {
+
+      var f = cl.retainDevice;
+
+      it("should throw cl.INVALID_DEVICE if device is not a subdevice", function () {
+        f.bind(f, device).should.throw(cl.INVALID_DEVICE.message);
+      });
+
+      it("should increase device reference count",function() {
+        try {
+          var subDevice = cl.createSubDevices(device, cl.DEVICE_PARTITION_BY_COUNTS, 2);
+          cl.retainDevice(subDevice);
+          var count = cl.getDeviceInfo(subDevice, cl.DEVICE_REFERENCE_COUNT);
+          assert.strictEqual(count, 2);
+          cl.releaseDevice(subDevice);
+        } catch (error) {
+          if (error.message === cl.DEVICE_PARTITION_FAILED.message) {
+            assert.isTrue(true);
+          }
+        }
+
+      })
+    });
     describe("#releaseDevice() for "+device_vendor+" "+device_name,function() {
+
+      var f = cl.releaseDevice;
+
+      it("should throw cl.INVALID_DEVICE if device is not a subdevice", function () {
+        f.bind(f, device).should.throw(cl.INVALID_DEVICE.message);
+      });
+
       it("should decrease device reference count",function() {
-        cl.releaseDevice(device).should.equal(0);
+        try {
+          var subDevice = cl.createSubDevices(device, cl.DEVICE_PARTITION_BY_COUNTS, 2);
+          cl.retainDevice(subDevice);
+          var count = cl.getDeviceInfo(subDevice, cl.DEVICE_REFERENCE_COUNT);
+          assert.strictEqual(count, 2);
+          cl.releaseDevice(subDevice);
+          count = cl.getDeviceInfo(subDevice, cl.DEVICE_REFERENCE_COUNT);
+          assert.strictEqual(count, 1);
+        } catch (error) {
+          if (error.message === cl.DEVICE_PARTITION_FAILED.message) {
+            assert.isTrue(true);
+          }
+        }
       })
     })
   }
 
-  for(var i=0;i<devices.length;i++)
-    testDevice(devices[i]);
+  testDevice(global.MAIN_DEVICE_ID);
 
-})
+});

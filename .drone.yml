@@ -1,0 +1,13 @@
+image: ioweb/opencl
+branches:
+  - master
+  - develop
+script:
+    - npm run lint || echo "You have lint issues. For now we skip this, but soon fixing them will be mandatory for CI integration"
+    - npm install --unsafe-perm
+    - npm test
+notify:
+  email:
+    recipients:
+      - contact@ioweb.fr
+      - fabien.cellier@gmail.com

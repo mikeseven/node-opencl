@@ -2,6 +2,7 @@
 #define EVENT_H_
 
 #include "common.h"
+#include "nanextension.h"
 
 namespace opencl {
 

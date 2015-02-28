@@ -1,8 +1,10 @@
 #include "commandqueue.h"
+#include "types.h"
 
 namespace opencl {
 
 #ifndef CL_VERSION_2_0
+
 // /* Command Queue APIs */
 // extern CL_API_ENTRY cl_command_queue CL_API_CALL
 // clCreateCommandQueue(cl_context                     /* context */,
@@ -13,30 +15,78 @@ NAN_METHOD(CreateCommandQueue) {
   NanScope();
   REQ_ARGS(3);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_CONTEXT));
-  }
-  cl_context context=Unwrap<cl_context>(args[0]);
+  // Arg 0
+  NOCL_UNWRAP(context, NoCLContext, args[0]);
 
-  if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_DEVICE));
-  }
-  cl_device_id device=Unwrap<cl_device_id>(args[1]);
+  // Arg 1
+  NOCL_UNWRAP(device, NoCLDeviceId, args[1]);
+
   cl_command_queue_properties properties = args[2]->Uint32Value();
 
   cl_int err;
-  cl_command_queue q = ::clCreateCommandQueue(context, device, properties, &err);
-  CHECK_ERR(err)
+  cl_command_queue q = ::clCreateCommandQueue(
+    context->getRaw(), device->getRaw(), properties, &err);
 
-  NanReturnValue(Wrap(q));
+  CHECK_ERR(err)
+  NanReturnValue(NOCL_WRAP(NoCLCommandQueue, q));
 }
 
 #else
+
 // extern CL_API_ENTRY cl_command_queue CL_API_CALL
 // clCreateCommandQueueWithProperties(cl_context               /* context */,
 //                                    cl_device_id              /* device */,
 //                                    const cl_queue_properties *    /* properties */,
 //                                    cl_int *                 /* errcode_ret */) CL_API_SUFFIX__VERSION_2_0;
+NAN_METHOD(CreateCommandQueueWithProperties) {
+  NanScope();
+  REQ_ARGS(3);
+
+  // Arg 1
+  NOCL_UNWRAP(context, NoCLContext, args[0]);
+
+  // Arg 2
+  NOCL_UNWRAP(device, NoCLDeviceId, args[1]);
+
+  // Arg 3
+  Local<Array> properties = Local<Array>::Cast(args[2]);
+  vector<cl_queue_properties> cl_properties;
+
+  for (uint32_t i=0; i < properties->Length(); i+=2) {
+    if (!properties->Get(i)->IsNumber()) {
+        THROW_ERR(CL_INVALID_VALUE);
+    }
+    cl_uint prop_id = properties->Get(i)->Uint32Value();
+    cl_properties.push_back(prop_id);
+
+    if(prop_id == CL_QUEUE_PROPERTIES) {
+      if (!properties->Get(i+1)->IsNumber()) {
+        THROW_ERR(CL_INVALID_VALUE);
+      }
+      cl_queue_properties props = properties->Get(i+1)->Int32Value();
+      cl_properties.push_back(props);
+    } else if (prop_id == CL_QUEUE_SIZE) {
+      if (!properties->Get(i+1)->IsNumber()) {
+        THROW_ERR(CL_INVALID_VALUE);
+      }
+      cl_queue_properties size = properties->Get(i+1)->Int32Value();
+      cl_properties.push_back(size);
+    } else {
+      THROW_ERR(CL_INVALID_QUEUE_PROPERTIES)
+    }
+  }
+
+  cl_int err;
+  cl_command_queue q = ::clCreateCommandQueueWithProperties(
+    context->getRaw(),
+    device->getRaw(),
+    cl_properties.data(),
+    &err);
+
+  CHECK_ERR(err)
+
+  NanReturnValue(NOCL_WRAP(NoCLCommandQueue, q));
+}
 #endif
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -45,12 +95,10 @@ NAN_METHOD(RetainCommandQueue) {
   NanScope();
   REQ_ARGS(1);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
-  cl_int count=clRetainCommandQueue(q);
+  cl_int count=clRetainCommandQueue(q->getRaw());
 
   NanReturnValue(JS_INT(count));
 }
@@ -61,12 +109,10 @@ NAN_METHOD(ReleaseCommandQueue) {
   NanScope();
   REQ_ARGS(1);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
-  cl_int count=clReleaseCommandQueue(q);
+  cl_int count=clReleaseCommandQueue(q->getRaw());
 
   NanReturnValue(JS_INT(count));
 }
@@ -81,34 +127,30 @@ NAN_METHOD(GetCommandQueueInfo) {
   NanScope();
   REQ_ARGS(2);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
   cl_command_queue_info param_name = args[1]->Uint32Value();
 
   switch(param_name) {
     case CL_QUEUE_CONTEXT: {
       cl_context val;
-      CHECK_ERR(::clGetCommandQueueInfo(q,param_name,sizeof(cl_context), &val, nullptr))
-      // TODO NanReturnValue(JS_INT(val));
-      break;
+      CHECK_ERR(::clGetCommandQueueInfo(q->getRaw(),param_name,sizeof(cl_context), &val, nullptr))
+      NanReturnValue(NOCL_WRAP(NoCLContext, val));
     }
     case CL_QUEUE_DEVICE: {
       cl_device_id val;
-      CHECK_ERR(::clGetCommandQueueInfo(q,param_name,sizeof(cl_device_id), &val, nullptr))
-      // TODO NanReturnValue(JS_INT(val));
-      break;
+      CHECK_ERR(::clGetCommandQueueInfo(q->getRaw(),param_name,sizeof(cl_device_id), &val, nullptr))
+      NanReturnValue(NOCL_WRAP(NoCLDeviceId, val));
     }
     case CL_QUEUE_REFERENCE_COUNT: {
       cl_uint val;
-      CHECK_ERR(::clGetCommandQueueInfo(q,param_name,sizeof(cl_uint), &val, nullptr))
+      CHECK_ERR(::clGetCommandQueueInfo(q->getRaw(),param_name,sizeof(cl_uint), &val, nullptr))
       NanReturnValue(JS_INT(val));
     }
     case CL_QUEUE_PROPERTIES: {
       cl_command_queue_properties val;
-      CHECK_ERR(::clGetCommandQueueInfo(q,param_name,sizeof(cl_command_queue_properties), &val, nullptr))
+      CHECK_ERR(::clGetCommandQueueInfo(q->getRaw(),param_name,sizeof(cl_command_queue_properties), &val, nullptr))
       NanReturnValue(JS_INT(val));
     }
   }
@@ -122,13 +164,13 @@ NAN_METHOD(Flush) {
   NanScope();
   REQ_ARGS(1);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
-  CHECK_ERR(::clFlush(q));
-  NanReturnUndefined();
+  cl_int err = ::clFlush(q->getRaw());
+
+  CHECK_ERR(err);
+  NanReturnValue(JS_INT(err));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -137,13 +179,13 @@ NAN_METHOD(Finish) {
   NanScope();
   REQ_ARGS(1);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
-  CHECK_ERR(::clFinish(q));
-  NanReturnUndefined();
+  cl_int err = ::clFinish(q->getRaw());
+
+  CHECK_ERR(err);
+  NanReturnValue(JS_INT(err));
 }
 
 // /* Enqueued Commands APIs */
@@ -159,16 +201,14 @@ NAN_METHOD(Finish) {
 //                     cl_event *          /* event */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueReadBuffer) {
   NanScope();
-  REQ_ARGS(8);
+  REQ_ARGS(6);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
-  if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem buffer = Unwrap<cl_mem>(args[1]);
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
+
+  // Arg 1
+  NOCL_UNWRAP(buffer, NoCLMem, args[1]);
+
   cl_bool blocking_read = args[2]->BooleanValue();
   size_t offset = args[3]->Uint32Value();
   size_t size = args[4]->Uint32Value();
@@ -181,18 +221,35 @@ NAN_METHOD(EnqueueReadBuffer) {
   else
     getPtrAndLen(args[5],ptr,len);
 
-  std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[6]), events);
-
-  cl_event event=nullptr;
-  if(!args[7]->IsUndefined() && !args[7]->IsNull()) {
-    event=Unwrap<cl_event>(args[7]);
+  std::vector<NoCLEvent> cl_events;
+  
+  if (ARG_EXISTS(6)) {
+    Local<Array> js_events = Local<Array>::Cast(args[6]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
 
-  CHECK_ERR(::clEnqueueReadBuffer(q,buffer,blocking_read,offset,size,ptr,
-    events.size(),events.size() ? &events.front() : nullptr,
+  //::clGetCommandQueueInfo(q->getRaw(),param_name,sizeof(cl_context), &val, nullptr)
+  cl_event event=nullptr;
+  if(ARG_EXISTS(7) && args[7]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
+  }
+
+  CHECK_ERR(::clEnqueueReadBuffer(
+    q->getRaw(),buffer->getRaw(),blocking_read,offset,size,ptr,
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
-  NanReturnValue(JS_INT(CL_SUCCESS));
+
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -212,16 +269,15 @@ NAN_METHOD(EnqueueReadBuffer) {
 //                         cl_event *          /* event */) CL_API_SUFFIX__VERSION_1_1;
 NAN_METHOD(EnqueueReadBufferRect) {
   NanScope();
-  REQ_ARGS(13);
+  REQ_ARGS(11);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
-  if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem buffer = Unwrap<cl_mem>(args[1]);
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
+
+  // Arg 1
+  NOCL_UNWRAP(buffer, NoCLMem, args[1]);
+
+  // Arg 2
   cl_bool blocking_read = args[2]->BooleanValue();
 
   size_t buffer_offset[]={0,0,0};
@@ -245,26 +301,42 @@ NAN_METHOD(EnqueueReadBufferRect) {
 
   void *ptr=nullptr;
   int len=0;
+
   if(args[10]->IsUndefined() || args[10]->IsNull()) {
     CHECK_ERR(CL_INVALID_VALUE);
   }
   else
     getPtrAndLen(args[10],ptr,len);
 
-  std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[11]), events);
+  std::vector<NoCLEvent> cl_events;
 
-  cl_event event=nullptr;
-  if(!args[12]->IsUndefined() && !args[12]->IsNull()) {
-    event=Unwrap<cl_event>(args[12]);
+  if (ARG_EXISTS(11)) {
+    Local<Array> js_events = Local<Array>::Cast(args[6]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
 
-  CHECK_ERR(::clEnqueueReadBufferRect(q,buffer,blocking_read,buffer_offset,host_offset,region,
+  cl_event event=nullptr;
+  if(ARG_EXISTS(12) && args[12]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
+  }
+
+  CHECK_ERR(::clEnqueueReadBufferRect(
+    q->getRaw(),buffer->getRaw(),blocking_read,buffer_offset,host_offset,region,
     buffer_row_pitch,buffer_slice_pitch,host_row_pitch,host_slice_pitch,ptr,
-    events.size(),events.size() ? &events.front() : nullptr,
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -279,16 +351,14 @@ NAN_METHOD(EnqueueReadBufferRect) {
 //                      cl_event *         /* event */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueWriteBuffer) {
   NanScope();
-  REQ_ARGS(8);
+  REQ_ARGS(6);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
-  if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem buffer = Unwrap<cl_mem>(args[1]);
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
+
+  // Arg 1
+  NOCL_UNWRAP(buffer, NoCLMem, args[1]);
+
   cl_bool blocking_write = args[2]->BooleanValue();
   size_t offset = args[3]->Uint32Value();
   size_t size = args[4]->Uint32Value();
@@ -301,19 +371,34 @@ NAN_METHOD(EnqueueWriteBuffer) {
   else
     getPtrAndLen(args[5],ptr,len);
 
-  std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[6]), events);
+  std::vector<NoCLEvent> cl_events;
 
+  if (ARG_EXISTS(6)) {
+    Local<Array> js_events = Local<Array>::Cast(args[6]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+
+  }
   cl_event event=nullptr;
-  if(!args[7]->IsUndefined() && !args[7]->IsNull()) {
-    event=Unwrap<cl_event>(args[7]);
+  if(ARG_EXISTS(7) && args[7]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
-  CHECK_ERR(::clEnqueueWriteBuffer(q,buffer,blocking_write,offset,size,ptr,
-    events.size(),events.size() ? &events.front() : nullptr,
+  CHECK_ERR(::clEnqueueWriteBuffer(
+    q->getRaw(),buffer->getRaw(),blocking_write,offset,size,ptr,
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -333,16 +418,15 @@ NAN_METHOD(EnqueueWriteBuffer) {
 //                          cl_event *          /* event */) CL_API_SUFFIX__VERSION_1_1;
 NAN_METHOD(EnqueueWriteBufferRect) {
   NanScope();
-  REQ_ARGS(13);
+  REQ_ARGS(11);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
-  if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem buffer = Unwrap<cl_mem>(args[1]);
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
+
+  // Arg 1
+  NOCL_UNWRAP(buffer, NoCLMem, args[1]);
+
+  // Arg 2
   cl_bool blocking_write = args[2]->BooleanValue();
 
   size_t buffer_offset[]={0,0,0};
@@ -372,20 +456,35 @@ NAN_METHOD(EnqueueWriteBufferRect) {
   else
     getPtrAndLen(args[10],ptr,len);
 
-  std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[11]), events);
-
-  cl_event event=nullptr;
-  if(!args[12]->IsUndefined() && !args[12]->IsNull()) {
-    event=Unwrap<cl_event>(args[12]);
+  std::vector<NoCLEvent> cl_events;
+  if (ARG_EXISTS(12)) {
+    Local<Array> js_events = Local<Array>::Cast(args[11]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
 
-  CHECK_ERR(::clEnqueueWriteBufferRect(q,buffer,blocking_write,buffer_offset,host_offset,region,
+
+  cl_event event=nullptr;
+  if(ARG_EXISTS(12) && args[12]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
+  }
+
+  CHECK_ERR(::clEnqueueWriteBufferRect(
+    q->getRaw(),buffer->getRaw(),blocking_write,buffer_offset,host_offset,region,
     buffer_row_pitch,buffer_slice_pitch,host_row_pitch,host_slice_pitch,ptr,
-    events.size(),events.size() ? &events.front() : nullptr,
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -400,41 +499,63 @@ NAN_METHOD(EnqueueWriteBufferRect) {
 //                     cl_event *         /* event */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(EnqueueFillBuffer) {
   NanScope();
-  REQ_ARGS(7);
+  REQ_ARGS(5);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
-  if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem buffer = Unwrap<cl_mem>(args[1]);
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
+
+  NOCL_UNWRAP(buffer, NoCLMem, args[1]);
 
   void *pattern=nullptr;
+  cl_double scalar_pattern_double;
+  cl_int scalar_pattern_int;
   int len=0;
   if(args[2]->IsUndefined() || args[2]->IsNull()) {
-    CHECK_ERR(CL_INVALID_VALUE);
+    THROW_ERR(CL_INVALID_VALUE);
   }
-  else
-    getPtrAndLen(args[2],pattern,len);
+  else if (args[2]->IsInt32()) {
+    scalar_pattern_int = args[2]->Int32Value();
+    pattern = &scalar_pattern_int;
+    len = sizeof(cl_uint);
+  }
+  else if (args[2]->IsNumber()) {
+    scalar_pattern_double = args[2]->NumberValue();
+    pattern = &scalar_pattern_double;
+    len = sizeof(cl_double);
+  }
+  else {
+    getPtrAndLen(args[2], pattern, len);
+  }
 
   size_t offset=args[3]->Uint32Value();
   size_t size=args[4]->Uint32Value();
 
-  std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[11]), events);
-
-  cl_event event=nullptr;
-  if(!args[6]->IsUndefined() && !args[6]->IsNull()) {
-    event=Unwrap<cl_event>(args[6]);
+  std::vector<NoCLEvent> cl_events;
+  if (ARG_EXISTS(5)) {
+    Local<Array> js_events = Local<Array>::Cast(args[5]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
 
-  CHECK_ERR(::clEnqueueFillBuffer(q,buffer,pattern, len, offset, size,
-    events.size(),events.size() ? &events.front() : nullptr,
+  cl_event event=nullptr;
+  if(ARG_EXISTS(6) && args[6]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
+  }
+
+  CHECK_ERR(::clEnqueueFillBuffer(
+    q->getRaw(), buffer->getRaw(), pattern, len, offset, size,
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -449,37 +570,43 @@ NAN_METHOD(EnqueueFillBuffer) {
 //                     cl_event *          /* event */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueCopyBuffer) {
   NanScope();
-  REQ_ARGS(7);
+  REQ_ARGS(6);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
-  if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem src_buffer = Unwrap<cl_mem>(args[1]);
-  if(!isOpenCLObj(args[2])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem dst_buffer = Unwrap<cl_mem>(args[2]);
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
+
+  // Arg 1
+  NOCL_UNWRAP(src_buffer, NoCLMem, args[1]);
+
+  // Arg 2
+  NOCL_UNWRAP(dst_buffer, NoCLMem, args[2]);
+
 
   size_t src_offset=args[3]->Uint32Value();
   size_t dst_offset=args[4]->Uint32Value();
   size_t size=args[5]->Uint32Value();
 
-  std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[6]), events);
+  std::vector<NoCLEvent> cl_events;
 
-  cl_event event=nullptr;
-  if(!args[7]->IsUndefined() && !args[7]->IsNull()) {
-    event=Unwrap<cl_event>(args[7]);
+  if (ARG_EXISTS(6)) {
+    Local<Array> js_events = Local<Array>::Cast(args[6]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
 
-  CHECK_ERR(::clEnqueueCopyBuffer(q,
-    src_buffer,dst_buffer,src_offset,dst_offset, size,
-    events.size(),events.size() ? &events.front() : nullptr,
-    event ? &event : nullptr));
+  cl_event event=nullptr;
+  if(ARG_EXISTS(7) && args[7]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
+  }
+
+  CHECK_ERR(::clEnqueueCopyBuffer(q->getRaw(),
+    src_buffer->getRaw(),dst_buffer->getRaw(),src_offset,dst_offset, size,
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent), &event));
   NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
@@ -499,22 +626,16 @@ NAN_METHOD(EnqueueCopyBuffer) {
 //                         cl_event *          /* event */) CL_API_SUFFIX__VERSION_1_1;
 NAN_METHOD(EnqueueCopyBufferRect) {
   NanScope();
-  REQ_ARGS(13);
+  REQ_ARGS(10);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem src_buffer = Unwrap<cl_mem>(args[1]);
+  // Arg 1
+  NOCL_UNWRAP(src_buffer, NoCLMem, args[1]);
 
-  if(!isOpenCLObj(args[2])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem dst_buffer = Unwrap<cl_mem>(args[2]);
+  // Arg 2
+  NOCL_UNWRAP(dst_buffer, NoCLMem, args[2]);
 
   size_t src_origin[]={0,0,0};
   size_t dst_origin[]={0,0,0};
@@ -529,27 +650,40 @@ NAN_METHOD(EnqueueCopyBufferRect) {
   arr= Local<Array>::Cast(args[5]);
   for(i=0;i<arr->Length();i++)
       region[i]=arr->Get(i)->Uint32Value();
-
   size_t src_row_pitch = args[6]->Uint32Value();
   size_t src_slice_pitch = args[7]->Uint32Value();
   size_t dst_row_pitch = args[8]->Uint32Value();
   size_t dst_slice_pitch = args[9]->Uint32Value();
 
-  std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[10]), events);
-
-  cl_event event=nullptr;
-  if(!args[11]->IsUndefined() && !args[11]->IsNull()) {
-    event=Unwrap<cl_event>(args[11]);
+  std::vector<NoCLEvent> cl_events;
+  if(ARG_EXISTS(10)) {
+    Local<Array> js_events = Local<Array>::Cast(args[10]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
 
-  CHECK_ERR(::clEnqueueCopyBufferRect(q,src_buffer,dst_buffer,
+  cl_event event=nullptr;
+  if(ARG_EXISTS(11) && args[11]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
+  }
+
+  CHECK_ERR(::clEnqueueCopyBufferRect(
+    q->getRaw(),src_buffer->getRaw(),dst_buffer->getRaw(),
     src_origin, dst_origin, region,
     src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch,
-    events.size(),events.size() ? &events.front() : nullptr,
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -566,16 +700,14 @@ NAN_METHOD(EnqueueCopyBufferRect) {
 //                    cl_event *           /* event */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueReadImage) {
   NanScope();
-  REQ_ARGS(10);
+  REQ_ARGS(8);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
-  if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem image = Unwrap<cl_mem>(args[1]);
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
+
+  // Arg 1
+  NOCL_UNWRAP(image, NoCLMem, args[1]);
+
   cl_bool blocking_read = args[2]->BooleanValue();
 
   size_t origin[]={0,0,0};
@@ -594,25 +726,39 @@ NAN_METHOD(EnqueueReadImage) {
   void *ptr=nullptr;
   int len=0;
   if(args[7]->IsUndefined() || args[7]->IsNull()) {
-    CHECK_ERR(CL_INVALID_VALUE);
+    THROW_ERR(CL_INVALID_VALUE);
   }
-  else
-    getPtrAndLen(args[7],ptr,len);
+  else {
+    getPtrAndLen(args[7], ptr, len);
+  }
 
-  std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[8]), events);
+  std::vector<NoCLEvent> cl_events;
+  if(ARG_EXISTS(8)) {
+    Local<Array> js_events = Local<Array>::Cast(args[8]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  }
 
   cl_event event=nullptr;
-  if(!args[9]->IsUndefined() && !args[9]->IsNull()) {
-    event=Unwrap<cl_event>(args[9]);
+  if(ARG_EXISTS(9) && args[9]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
-  CHECK_ERR(::clEnqueueReadImage(q,image,blocking_read,
+  CHECK_ERR(::clEnqueueReadImage(q->getRaw(),image->getRaw(),blocking_read,
     origin,region,row_pitch,slice_pitch, ptr,
-    events.size(),events.size() ? &events.front() : nullptr,
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -629,16 +775,15 @@ NAN_METHOD(EnqueueReadImage) {
 //                     cl_event *          /* event */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueWriteImage) {
   NanScope();
-  REQ_ARGS(10);
+  REQ_ARGS(8);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
-  if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem image = Unwrap<cl_mem>(args[1]);
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
+
+  // Arg 1
+  NOCL_UNWRAP(image, NoCLMem, args[1]);
+
+  // Arg 2
   cl_bool blocking_write = args[2]->BooleanValue();
 
   size_t origin[]={0,0,0};
@@ -657,25 +802,38 @@ NAN_METHOD(EnqueueWriteImage) {
   void *ptr=nullptr;
   int len=0;
   if(args[7]->IsUndefined() || args[7]->IsNull()) {
-    CHECK_ERR(CL_INVALID_VALUE);
+    THROW_ERR(CL_INVALID_VALUE);
   }
   else
     getPtrAndLen(args[7],ptr,len);
 
-  std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[8]), events);
-
-  cl_event event=nullptr;
-  if(!args[9]->IsUndefined() && !args[9]->IsNull()) {
-    event=Unwrap<cl_event>(args[9]);
+  std::vector<NoCLEvent> cl_events;
+  if (ARG_EXISTS(8)) {
+    Local<Array> js_events = Local<Array>::Cast(args[8]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
 
-  CHECK_ERR(::clEnqueueWriteImage(q,image,blocking_write,
+  cl_event event=nullptr;
+  if(ARG_EXISTS(9) && args[9]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
+  }
+
+  CHECK_ERR(::clEnqueueWriteImage(q->getRaw(),image->getRaw(),blocking_write,
     origin,region,row_pitch,slice_pitch, ptr,
-    events.size(),events.size() ? &events.front() : nullptr,
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -689,21 +847,16 @@ NAN_METHOD(EnqueueWriteImage) {
 //                    cl_event *         /* event */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(EnqueueFillImage) {
   NanScope();
-  REQ_ARGS(7);
+  REQ_ARGS(5);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
-  if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem image = Unwrap<cl_mem>(args[1]);
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
+
+  NOCL_UNWRAP(image, NoCLMem, args[1]);
 
   void *fill_color=nullptr;
   int len=0;
   if(args[2]->IsUndefined() || args[2]->IsNull()) {
-    CHECK_ERR(CL_INVALID_VALUE);
+    THROW_ERR(CL_INVALID_VALUE);
   }
   else
     getPtrAndLen(args[2],fill_color,len);
@@ -718,20 +871,34 @@ NAN_METHOD(EnqueueFillImage) {
   for(i=0;i<arr->Length();i++)
       region[i]=arr->Get(i)->Uint32Value();
 
-  std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[5]), events);
-
-  cl_event event=nullptr;
-  if(!args[6]->IsUndefined() && !args[6]->IsNull()) {
-    event=Unwrap<cl_event>(args[6]);
+  std::vector<NoCLEvent> cl_events;
+  if(ARG_EXISTS(5)) {
+    Local<Array> js_events = Local<Array>::Cast(args[5]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
 
-  CHECK_ERR(::clEnqueueFillImage(q,image,fill_color,
+  cl_event event=nullptr;
+  if(ARG_EXISTS(6) && args[6]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
+  }
+
+  CHECK_ERR(::clEnqueueFillImage(
+    q->getRaw(),image->getRaw(),fill_color,
     origin,region,
-    events.size(),events.size() ? &events.front() : nullptr,
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -746,20 +913,16 @@ NAN_METHOD(EnqueueFillImage) {
 //                    cl_event *           /* event */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueCopyImage) {
   NanScope();
-  REQ_ARGS(8);
+  REQ_ARGS(6);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
-  if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem src_image = Unwrap<cl_mem>(args[1]);
-  if(!isOpenCLObj(args[2])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem dst_image = Unwrap<cl_mem>(args[2]);
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
+
+  // Arg 1
+  NOCL_UNWRAP(src_image, NoCLMem, args[1]);
+
+  // Arg 2
+  NOCL_UNWRAP(dst_image, NoCLMem, args[2]);
 
   size_t src_origin[]={0,0,0};
   size_t dst_origin[]={0,0,0};
@@ -775,20 +938,34 @@ NAN_METHOD(EnqueueCopyImage) {
   for(i=0;i<arr->Length();i++)
       region[i]=arr->Get(i)->Uint32Value();
 
-  std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[6]), events);
-
-  cl_event event=nullptr;
-  if(!args[7]->IsUndefined() && !args[7]->IsNull()) {
-    event=Unwrap<cl_event>(args[7]);
+  std::vector<NoCLEvent> cl_events;
+  if (ARG_EXISTS(6)) {
+    Local<Array> js_events = Local<Array>::Cast(args[6]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
 
-  CHECK_ERR(::clEnqueueCopyImage(q,src_image,dst_image,
+  cl_event event=nullptr;
+  if(ARG_EXISTS(7) && args[7]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
+  }
+
+  CHECK_ERR(::clEnqueueCopyImage(
+    q->getRaw(),src_image->getRaw(),dst_image->getRaw(),
     src_origin,dst_origin, region,
-    events.size(),events.size() ? &events.front() : nullptr,
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -803,20 +980,16 @@ NAN_METHOD(EnqueueCopyImage) {
 //                            cl_event *       /* event */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueCopyImageToBuffer) {
   NanScope();
-  REQ_ARGS(8);
+  REQ_ARGS(6);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
-  if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem src_image = Unwrap<cl_mem>(args[1]);
-  if(!isOpenCLObj(args[2])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem dst_buffer = Unwrap<cl_mem>(args[2]);
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
+
+  // Arg 1
+  NOCL_UNWRAP(src_image, NoCLMem, args[1]);
+
+  // Arg 2
+  NOCL_UNWRAP(dst_buffer, NoCLMem, args[2]);
 
   size_t src_origin[]={0,0,0};
   size_t region[]={1,1,1};
@@ -830,20 +1003,34 @@ NAN_METHOD(EnqueueCopyImageToBuffer) {
 
   size_t dst_offset = args[5]->Uint32Value();
 
-  std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[6]), events);
-
-  cl_event event=nullptr;
-  if(!args[7]->IsUndefined() && !args[7]->IsNull()) {
-    event=Unwrap<cl_event>(args[7]);
+  std::vector<NoCLEvent> cl_events;
+  if (ARG_EXISTS(6)) {
+    Local<Array> js_events = Local<Array>::Cast(args[6]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
 
-  CHECK_ERR(::clEnqueueCopyImageToBuffer(q,src_image,dst_buffer,
+  cl_event event=nullptr;
+  if(ARG_EXISTS(7) && args[7]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
+  }
+
+  CHECK_ERR(::clEnqueueCopyImageToBuffer(
+    q->getRaw(),src_image->getRaw(),dst_buffer->getRaw(),
     src_origin, region, dst_offset,
-    events.size(),events.size() ? &events.front() : nullptr,
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -858,20 +1045,16 @@ NAN_METHOD(EnqueueCopyImageToBuffer) {
 //                            cl_event *       /* event */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueCopyBufferToImage) {
   NanScope();
-  REQ_ARGS(8);
+  REQ_ARGS(6);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
-  if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem src_buffer = Unwrap<cl_mem>(args[1]);
-  if(!isOpenCLObj(args[2])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem dst_image = Unwrap<cl_mem>(args[2]);
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
+
+  // Arg 1
+  NOCL_UNWRAP(src_buffer, NoCLMem, args[1]);
+
+  // Arg 2
+  NOCL_UNWRAP(dst_image, NoCLMem, args[2]);
 
   size_t src_offset = args[3]->Uint32Value();
 
@@ -879,26 +1062,41 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(args[4]);
   uint32_t i;
+
   for(i=0;i<arr->Length();i++)
       dst_origin[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(args[5]);
   for(i=0;i<arr->Length();i++)
       region[i]=arr->Get(i)->Uint32Value();
 
-  std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[6]), events);
-
-  cl_event event=nullptr;
-  if(!args[7]->IsUndefined() && !args[7]->IsNull()) {
-    event=Unwrap<cl_event>(args[7]);
+  std::vector<NoCLEvent> cl_events;
+  if(ARG_EXISTS(6)) {
+    Local<Array> js_events = Local<Array>::Cast(args[7]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
 
-  CHECK_ERR(::clEnqueueCopyBufferToImage(q,src_buffer,dst_image,
+  cl_event event=nullptr;
+  if(ARG_EXISTS(7) && args[7]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
+  }
+
+  CHECK_ERR(::clEnqueueCopyBufferToImage(
+    q->getRaw(),src_buffer->getRaw(),dst_image->getRaw(),
     src_offset, dst_origin, region,
-    events.size(),events.size() ? &events.front() : nullptr,
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY void * CL_API_CALL
@@ -916,38 +1114,58 @@ NAN_METHOD(EnqueueMapBuffer) {
   NanScope();
   REQ_ARGS(8);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
-  if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem buffer = Unwrap<cl_mem>(args[1]);
+  return NanThrowError("Not implemented yet");
 
-  cl_bool blocking_map = args[2]->BooleanValue();
-  cl_map_flags map_flags = args[3]->BooleanValue();
-  size_t offset = args[4]->Uint32Value();
-  size_t size = args[5]->Uint32Value();
-
-  std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[6]), events);
-
-  cl_event event=nullptr;
-  if(!args[7]->IsUndefined() && !args[7]->IsNull()) {
-    event=Unwrap<cl_event>(args[7]);
-  }
-
-  cl_int ret=CL_SUCCESS;
-  void *ptr = ::clEnqueueMapBuffer(q,buffer,blocking_map,
-    map_flags,offset, size,
-    events.size(),events.size() ? &events.front() : nullptr,
-    event ? &event : nullptr,
-    &ret);
-
-  CHECK_ERR(ret);
-
-  NanReturnValue(Wrap(ptr));
+//  // Arg 0
+//  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
+//
+//  // Arg 1
+//  NOCL_UNWRAP(buffer, NoCLMem, args[1]);
+//
+//
+//  cl_bool blocking_map = args[2]->BooleanValue() ? CL_TRUE : CL_FALSE;
+//  cl_map_flags map_flags = args[3]->Uint32Value();
+//  size_t offset = args[4]->Uint32Value();
+//  size_t size = args[5]->Uint32Value();
+//
+//  std::vector<NoCLEvent> cl_events;
+//  Local<Array> js_events = Local<Array>::Cast(args[6]);
+//  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+//
+//  cl_event event=nullptr;
+//  if(ARG_EXISTS(7)) {
+//    NOCL_UNWRAP(evt, NoCLEvent, args[7]);
+//    event = evt->getRaw();
+//  }
+//
+//  // Creating the output buffer
+//  node::Buffer * outputBuffer = node::Buffer::New(1);
+//
+//  cl_int ret=CL_SUCCESS;
+//  void *ptr = ::clEnqueueMapBuffer(
+//    q->getRaw(),buffer->getRaw(),blocking_map,
+//    map_flags, offset, size,
+//    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
+//    event ? &event : nullptr,
+//    &ret);
+//
+//  CHECK_ERR(ret);
+//
+//  delete node::Buffer::Data(outputBuffer);
+//
+//  // Replacing the buffer data pointer
+//
+//  outputBuffer->handle_.As<v8::Object>()
+//    ->SetIndexedPropertiesToExternalArrayData(
+//      ptr, kExternalByteArray, size);
+//
+//  // From https://gist.github.com/luismreis/4160350
+//  Local<Object> globalObj = Context::GetCurrent()->Global();
+//  Local<Function> bufferConstructor = Local<Function>::Cast(globalObj->Get(String::New("Buffer")));
+//  Handle<Value> constructorArgs[3] = { outputBuffer->handle_, v8::Integer::New(size), v8::Integer::New(0) };
+//  Local<Object> actualBuffer = bufferConstructor->NewInstance(3, constructorArgs);
+//
+//  NanReturnValue(actualBuffer);
 }
 
 // extern CL_API_ENTRY void * CL_API_CALL
@@ -967,61 +1185,66 @@ NAN_METHOD(EnqueueMapImage) {
   NanScope();
   REQ_ARGS(10);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
-  if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem image = Unwrap<cl_mem>(args[1]);
+  return NanThrowError("Not implemented yet");
 
-  cl_bool blocking_map = args[2]->BooleanValue();
-  cl_map_flags map_flags = args[3]->BooleanValue();
-  size_t origin[]={0,0,0};
-  size_t region[]={1,1,1};
-  Local<Array> arr= Local<Array>::Cast(args[4]);
-  uint32_t i;
-  for(i=0;i<arr->Length();i++)
-      origin[i]=arr->Get(i)->Uint32Value();
-  arr= Local<Array>::Cast(args[5]);
-  for(i=0;i<arr->Length();i++)
-      region[i]=arr->Get(i)->Uint32Value();
+  // NOTE
+  // An implementation with common Node buffers is available in EnqueueMapBUffer
 
-  void *image_row_pitch=nullptr;
-  int len_image_row_pitch=0;
-  if(args[6]->IsUndefined() || args[6]->IsNull()) {
-    CHECK_ERR(CL_INVALID_VALUE);
-  }
-  else
-    getPtrAndLen(args[6],image_row_pitch,len_image_row_pitch);
-
-  void *image_slice_pitch=nullptr;
-  int len_image_slice_pitch=0;
-  if(args[7]->IsUndefined() || args[7]->IsNull()) {
-    CHECK_ERR(CL_INVALID_VALUE);
-  }
-  else
-    getPtrAndLen(args[7],image_slice_pitch,len_image_slice_pitch);
-
-  std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[8]), events);
-
-  cl_event event=nullptr;
-  if(!args[9]->IsUndefined() && !args[9]->IsNull()) {
-    event=Unwrap<cl_event>(args[9]);
-  }
-
-  cl_int ret=CL_SUCCESS;
-  void *ptr = ::clEnqueueMapImage(q,image,blocking_map,map_flags,
-    origin, region, (size_t*)image_row_pitch, (size_t*)image_slice_pitch,
-    events.size(),events.size() ? &events.front() : nullptr,
-    event ? &event : nullptr,
-    &ret);
-
-  CHECK_ERR(ret);
-
-  NanReturnValue(Wrap(ptr));
+//  // Arg 0
+//  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
+//
+//  // Arg 1
+//  NOCL_UNWRAP(image, NoCLMem, args[1]);
+//
+//  cl_bool blocking_map = args[2]->BooleanValue();
+//  cl_map_flags map_flags = args[3]->BooleanValue();
+//  size_t origin[]={0,0,0};
+//  size_t region[]={1,1,1};
+//  Local<Array> arr= Local<Array>::Cast(args[4]);
+//  uint32_t i;
+//  for(i=0;i<arr->Length();i++)
+//      origin[i]=arr->Get(i)->Uint32Value();
+//  arr= Local<Array>::Cast(args[5]);
+//  for(i=0;i<arr->Length();i++)
+//      region[i]=arr->Get(i)->Uint32Value();
+//
+//  void *image_row_pitch=nullptr;
+//  int len_image_row_pitch=0;
+//  if(args[6]->IsUndefined() || args[6]->IsNull()) {
+//    CHECK_ERR(CL_INVALID_VALUE);
+//  }
+//  else
+//    getPtrAndLen(args[6],image_row_pitch,len_image_row_pitch);
+//
+//  void *image_slice_pitch=nullptr;
+//  int len_image_slice_pitch=0;
+//  if(args[7]->IsUndefined() || args[7]->IsNull()) {
+//    CHECK_ERR(CL_INVALID_VALUE);
+//  }
+//  else
+//    getPtrAndLen(args[7],image_slice_pitch,len_image_slice_pitch);
+//
+//  std::vector<NoCLEvent> cl_events;
+//  Local<Array> js_events = Local<Array>::Cast(args[8]);
+//  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+//
+//  cl_event event=nullptr;
+//  if(ARG_EXISTS(9)) {
+//    NOCL_UNWRAP(evt, NoCLEvent, args[9]);
+//    event = evt->getRaw();
+//  }
+//
+//  cl_int ret=CL_SUCCESS;
+//  void *ptr = ::clEnqueueMapImage(
+//    q->getRaw(),image->getRaw(),blocking_map,map_flags,
+//    origin, region, (size_t*)image_row_pitch, (size_t*)image_slice_pitch,
+//    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
+//    event ? &event : nullptr,
+//    &ret);
+//
+//  CHECK_ERR(ret);
+//
+//  NanReturnValue(NOCL_WRAP(NoCLMappedPtr, ptr));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -1035,31 +1258,34 @@ NAN_METHOD(EnqueueUnmapMemObject) {
   NanScope();
   REQ_ARGS(5);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
-  if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-  }
-  cl_mem memobj = Unwrap<cl_mem>(args[1]);
+  return NanThrowError("Not implemented yet");
 
-  void *mapped_ptr=Unwrap<void*>(args[2]);
-
-  std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[3]), events);
-
-  cl_event event=nullptr;
-  if(!args[4]->IsUndefined() && !args[4]->IsNull()) {
-    event=Unwrap<cl_event>(args[4]);
-  }
-
-  CHECK_ERR(::clEnqueueUnmapMemObject(q,memobj,
-    mapped_ptr,
-    events.size(),events.size() ? &events.front() : nullptr,
-    event ? &event : nullptr));
-
-  NanReturnValue(JS_INT(CL_SUCCESS));
+//  // Arg 0
+//  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
+//
+//  // Arg 1
+//  NOCL_UNWRAP(memobj, NoCLMem, args[1]);
+//
+//  // Arg 2
+//  NOCL_UNWRAP(mapped_ptr, NoCLMappedPtr, args[2]);
+//
+//  std::vector<NoCLEvent> cl_events;
+//  Local<Array> js_events = Local<Array>::Cast(args[3]);
+//  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+//
+//  cl_event event=nullptr;
+//  if(ARG_EXISTS(4)) {
+//    NOCL_UNWRAP(evt, NoCLEvent, args[4]);
+//    event = evt->getRaw();;
+//  }
+//
+//  CHECK_ERR(::clEnqueueUnmapMemObject(
+//    q->getRaw(),memobj->getRaw(),
+//    mapped_ptr,
+//    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
+//    event ? &event : nullptr));
+//
+//  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -1072,15 +1298,13 @@ NAN_METHOD(EnqueueUnmapMemObject) {
 //                            cl_event *             /* event */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(EnqueueMigrateMemObjects) {
   NanScope();
-  REQ_ARGS(5);
+  REQ_ARGS(3);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
   if(args[1]->IsNull() || args[1]->IsUndefined() || !args[1]->IsArray()) {
-    return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
+    THROW_ERR(CL_INVALID_VALUE);
   }
 
   Local<Array> arr=Local<Array>::Cast(args[1]);
@@ -1088,29 +1312,42 @@ NAN_METHOD(EnqueueMigrateMemObjects) {
   unique_ptr<cl_mem[]> mem_objects(new cl_mem[num_mem_objects]);
   for(size_t i=0;i<num_mem_objects;i++) {
     Local<Value> mem=arr->Get(i);
-    if(!isOpenCLObj(mem)) {
-      return NanThrowError(JS_INT(CL_INVALID_MEM_OBJECT));
-    }
-    cl_mem obj=Unwrap<cl_mem>(mem);
-    mem_objects[i]=obj;
+    if (mem->IsNull() || mem->IsUndefined())
+      THROW_ERR(CL_INVALID_MEM_OBJECT);
+    NOCL_UNWRAP(obj, NoCLMem, mem);
+    mem_objects[i]=obj->getRaw();
   }
 
   cl_mem_migration_flags flags=args[2]->Uint32Value();
 
- std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[3]), events);
-
-  cl_event event=nullptr;
-  if(!args[4]->IsUndefined() && !args[4]->IsNull()) {
-    event=Unwrap<cl_event>(args[4]);
+  std::vector<NoCLEvent> cl_events;
+  if(ARG_EXISTS(3)) {
+    Local<Array> js_events = Local<Array>::Cast(args[3]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
 
-  CHECK_ERR(::clEnqueueMigrateMemObjects(q,num_mem_objects,
+  cl_event event=nullptr;
+  if(ARG_EXISTS(4) && args[4]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
+  }
+
+  CHECK_ERR(::clEnqueueMigrateMemObjects(
+    q->getRaw(),num_mem_objects,
     mem_objects.get(),flags,
-    events.size(),events.size() ? &events.front() : nullptr,
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -1125,46 +1362,91 @@ NAN_METHOD(EnqueueMigrateMemObjects) {
 //                        cl_event *       /* event */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueNDRangeKernel) {
   NanScope();
-  REQ_ARGS(8);
+  REQ_ARGS(6);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
-  if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_KERNEL));
-  }
-  cl_kernel k = Unwrap<cl_kernel>(args[1]);
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
+
+  // Arg 1
+  NOCL_UNWRAP(k, NoCLKernel, args[1]);
+
 
   cl_uint work_dim=args[2]->Uint32Value();
-  size_t global_work_offset[]={0,0,0};
-  size_t global_work_size[]={0,0,0};
-  size_t local_work_size[]={0,0,0};
-  Local<Array> arr= Local<Array>::Cast(args[3]);
-  uint32_t i;
-  for(i=0;i<arr->Length();i++)
-      global_work_offset[i]=arr->Get(i)->Uint32Value();
-  arr= Local<Array>::Cast(args[4]);
-  for(i=0;i<arr->Length();i++)
-      global_work_size[i]=arr->Get(i)->Uint32Value();
-  arr= Local<Array>::Cast(args[5]);
-  for(i=0;i<arr->Length();i++)
-      local_work_size[i]=arr->Get(i)->Uint32Value();
 
-  std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[6]), events);
+  std::vector<size_t> cl_work_offset;
+  std::vector<size_t> cl_work_global;
+  std::vector<size_t> cl_work_local;
 
-  cl_event event=nullptr;
-  if(!args[7]->IsUndefined() && !args[7]->IsNull()) {
-    event=Unwrap<cl_event>(args[7]);
+
+  if (ARG_EXISTS(3)) {
+    Local<Array> js_work_offset = Local<Array>::Cast(args[3]);
+
+    if (js_work_offset->Length() != work_dim) {
+      THROW_ERR(CL_INVALID_GLOBAL_OFFSET);
+    }
+
+    for (unsigned int i = 0; i < work_dim; ++ i) {
+      cl_work_offset.push_back(js_work_offset->Get(i)->Uint32Value());
+    }
   }
 
-  CHECK_ERR(::clEnqueueNDRangeKernel(q,k,work_dim,
-    global_work_offset,global_work_size,local_work_size,
-    events.size(),events.size() ? &events.front() : nullptr,
-    event ? &event : nullptr));
+  if (ARG_EXISTS(4)) {
+    Local<Array> js_work_global = Local<Array>::Cast(args[4]);
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+    if (js_work_global->Length() != work_dim) {
+      THROW_ERR(CL_INVALID_GLOBAL_WORK_SIZE);
+    }
+
+    for (unsigned int i = 0; i < work_dim; ++ i) {
+      cl_work_global.push_back(js_work_global->Get(i)->Uint32Value());
+    }
+  }
+
+
+  if (ARG_EXISTS(5)) {
+    Local<Array> js_work_local = Local<Array>::Cast(args[5]);
+
+    if (js_work_local->Length() != work_dim) {
+      THROW_ERR(CL_INVALID_WORK_GROUP_SIZE);
+    }
+
+    for (unsigned int i = 0; i < work_dim; ++ i) {
+      cl_work_local.push_back(js_work_local->Get(i)->Uint32Value());
+    }
+  }
+
+  std::vector<NoCLEvent> cl_events;
+  if (ARG_EXISTS(6)) {
+    Local<Array> js_events = Local<Array>::Cast(args[6]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  }
+
+  cl_event event=nullptr;
+  if(ARG_EXISTS(7) && args[7]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
+  }
+
+  CHECK_ERR(::clEnqueueNDRangeKernel(
+    q->getRaw(),
+    k->getRaw(),
+    1,
+    cl_work_offset.size() ? cl_work_offset.data() : NULL,
+    cl_work_global.size() ? cl_work_global.data() : NULL,
+    cl_work_local.size() ? cl_work_local.data() : NULL,
+    0, NULL, NULL
+  ));
+
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 #ifndef CL_VERSION_2_0
@@ -1176,32 +1458,46 @@ NAN_METHOD(EnqueueNDRangeKernel) {
 //               cl_event *        /* event */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueTask) {
   NanScope();
-  REQ_ARGS(4);
+  REQ_ARGS(2);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
-  if(!isOpenCLObj(args[1])) {
-    return NanThrowError(JS_INT(CL_INVALID_KERNEL));
-  }
-  cl_kernel k = Unwrap<cl_kernel>(args[1]);
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[2]), events);
+  // Arg 1
+  NOCL_UNWRAP(k, NoCLKernel, args[1]);
+
+
+  std::vector<NoCLEvent> cl_events;
+  Local<Array> js_events;
+  if (ARG_EXISTS(2)) {
+    js_events = Local<Array>::Cast(args[2]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  }
 
   cl_event event=nullptr;
-  if(!args[3]->IsUndefined() && !args[3]->IsNull()) {
-    event=Unwrap<cl_event>(args[3]);
+  if(ARG_EXISTS(3) && args[3]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
-  CHECK_ERR(::clEnqueueTask(q,k,
-    events.size(),events.size() ? &events.front() : nullptr,
+  CHECK_ERR(::clEnqueueTask(
+    q->getRaw(),k->getRaw(),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 #endif
+
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clEnqueueNativeKernel(cl_command_queue  /* command_queue */,
@@ -1218,9 +1514,12 @@ NAN_METHOD(EnqueueTask) {
 // Note: only available if CL_EXEC_NATIVE_KERNEL capability
 NAN_METHOD(EnqueueNativeKernel) {
   NanScope();
-  // TODO
+
+  NanThrowError("enqueueNativeKernel is not supported by Node OpenCL");
+
   NanReturnUndefined();
 }
+
 
 #ifdef CL_VERSION_1_2
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -1232,24 +1531,34 @@ NAN_METHOD(EnqueueMarkerWithWaitList) {
   NanScope();
   REQ_ARGS(3);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[1]), events);
+  std::vector<NoCLEvent> cl_events;
+  Local<Array> js_events = Local<Array>::Cast(args[1]);
+  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
 
   cl_event event=nullptr;
-  if(!args[2]->IsUndefined() && !args[2]->IsNull()) {
-    event=Unwrap<cl_event>(args[2]);
+  if(ARG_EXISTS(2) && args[2]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
-  CHECK_ERR(::clEnqueueMarkerWithWaitList(q,
-    events.size(),events.size() ? &events.front() : nullptr,
+  CHECK_ERR(::clEnqueueMarkerWithWaitList(
+    q->getRaw(),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -1261,24 +1570,33 @@ NAN_METHOD(EnqueueBarrierWithWaitList) {
   NanScope();
   REQ_ARGS(3);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[1]), events);
+  std::vector<NoCLEvent> cl_events;
+  Local<Array> js_events = Local<Array>::Cast(args[1]);
+  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
 
   cl_event event=nullptr;
-  if(!args[2]->IsUndefined() && !args[2]->IsNull()) {
-    event=Unwrap<cl_event>(args[2]);
+  if(ARG_EXISTS(2) && args[2]->BooleanValue()) {
+    cl_context ctx;
+    cl_int err = 0;
+    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    CHECK_ERR(err);
+
+    event = ::clCreateUserEvent(ctx, &err);
+    CHECK_ERR(err);
   }
 
-  CHECK_ERR(::clEnqueueBarrierWithWaitList(q,
-    events.size(),events.size() ? &events.front() : nullptr,
+  CHECK_ERR(::clEnqueueBarrierWithWaitList(q->getRaw(),
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
     event ? &event : nullptr));
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  if (event != nullptr) {
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  } else {
+    NanReturnValue(JS_INT(CL_SUCCESS));
+  }
 }
 
 // // Deprecated OpenCL 1.1 APIs
@@ -1290,17 +1608,16 @@ NAN_METHOD(EnqueueMarker) {
   NanScope();
   REQ_ARGS(2);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
   cl_event event=nullptr;
-  if(!args[1]->IsUndefined() && !args[1]->IsNull()) {
-    event=Unwrap<cl_event>(args[1]);
+  if(ARG_EXISTS(1)) {
+    NOCL_UNWRAP(evt, NoCLEvent, args[1]);
+    event = evt->getRaw();
   }
 
-  CHECK_ERR(::clEnqueueMarker(q, &event));
+  CHECK_ERR(::clEnqueueMarker(q->getRaw(), &event));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
 }
@@ -1313,15 +1630,14 @@ NAN_METHOD(EnqueueWaitForEvents) {
   NanScope();
   REQ_ARGS(2);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  std::vector<cl_event> events;
-  getValuesFromArray(Local<Array>::Cast(args[1]), events);
+  std::vector<NoCLEvent> cl_events;
+  Local<Array> js_events = Local<Array>::Cast(args[1]);
+  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
 
-  CHECK_ERR(::clEnqueueWaitForEvents(q,
+  CHECK_ERR(::clEnqueueWaitForEvents(q->getRaw(),
         events.size(),events.size() ? &events.front() : nullptr));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
@@ -1333,12 +1649,10 @@ NAN_METHOD(EnqueueBarrier) {
   NanScope();
   REQ_ARGS(1);
 
-  if(!isOpenCLObj(args[0])) {
-    return NanThrowError(JS_INT(CL_INVALID_COMMAND_QUEUE));
-  }
-  cl_command_queue q = Unwrap<cl_command_queue>(args[0]);
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  CHECK_ERR(::clEnqueueBarrier(q));
+  CHECK_ERR(::clEnqueueBarrier(q->getRaw()));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
 }
@@ -1437,7 +1751,7 @@ void init(Handle<Object> exports)
   NODE_SET_METHOD(exports, "enqueueBarrierWithWaitList", EnqueueBarrierWithWaitList);
 #elif defined(CL_VERSION_1_1)
   NODE_SET_METHOD(exports, "enqueueMarker", EnqueueMarker);
-  NODE_SET_METHOD(exports, "EnqueueWaitForEvents", EnqueueWaitForEvents);
+  NODE_SET_METHOD(exports, "enqueueWaitForEvents", EnqueueWaitForEvents);
   NODE_SET_METHOD(exports, "enqueueBarrier", EnqueueBarrier);
 #endif
 }
