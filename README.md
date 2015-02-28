@@ -18,9 +18,9 @@ The implementation is almost OpenCL 1.2 compliant. We are currently working on O
 
 This project has been succesfully tested on the following platforms  :
 
-- OSX 10.10 with Intel Iris GPU, Native OpenCL implementation (OpenCL 1.2), Node 0.10
+- OSX 10.10 with Intel Iris GPU, Native OpenCL implementation (OpenCL 1.2), Node 0.12
 - Ubuntu 14.10 with Intel CPU, AMD APP SDK 3 (OpenCL 2.0), Node 0.12 (Dockerfile is available in docker folder)
-- Windows 7.1 with Intel CPU, AMD APP SDK 3 (OpenCL 2.0), Node 0.10
+- Windows 7.1 with Intel CPU, AMD APP SDK 3 (OpenCL 2.0), Node 0.12
 
 
 # Installation
@@ -38,7 +38,7 @@ To run unit tests, you will need mocha as a global package. Then you can simply 
 You should only need : 
 
 - XCode Developers tools (for C++ bindings compilation)
-- NodeJS >= 0.10
+- NodeJS >= 0.12
 - OpenCL 1.2 is natively included
 
 ## Linux / Docker 
@@ -54,12 +54,12 @@ This dockerfile is based on the following guide : http://streamcomputing.eu/blog
 You need : 
 
 - Visual Studio 2013
-- NodeJS >= 0.10
+- NodeJS >= 0.12
 - AMD APP SDK
 
 Please note that while node-gyp should work for compilation, it is possible that another DLL will be used on dynamic linking, leading to errors.
 
-You need to update your path in order to get AMD APP SDK as the first OpenCL.dll.
+You need to update your path in order to to get AMD APP SDK's OpenCL.dll first in path resolution order.
 
 # Usage
 
@@ -96,7 +96,7 @@ they provide a lot more features and copying them into a TyoedArray is hence not
 
 TODO
 
-# Not working yet
+# Coming soon
 
 - Map and unmap
 - Memory cleanup on process exit
