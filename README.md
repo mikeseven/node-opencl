@@ -1,6 +1,6 @@
 # Node OpenCL
  
-[![Build Status](http://ci.ioweb.fr/api/badge/bitbucket.org/ioweb/node-opencl/status.svg?branch=develop)](http://ci.ioweb.fr/bitbucket.org/ioweb/node-opencl)
+[![Build Status](http://pub-ci.ioweb.fr/api/badge/github.com/ioweb-fr/node-opencl/status.svg?branch=master)](http://pub-ci.ioweb.fr/github.com/ioweb-fr/node-opencl)
 
 ## Abstract
 
