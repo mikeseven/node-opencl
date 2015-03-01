@@ -67,8 +67,6 @@ For now you can simply require this project and call native-like functions on th
 
 The API is very close to the low-level one, although there are minor changes when it comes to lengths and, of course, pointers.
 
-A full documentation and a WebCL wrapper might be available soon. For now, you can find examples API calls in the examples folder.
-
 # Troubleshooting
 
 ## Drivers issues
@@ -109,23 +107,6 @@ Pull requests are welcome ! When you do a PR on this project, you need to respec
 
 - Your JS files must be compliant with the eslint rules
 - All tests should pass on as much platforms as possible
-
-For this last step we do understand that it can be pretty difficult so you can do a PR that do not respect this last rule and we will provide you
-the results of tests on platforms listed in the Tested Configurations part.
-
-# Getting involved
-
-This project has two goals :
-
-- Providing a low level wrapper for OpenCL APIs
-- Allow users to check for bugs related to drivers on their platforms, by running unit tests.
-
-For the first part, we are quite done.
-
-However, for the second, this is much more difficult and you can help us in two ways :
-
-- Reporting issues with drivers that are not listed in unit tests
-- Provide a CI project build on a different platform, so we can test new builds with your platform easily
 
 # Licence
 

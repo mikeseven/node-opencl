@@ -332,7 +332,7 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
     case CL_KERNEL_LOCAL_MEM_SIZE:
     case CL_KERNEL_PRIVATE_MEM_SIZE: {
       cl_ulong sz=0;
-      CHECK_ERR(::clGetKernelWorkGroupInfo(k->getRaw(),d->getRaw(),param_name,sizeof(cl_ulong),&sz, NULL));
+      CHECK_ERR(::clGetKernelWorkGroupInfo(k,d,param_name,sizeof(cl_ulong),&sz, NULL));
       NanReturnValue(JS_INT(sz));
     }
   }

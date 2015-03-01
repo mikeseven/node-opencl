@@ -415,7 +415,7 @@ NAN_METHOD(GetProgramInfo) {
 
       Local<Array> arr = NanNew<Array>(nsizes);
       for(cl_uint i=0;i<nsizes;i++)
-        arr->Set(i,JS_INT(sizes[i]));
+        arr->Set(i,JS_INT(uint32_t(sizes[i])));
 
       NanReturnValue(arr);
     }
