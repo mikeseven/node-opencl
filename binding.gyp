@@ -7,16 +7,18 @@
       ],
       'sources': [
         'src/addon.cpp',
-        'src/commandqueue.cpp',
         'src/common.cpp',
         'src/context.cpp',
         'src/device.cpp',
         'src/event.cpp',
+        'src/platform.cpp',
+        'src/types.cpp',
+        'src/program.cpp',
         'src/kernel.cpp',
         'src/memobj.cpp',
-        'src/platform.cpp',
-        'src/program.cpp',
         'src/sampler.cpp',
+        'src/commandqueue.cpp',
+        'src/pipe.cpp',
         'src/manager.cpp'
       ],
       'include_dirs' : [
@@ -29,13 +31,15 @@
             ['CXX', '/usr/bin/clang++'],
           ],
           "xcode_settings": {
-             'OTHER_CPLUSPLUSFLAGS' : ['-std=c++11','-stdlib=libc++'],
+             'OTHER_CPLUSPLUSFLAGS' : ['-std=c++11','-stdlib=libc++', ' -Wall'],
              'OTHER_LDFLAGS': ['-stdlib=libc++'],
               'MACOSX_DEPLOYMENT_TARGET': '10.9'
           },
-          'libraries': ['-framework OpenGL', '-framework OpenCL'],
+          'libraries': ['-framework OpenCL'],
         }],
-        ['OS=="linux"', {'libraries': ['-lGL', '-lOpenCL']}],
+        ['OS=="linux"', {
+          'cflags': ['-std=c++11' ' -Wall'],
+          'libraries': ['-lOpenCL']}],
         ['OS=="win"', {
           'variables' :
             {
@@ -73,7 +77,7 @@
             'ldflags' : [
               '/OPT:REF','/OPT:ICF','/LTCG'
             ],
-            'libraries': ['opengl32.lib', 'OpenCL.lib'],
+            'libraries': ['OpenCL.lib'],
           },
        ],
     ]
