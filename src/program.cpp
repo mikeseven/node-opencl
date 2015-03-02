@@ -1,8 +1,47 @@
 #include "program.h"
 #include "types.h"
 #include <vector>
+#include "nanextension.h"
 
 namespace opencl {
+
+class NoCLProgramCLCallback:public NanAsyncLaunch {
+ public:
+   NoCLProgramCLCallback(NanCallback* callback,const v8::Local<v8::Object> &userData):NanAsyncLaunch(callback){
+       NanScope();
+       v8::Local<v8::Object> obj = NanNew<v8::Object>();
+       NanAssignPersistent(persistentHandle, obj);
+       v8::Local<v8::Object>  handle = NanNew(persistentHandle);
+       handle->Set(kIndex, userData);
+   }
+
+   void CallBackIsDone(cl_program prg){
+       this->program = prg;
+       this->FireAndForget();
+   }
+
+   void Execute() {
+     NanEscapableScope();
+     v8::Local<v8::Object> handle = NanNew(persistentHandle);
+     v8::Local<v8::Object> userData= (handle->Get(kIndex)).As<v8::Object>();
+     Handle<Value> argv[] = {
+         NanNew(NOCL_WRAP(NoCLProgram, program)),
+         NanNew(userData)
+     };
+     callback->Call(2,argv);
+   }
+
+ private:
+   cl_program program;
+
+};
+
+void CL_CALLBACK notifyPCB (cl_program program, void *user_data) {
+    NoCLProgramCLCallback* asyncCB = static_cast<NoCLProgramCLCallback*>(user_data);
+    if(asyncCB!=nullptr)
+        asyncCB->CallBackIsDone(program);
+}
+
 
 // /* Program Object APIs  */
 // extern CL_API_ENTRY cl_program CL_API_CALL
@@ -185,17 +224,32 @@ NAN_METHOD(BuildProgram) {
 
   //REQ_STR_ARG(2,options);
 
-  // TODO callback + userdata
+  //  callback + userdata
+  int err;
 
-  int err = ::clBuildProgram(p->getRaw(),
-    devices.size(), NOCL_TO_CL_ARRAY(devices, NoCLDeviceId),
-    options != NULL ? **options : nullptr,
-    nullptr, nullptr);
+  if (ARG_EXISTS(3)) {
+   Local<Function> callbackHandle = args[3].As<Function>();
+   NanCallback *callback = new NanCallback(callbackHandle);
+   Local<Object> userData = args[4].As<Object>();
+   NoCLProgramCLCallback* cb = new NoCLProgramCLCallback(callback,userData);
+
+   err = ::clBuildProgram(p->getRaw(),
+          devices.size(), NOCL_TO_CL_ARRAY(devices, NoCLDeviceId),
+          options != NULL ? **options : nullptr,
+          notifyPCB, cb);
+  }
+
+
+  else
+    err = ::clBuildProgram(p->getRaw(),
+          devices.size(), NOCL_TO_CL_ARRAY(devices, NoCLDeviceId),
+          options != NULL ? **options : nullptr,
+          nullptr, nullptr);
 
   delete options;
 
 
-  CHECK_ERR(err); // TODO CB
+  CHECK_ERR(err);
 
 
   NanReturnValue(JS_INT(CL_SUCCESS));
@@ -261,15 +315,34 @@ NAN_METHOD(CompileProgram) {
   }
 
   // CL CALL
-  // TODO Callbacks
+  //  callback + userdata
+  int err;
 
-  int err = ::clCompileProgram(
-    p->getRaw(),
-    cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
-    options != NULL ? **options : nullptr,
-    program_headers.size(), NOCL_TO_CL_ARRAY(program_headers, NoCLProgram),
-    &names.front(),
-    nullptr, nullptr);
+  if (ARG_EXISTS(5)) {
+   Local<Function> callbackHandle = args[5].As<Function>();
+   NanCallback *callback = new NanCallback(callbackHandle);
+   Local<Object> userData = args[6].As<Object>();
+   NoCLProgramCLCallback* cb = new NoCLProgramCLCallback(callback,userData);
+
+   err = ::clCompileProgram(
+               p->getRaw(),
+               cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
+               options != NULL ? **options : nullptr,
+               program_headers.size(), NOCL_TO_CL_ARRAY(program_headers, NoCLProgram),
+               &names.front(),
+               notifyPCB, cb);
+  }
+
+
+  else
+    err = ::clCompileProgram(
+                p->getRaw(),
+                cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
+                options != NULL ? **options : nullptr,
+                program_headers.size(), NOCL_TO_CL_ARRAY(program_headers, NoCLProgram),
+                &names.front(),
+                nullptr, nullptr);
+
 
   delete options;
 
@@ -328,7 +401,24 @@ NAN_METHOD(LinkProgram) {
   */
   cl_int ret = CL_SUCCESS;
 
-  cl_program prg = ::clLinkProgram(
+  cl_program prg;
+
+  if (ARG_EXISTS(4)) {
+   Local<Function> callbackHandle = args[4].As<Function>();
+   NanCallback *callback = new NanCallback(callbackHandle);
+   Local<Object> userData = args[5].As<Object>();
+   NoCLProgramCLCallback* cb = new NoCLProgramCLCallback(callback,userData);
+   prg = ::clLinkProgram(
+     ctx->getRaw(),
+     cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
+     options != NULL ? **options : nullptr,
+     cl_programs.size(), NOCL_TO_CL_ARRAY(cl_programs, NoCLProgram),
+     notifyPCB, cb,
+     &ret);
+  }
+
+  else
+    prg = ::clLinkProgram(
     ctx->getRaw(),
     cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
     options != NULL ? **options : nullptr,

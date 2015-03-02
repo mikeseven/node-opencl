@@ -55,6 +55,20 @@ describe("Program", function () {
       });
     });
 
+    it("should build and call the callback using a valid program", function (done) {
+      U.withAsyncContext(function (ctx,device,platform,ctxDone) {
+        var mCB = function(prg,userData){
+          assert.isNotNull(prg);
+          assert.isDefined(prg);
+          cl.releaseProgram(prg);
+          ctxDone();
+          userData.done();
+        };
+        var prg = cl.createProgramWithSource(ctx, squareKern);
+        var ret = cl.buildProgram(prg,undefined,undefined,mCB,{done:done});
+        assert(ret == cl.SUCCESS);
+      });
+    });
     it("should build using a valid program and options", function () {
       U.withContext(function (ctx) {
         var prg = cl.createProgramWithSource(ctx, squareKern);
@@ -205,6 +219,21 @@ describe("Program", function () {
       });
     });
 
+    it("should build and call the callback with no input header", function (done) {
+      U.withAsyncContext(function (ctx,device,platform,ctxDone) {
+        var mCB = function(prg,userData){
+          assert.isNotNull(prg);
+          assert.isDefined(prg);
+          cl.releaseProgram(prg);
+          ctxDone();
+          userData.done();
+        };
+        var prg = cl.createProgramWithSource(ctx, squareKern);
+        var ret = cl.compileProgram(prg,undefined,undefined,undefined,undefined,mCB,{done:done});
+        assert(ret == cl.SUCCESS);
+      });
+    });
+
     it("should build a program with an input header", function () {
       U.withContext(function (ctx) {
         var prg = cl.createProgramWithSource(ctx, squareKern);
@@ -266,6 +295,7 @@ describe("Program", function () {
         });
       });
     });
+    });
 
     it("should success in linking one compiled program", function () {
       U.withContext(function (ctx) {
@@ -277,6 +307,23 @@ describe("Program", function () {
         });
       });
     });
+    
+    it("should success in linking one program and call the callback", function (done) {
+      U.withAsyncContext(function (ctx,device,platform,ctxDone) {
+        var mCB = function(prg,userData){
+          assert.isNotNull(prg);
+          assert.isDefined(prg);
+          cl.releaseProgram(prg);
+          ctxDone();
+          userData.done();
+        };
+        var prg = cl.createProgramWithSource(ctx, squareKern);
+        var ret = cl.compileProgram(prg);
+        assert(ret == cl.SUCCESS);
+        var nprg = cl.linkProgram(ctx, null, null, [prg],mCB,{done:done});
+        assert.isObject(nprg);
+
+      });
 
     it("should success in linking one compiled program with a list of devices", function () {
       U.withContext(function (ctx, device) {
