@@ -223,7 +223,7 @@ void CL_CALLBACK notifyCB (cl_event event, cl_int event_command_exec_status, voi
 
 NAN_METHOD(SetEventCallback){
   NanScope();
-  REQ_ARGS(4);
+  REQ_ARGS(3);
   NOCL_UNWRAP(event, NoCLEvent, args[0]);
   cl_int callbackStatusType = args[1]->Int32Value();
   Local<Function> callbackHandle = args[2].As<Function>();
