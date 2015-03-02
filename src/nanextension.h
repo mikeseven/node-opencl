@@ -18,7 +18,7 @@ void NanAsyncAddInQueue(uv_async_t *handle, int status);
   **/
 /* abstract */ class NanAsyncLaunch {
  public:
-  NanAsyncLaunch():alreadyFired(false) {
+  NanAsyncLaunch(NanCallback* callback):callback(callback),alreadyFired(false) {
     uv_async_init(uv_default_loop(), &(this->async), NanAsyncLaunch::AddInQueue);
     async.data = this;
   }
@@ -31,38 +31,45 @@ void NanAsyncAddInQueue(uv_async_t *handle, int status);
   }
   virtual void Execute() = 0;
 
-  virtual ~NanAsyncLaunch() {
-  }
-
   virtual void Destroy() {
     uv_close(reinterpret_cast<uv_handle_t*>(&this->async),NanAsyncLaunch::AsyncClose_);
   }
+
 #if NODE_VERSION_AT_LEAST(0,12,0)
   inline static void AddInQueue(uv_async_t *handle) {
 #elif NODE_VERSION_AT_LEAST(0,10,0)
   inline static void AddInQueue(uv_async_t *handle, int status) {
 #endif
-      NanAsyncLaunch* asyncLaunch = static_cast<NanAsyncLaunch*>(handle->data);
+    NanAsyncLaunch* asyncLaunch = static_cast<NanAsyncLaunch*>(handle->data);
 #if NODE_MAJOR_VERSION == 0 && NODE_MINOR_VERSION <= 10
-      if(status != UV_ECANCELED)
+    if(status != UV_ECANCELED)
 #endif
-          asyncLaunch->Execute();
-      asyncLaunch->Destroy();
+      asyncLaunch->Execute();
+    asyncLaunch->Destroy();
   }
 
 inline static void AsyncClose_(uv_handle_t* handle) {
       NanAsyncLaunch *launcher =
               static_cast<NanAsyncLaunch*>(handle->data);
       delete launcher;
-    }
+  }
 
+  virtual ~NanAsyncLaunch(){
+    NanScope();
+    if (!persistentHandle.IsEmpty())
+      NanDisposePersistent(persistentHandle);
+    if (callback)
+      delete callback;
+  }
+
+ protected:
+  NanCallback* callback;
+  Persistent<Object> persistentHandle;
+  static const uint32_t kIndex = 0;
  private:
   uv_async_t async;
   bool alreadyFired;
 };
-
-
-
 
 #endif // NANEXTENSION
 
