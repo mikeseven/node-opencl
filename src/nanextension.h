@@ -1,7 +1,8 @@
 #ifndef NAN_VERSION
 #define NAN_VERSION
 
-#include "nan.h"
+#include "node.h"
+#include "uv.h"
 
 //// async Fire and Forget call ////
 
@@ -36,14 +37,20 @@ void NanAsyncAddInQueue(uv_async_t *handle, int status);
   virtual void Destroy() {
     uv_close(reinterpret_cast<uv_handle_t*>(&this->async),NanAsyncLaunch::AsyncClose_);
   }
-  NAN_INLINE static void AddInQueue(uv_async_t *handle) {
+#if NODE_VERSION_AT_LEAST(0,12,0)
+  inline static void AddInQueue(uv_async_t *handle) {
+#elif NODE_VERSION_AT_LEAST(0,10,0)
+  inline static void AddInQueue(uv_async_t *handle, int status) {
+#endif
       NanAsyncLaunch* asyncLaunch = static_cast<NanAsyncLaunch*>(handle->data);
-      //if(status != UV_ECANCELED)
+#if NODE_MAJOR_VERSION == 0 && NODE_MINOR_VERSION <= 10
+      if(status != UV_ECANCELED)
+#endif
           asyncLaunch->Execute();
       asyncLaunch->Destroy();
   }
 
-  NAN_INLINE static void AsyncClose_(uv_handle_t* handle) {
+inline static void AsyncClose_(uv_handle_t* handle) {
       NanAsyncLaunch *launcher =
               static_cast<NanAsyncLaunch*>(handle->data);
       delete launcher;
