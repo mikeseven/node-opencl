@@ -95,7 +95,8 @@ NAN_METHOD(RetainEvent) {
   REQ_ARGS(1);
 
   NOCL_UNWRAP(ev, NoCLEvent, args[0]);
-  cl_int err=clRetainEvent(ev->getRaw());
+  cl_int err=ev->acquire();
+  //cl_int err=clRetainEvent(ev->getRaw());
   CHECK_ERR(err)
   NanReturnValue(JS_INT(CL_SUCCESS));
 }
@@ -108,7 +109,8 @@ NAN_METHOD(ReleaseEvent) {
 
   // Arg 0
   NOCL_UNWRAP(ev, NoCLEvent, args[0]);
-  cl_int err=clReleaseEvent(ev->getRaw());
+  cl_int err=ev->release();
+  //cl_int err=clReleaseEvent(ev->getRaw());
 
   CHECK_ERR(err)
   NanReturnValue(JS_INT(CL_SUCCESS));
