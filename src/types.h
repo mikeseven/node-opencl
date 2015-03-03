@@ -1,13 +1,13 @@
 #ifndef NODE_OPENCL_TYPES_H_
 #define NODE_OPENCL_TYPES_H_
 
-
 #include <node.h>
 #include "nan.h"
 #include <string>
-#include <memory>
 #include <vector>
 #include <v8.h>
+#include <map>
+#include<iostream>
 
 #if defined (__APPLE__) || defined(MACOSX)
 #ifdef __ECLIPSE__
@@ -29,6 +29,8 @@
 
 using namespace std;
 using namespace v8;
+
+namespace opencl {
 
 template <typename T>
 T * NoCLUnwrap(Local<Value> val) {
@@ -70,17 +72,13 @@ Local<ObjectTemplate> & GetNodeOpenCLObjectGenericTemplate();
 
 class NoCLObjectGen {
 
-protected:
-  const void * raw;
+ public:
 
-public:
-  const void * getUncastedRaw() {
-    return raw;
-  }
+   virtual unsigned int GetType() = 0;
 
 };
 
-template <typename T, unsigned int elid, int err>
+template <typename T,const unsigned int elid, int err>
 class NoCLObject : public NoCLObjectGen {
 public:
 
@@ -88,8 +86,17 @@ public:
     this->raw = raw;
   }
 
-  const T getRaw() {
+  bool operator ==(const NoCLObject<T,elid,err> &b) const {
+    return (this->getRaw() == b.getRaw());
+  }
+
+  const T getRaw() const {
     return (T) this->raw;
+  }
+
+  // implicit cast
+  operator T() const{
+      return (T)raw;
   }
 
   static unsigned int GetId() {
@@ -123,6 +130,112 @@ public:
     return err;
   }
 
+  virtual unsigned int GetType() {
+      return elid;
+  }
+
+protected:
+  T raw;
+
+};
+
+extern int myCpt;
+
+template <typename T, unsigned int elid, int err,int cl_release(T),int cl_acquire(T)>
+class NoCLRefCountObject : public NoCLObject<T,elid,err> {
+ public:
+   NoCLRefCountObject(T raw):NoCLObject<T,elid,err>(raw){
+     this->init();
+   }
+
+   NoCLRefCountObject(const NoCLRefCountObject &other):NoCLObject<T,elid,err>(other.getRaw()) {
+     this->init();
+   }
+
+   NoCLRefCountObject& operator = (const NoCLRefCountObject& other){
+     this->releaseAndInit(other.getRaw());
+     return *this;
+   }
+
+   NoCLRefCountObject& operator = (const T& raw){
+     this->releaseAndInit(raw);
+     return *this;
+   }
+
+   ~NoCLRefCountObject() {
+     this->release();
+   }
+
+   bool isDeleted() const{
+     if(myMap[this->raw]>0)
+         return true;
+     return false;
+   }
+
+   int acquire(bool init=false) {
+#ifdef NOCL_REALEASE_DRIVER_ISSUES
+     if(myMap[this->raw]<1)
+       return CL_INVALID_ARG_VALUE;
+#endif
+     cl_int result = cl_acquire(this->raw);
+     if(result == CL_SUCCESS)
+        myMap[this->raw]++;
+     return result;
+   }
+
+   int release() {
+     int result;
+
+#ifdef NOCL_REALEASE_DRIVER_ISSUES
+     if(myMap[this->raw]>1) {
+       myMap[this->raw]--;
+       result = cl_release(this->raw);
+     }
+     else {
+       result = CL_SUCCESS;
+     }
+#else
+     if(myMap.count(this->raw)>0)
+       myMap[this->raw]--;
+     result = cl_release(this->raw);
+#endif
+     return result;
+   }
+
+#ifdef NOCL_REALEASE_DRIVER_ISSUES
+   static void releaseAll(){
+     for (auto const & kv : myMap) {
+       for(int cpt = 0;cpt < kv.second;++cpt){
+         cl_release(kv.first);
+       }
+     }
+   }
+
+#endif
+
+ protected:
+   static std::map<T,int> myMap;
+
+ private:
+   void init() {
+     if(myMap.count(this->raw)>0) {
+       this->acquire();
+         //if(result != CL_SUCCESS)
+         //  throw result;
+       }
+       else
+         myMap[this->raw] = 1;
+   }
+
+   void releaseAndInit(T raw) {
+       this->release();
+       //if(result!=CL_SUCCESS)
+       //    throw result;
+       this->raw = raw;
+       this->init();
+   }
+
+
 };
 
 #define NOCL_TO_ARRAY(TO, FROM, TYPE) \
@@ -148,52 +261,52 @@ public:
   }
 };
 
-class NoCLContext : public NoCLObject<cl_context, 2, CL_INVALID_CONTEXT> {
+class NoCLContext : public NoCLRefCountObject<cl_context, 2, CL_INVALID_CONTEXT,clReleaseContext,clRetainContext> {
 
 public:
-  NoCLContext(cl_context raw) : NoCLObject(raw) {
+  NoCLContext(cl_context raw) : NoCLRefCountObject(raw) {
   }
 };
 
-class NoCLProgram : public NoCLObject<cl_program, 3, CL_INVALID_PROGRAM> {
+class NoCLProgram : public NoCLRefCountObject<cl_program, 3, CL_INVALID_PROGRAM,clReleaseProgram,clRetainProgram> {
 
 public:
-  NoCLProgram(cl_program raw) : NoCLObject(raw) {
+  NoCLProgram(cl_program raw) : NoCLRefCountObject(raw) {
   }
 };
 
-class NoCLKernel : public NoCLObject<cl_kernel, 4, CL_INVALID_KERNEL> {
+class NoCLKernel : public NoCLRefCountObject<cl_kernel, 4, CL_INVALID_KERNEL,clReleaseKernel,clRetainKernel> {
 
 public:
-  NoCLKernel(cl_kernel raw) : NoCLObject(raw) {
+  NoCLKernel(cl_kernel raw) : NoCLRefCountObject(raw) {
   }
 };
 
-class NoCLMem : public NoCLObject<cl_mem, 5, CL_INVALID_MEM_OBJECT> {
+class NoCLMem : public NoCLRefCountObject<cl_mem, 5, CL_INVALID_MEM_OBJECT,clReleaseMemObject,clRetainMemObject> {
 
 public:
-  NoCLMem(cl_mem raw) : NoCLObject(raw) {
+  NoCLMem(cl_mem raw) : NoCLRefCountObject(raw) {
   }
 };
 
-class NoCLSampler : public NoCLObject<cl_sampler, 6, CL_INVALID_SAMPLER> {
+class NoCLSampler : public NoCLRefCountObject<cl_sampler, 6, CL_INVALID_SAMPLER,clReleaseSampler,clRetainSampler> {
 
 public:
-  NoCLSampler(cl_sampler raw) : NoCLObject(raw) {
+  NoCLSampler(cl_sampler raw) : NoCLRefCountObject(raw) {
   }
 };
 
-class NoCLCommandQueue : public NoCLObject<cl_command_queue, 7, CL_INVALID_COMMAND_QUEUE> {
+class NoCLCommandQueue : public NoCLRefCountObject<cl_command_queue, 7, CL_INVALID_COMMAND_QUEUE,clReleaseCommandQueue,clRetainCommandQueue> {
 
 public:
-  NoCLCommandQueue(cl_command_queue raw) : NoCLObject(raw) {
+  NoCLCommandQueue(cl_command_queue raw) : NoCLRefCountObject(raw) {
   }
 };
 
-class NoCLEvent : public NoCLObject<cl_event, 8, CL_INVALID_EVENT> {
+class NoCLEvent : public NoCLRefCountObject<cl_event, 8, CL_INVALID_EVENT,clReleaseEvent,clRetainEvent> {
 
 public:
-  NoCLEvent(cl_event raw) : NoCLObject(raw) {
+  NoCLEvent(cl_event raw) : NoCLRefCountObject(raw) {
   }
 };
 
@@ -213,6 +326,8 @@ public:
 
 NAN_METHOD(Equals);
 
+NAN_METHOD(releaseAll);
+
 // FIXME static does not seem to work great with V8 (random segfaults)
 // But we should not create a template each time we create an object
 template <typename T>
@@ -230,7 +345,12 @@ Local<Object> NoCLWrapCLObject(T * elm) {
   return obj;
 }
 
+namespace Types {
+  void init(Handle<Object> exports);
+}
+
 #define NOCL_WRAP(T, V) \
   NoCLWrapCLObject<T>(new T(V))
 
+}
 #endif
