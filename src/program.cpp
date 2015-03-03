@@ -176,9 +176,9 @@ NAN_METHOD(RetainProgram) {
   REQ_ARGS(1);
 
   NOCL_UNWRAP(p, NoCLProgram, args[0]);
-  cl_int count=clRetainProgram(p->getRaw());
-
-  NanReturnValue(JS_INT(count));
+  cl_int err=p->acquire();
+  CHECK_ERR(err);
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -188,9 +188,9 @@ NAN_METHOD(ReleaseProgram) {
   REQ_ARGS(1);
 
   NOCL_UNWRAP(p, NoCLProgram, args[0]);
-  cl_int count=clReleaseProgram(p->getRaw());
-
-  NanReturnValue(JS_INT(count));
+  cl_int err=p->release();
+  CHECK_ERR(err);
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL

@@ -4,6 +4,7 @@
       'target_name': 'opencl',
       'defines': [
         'VERSION=0.1.0',
+        'NOCL_REALEASE_DRIVER_ISSUES'
       ],
       'sources': [
         'src/addon.cpp',

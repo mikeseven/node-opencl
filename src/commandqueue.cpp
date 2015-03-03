@@ -98,9 +98,10 @@ NAN_METHOD(RetainCommandQueue) {
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  cl_int count=clRetainCommandQueue(q->getRaw());
+  cl_int err=q->acquire();
+  CHECK_ERR(err)
 
-  NanReturnValue(JS_INT(count));
+  NanReturnValue(JS_INT(err));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -112,9 +113,9 @@ NAN_METHOD(ReleaseCommandQueue) {
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  cl_int count=clReleaseCommandQueue(q->getRaw());
-
-  NanReturnValue(JS_INT(count));
+  cl_int err=q->release();
+  CHECK_ERR(err)
+  NanReturnValue(JS_INT(err));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
