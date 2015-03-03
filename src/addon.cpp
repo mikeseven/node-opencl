@@ -428,8 +428,10 @@ void init(Handle<Object> exports)
   JS_CL_CONSTANT(Rx);
   JS_CL_CONSTANT(RGx);
   JS_CL_CONSTANT(RGBx);
+#ifdef  CL_VERSION_1_2
   JS_CL_CONSTANT(DEPTH);
   JS_CL_CONSTANT(DEPTH_STENCIL);
+#endif
 #ifdef CL_VERSION_2_0
   JS_CL_CONSTANT(sRGB);
   JS_CL_CONSTANT(sRGBx);

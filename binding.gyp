@@ -23,6 +23,7 @@
       ],
       'include_dirs' : [
         "<!(node -e \"require('nan')\")",
+        "<!(echo $OPENCL_HEADER)",
       ],
       'conditions': [
         ['OS=="mac"', {

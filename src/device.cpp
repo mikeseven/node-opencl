@@ -242,6 +242,7 @@ NAN_METHOD(GetDeviceInfo) {
   NanReturnUndefined();
 }
 
+#ifdef CL_VERSION_1_2
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clCreateSubDevices(cl_device_id                         /* in_device */,
 //                    const cl_device_partition_property * /* properties */,
@@ -326,15 +327,18 @@ NAN_METHOD(ReleaseDevice) {
   CHECK_ERR(ret);
   NanReturnValue(JS_INT(ret));
 }
+#endif
 
 namespace Device {
 void init(Handle<Object> exports)
 {
   NODE_SET_METHOD(exports, "getDeviceIDs", GetDeviceIDs);
   NODE_SET_METHOD(exports, "getDeviceInfo", GetDeviceInfo);
+#ifdef CL_VERSION_1_2
   NODE_SET_METHOD(exports, "createSubDevices", CreateSubDevices);
   NODE_SET_METHOD(exports, "retainDevice", RetainDevice);
   NODE_SET_METHOD(exports, "releaseDevice", ReleaseDevice);
+#endif
 }
 } // namespace Device
 

@@ -68,12 +68,13 @@ const std::string getExceptionMessage(const cl_int code) {
     case CL_MAP_FAILURE:                        return "Map failure";
     case CL_MISALIGNED_SUB_BUFFER_OFFSET:       return "Misaligned sub-buffer offset";
     case CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST: return "Execution status error for events in wait list";
+#ifdef CL_VERSION_1_2
     case CL_COMPILE_PROGRAM_FAILURE:            return "Compile program failure";
     case CL_LINKER_NOT_AVAILABLE:               return "Linker not available";
     case CL_LINK_PROGRAM_FAILURE:               return "Link program failure";
     case CL_DEVICE_PARTITION_FAILED:            return "Device partition failed";
     case CL_KERNEL_ARG_INFO_NOT_AVAILABLE:      return "Kernel argument info not available";
-
+#endif
     case CL_INVALID_VALUE:                      return "Invalid value";
     case CL_INVALID_DEVICE_TYPE:                return "Invalid device type";
     case CL_INVALID_PLATFORM:                   return "Invalid platform";
@@ -109,10 +110,12 @@ const std::string getExceptionMessage(const cl_int code) {
     case CL_INVALID_MIP_LEVEL:                  return "Invalid mip-map level";
     case CL_INVALID_GLOBAL_WORK_SIZE:           return "Invalid global work size";
     case CL_INVALID_PROPERTY:                   return "Invalid property";
+#ifdef CL_VERSION_1_2
     case CL_INVALID_IMAGE_DESCRIPTOR:           return "Invalid image descriptor";
     case CL_INVALID_COMPILER_OPTIONS:           return "Invalid compiler options";
     case CL_INVALID_LINKER_OPTIONS:             return "Invalid linker options";
     case CL_INVALID_DEVICE_PARTITION_COUNT:     return "Invalid device partition count";
+#endif
     default:                                    return "Unknown error";
   }
 }

@@ -124,7 +124,7 @@ NAN_METHOD(CreateProgramWithBinary) {
   NanReturnValue(NOCL_WRAP(NoCLProgram, p));
 }
 
-
+#ifdef CL_VERSION_1_2
 // extern CL_API_ENTRY cl_program CL_API_CALL
 // clCreateProgramWithBuiltInKernels(cl_context            /* context */,
 //                                   cl_uint               /* num_devices */,
@@ -168,7 +168,7 @@ NAN_METHOD(CreateProgramWithBuiltInKernels) {
 
   NanReturnValue(NOCL_WRAP(NoCLProgram, prg));
 }
-
+#endif
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clRetainProgram(cl_program /* program */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(RetainProgram) {
@@ -217,7 +217,7 @@ NAN_METHOD(BuildProgram) {
 
   if (ARG_EXISTS(2)){
     if (!args[2]->IsString()) {
-      THROW_ERR(CL_INVALID_COMPILER_OPTIONS)
+      THROW_ERR(CL_INVALID_BUILD_OPTIONS)
     }
     options = new String::Utf8Value(args[2]);
   }
@@ -255,6 +255,7 @@ NAN_METHOD(BuildProgram) {
   NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
+#ifdef CL_VERSION_1_2
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clCompileProgram(cl_program           /* program */,
 //                  cl_uint              /* num_devices */,
@@ -429,12 +430,13 @@ NAN_METHOD(LinkProgram) {
   CHECK_ERR(ret);
   NanReturnValue(NOCL_WRAP(NoCLProgram, prg));
 }
-
+#endif
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clUnloadPlatformCompiler(cl_platform_id /* platform */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(UnloadPlatformCompiler) {
   NanScope();
+#ifdef CL_VERSION_1_2
   REQ_ARGS(1);
 
 
@@ -443,6 +445,11 @@ NAN_METHOD(UnloadPlatformCompiler) {
 
   CHECK_ERR(::clUnloadPlatformCompiler(platform->getRaw()));
   NanReturnValue(JS_INT(CL_SUCCESS));
+#else
+  CHECK_ERR(::clUnloadCompiler());
+  NanReturnValue(JS_INT(CL_SUCCESS));
+#endif
+
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -554,14 +561,16 @@ NAN_METHOD(GetProgramInfo) {
 
       NanReturnValue(arr);
     }
+#ifdef CL_VERSION_1_2
     case CL_PROGRAM_NUM_KERNELS:
     {
       size_t val;
       CHECK_ERR(::clGetProgramInfo(prog->getRaw(),param_name,sizeof(size_t), &val, NULL))
       NanReturnValue(JS_INT(val));
     }
-    case CL_PROGRAM_SOURCE:
     case CL_PROGRAM_KERNEL_NAMES:
+#endif
+    case CL_PROGRAM_SOURCE:
     {
       size_t nchars;
       CHECK_ERR(::clGetProgramInfo(prog->getRaw(), param_name, 0, NULL, &nchars));
@@ -604,12 +613,14 @@ NAN_METHOD(GetProgramBuildInfo) {
       CHECK_ERR(::clGetProgramBuildInfo(prog->getRaw(), device->getRaw(), param_name, param_value_size_ret, param_value.get(), NULL));
       NanReturnValue(JS_STR(param_value.get(),(int)param_value_size_ret));
     }
+#ifdef CL_VERSION_1_2
     case CL_PROGRAM_BINARY_TYPE:
     {
       cl_program_binary_type val;
       CHECK_ERR(::clGetProgramBuildInfo(prog->getRaw(), device->getRaw(), param_name,sizeof(cl_program_binary_type), &val, NULL))
       NanReturnValue(JS_INT(val));
     }
+#endif
   }
   THROW_ERR(CL_INVALID_VALUE);
 }
@@ -619,13 +630,19 @@ void init(Handle<Object> exports)
 {
   NODE_SET_METHOD(exports, "createProgramWithSource", CreateProgramWithSource);
   NODE_SET_METHOD(exports, "createProgramWithBinary", CreateProgramWithBinary);
+#ifdef CL_VERSION_1_2
   NODE_SET_METHOD(exports, "createProgramWithBuiltInKernels", CreateProgramWithBuiltInKernels);
+#endif
   NODE_SET_METHOD(exports, "retainProgram", RetainProgram);
   NODE_SET_METHOD(exports, "releaseProgram", ReleaseProgram);
   NODE_SET_METHOD(exports, "buildProgram", BuildProgram);
+#ifdef CL_VERSION_1_2
   NODE_SET_METHOD(exports, "compileProgram", CompileProgram);
   NODE_SET_METHOD(exports, "linkProgram", LinkProgram);
   NODE_SET_METHOD(exports, "unloadPlatformCompiler", UnloadPlatformCompiler);
+#else
+  NODE_SET_METHOD(exports, "unloadCompiler", UnloadPlatformCompiler);
+#endif
   NODE_SET_METHOD(exports, "getProgramInfo", GetProgramInfo);
   NODE_SET_METHOD(exports, "getProgramBuildInfo", GetProgramBuildInfo);
 }

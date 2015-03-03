@@ -94,7 +94,7 @@ NAN_METHOD(CreateSubBuffer) {
   CHECK_ERR(CL_INVALID_VALUE);
   NanReturnValue(JS_INT(CL_SUCCESS));
 }
-
+#ifdef CL_VERSION_1_2
 // extern CL_API_ENTRY cl_mem CL_API_CALL
 // clCreateImage(cl_context              /* context */,
 //               cl_mem_flags            /* flags */,
@@ -168,7 +168,9 @@ NAN_METHOD(CreateImage) {
 
   NanReturnValue(NOCL_WRAP(NoCLMem, mem));
 }
-
+#else
+//TODO createImage2D/3D from 1.1 spec
+#endif
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clRetainMemObject(cl_mem /* memobj */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(RetainMemObject) {
@@ -325,12 +327,15 @@ NAN_METHOD(GetImageInfo) {
     case CL_IMAGE_WIDTH:
     case CL_IMAGE_HEIGHT:
     case CL_IMAGE_DEPTH:
+#ifdef CL_VERSION_1_2
     case CL_IMAGE_ARRAY_SIZE:
+#endif
     {
       size_t val;
       CHECK_ERR(::clGetImageInfo(mem->getRaw(),param_name,sizeof(size_t), &val, NULL))
       NanReturnValue(JS_INT(val));
     }
+#ifdef CL_VERSION_1_2
     case CL_IMAGE_BUFFER: {
       cl_mem val;
       CHECK_ERR(::clGetImageInfo(mem->getRaw(),param_name,sizeof(cl_mem), &val, NULL))
@@ -343,6 +348,7 @@ NAN_METHOD(GetImageInfo) {
       CHECK_ERR(::clGetImageInfo(mem->getRaw(),param_name,sizeof(cl_uint), &val, NULL))
       NanReturnValue(JS_INT(val));
     }
+#endif
   }
 
   return NanThrowError(JS_INT(CL_INVALID_VALUE));
@@ -386,7 +392,9 @@ void init(Handle<Object> exports)
 {
   NODE_SET_METHOD(exports, "createBuffer", CreateBuffer);
   NODE_SET_METHOD(exports, "createSubBuffer", CreateSubBuffer);
+#ifdef CL_VERSION_1_2
   NODE_SET_METHOD(exports, "createImage", CreateImage);
+#endif
   NODE_SET_METHOD(exports, "retainMemObject", RetainMemObject);
   NODE_SET_METHOD(exports, "releaseMemObject", ReleaseMemObject);
   NODE_SET_METHOD(exports, "getSupportedImageFormats", GetSupportedImageFormats);
