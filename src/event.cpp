@@ -172,7 +172,7 @@ NAN_METHOD(GetEventProfilingInfo) {
 
 class NoCLEventCLCallback:public NanAsyncLaunch {
  public:
-   NoCLEventCLCallback(NanCallback* callback,const v8::Local<v8::Object> &userData,const v8::Local<v8::Object> &noCLEvent):NanAsyncLaunch(),callback(callback){
+   NoCLEventCLCallback(NanCallback* callback,const v8::Local<v8::Object> &userData,const v8::Local<v8::Object> &noCLEvent):NanAsyncLaunch(callback){
        NanScope();
        v8::Local<v8::Object> obj = NanNew<v8::Object>();
        NanAssignPersistent(persistentHandle, obj);
@@ -180,14 +180,6 @@ class NoCLEventCLCallback:public NanAsyncLaunch {
        handle->Set(kIndex, noCLEvent);
        handle->Set(kIndex+1, userData);
 
-   }
-
-   ~NoCLEventCLCallback() {
-       NanScope();
-       if (!persistentHandle.IsEmpty())
-         NanDisposePersistent(persistentHandle);
-       if (callback)
-         delete callback;
    }
 
    void CallBackIsDone(int status) {
@@ -209,9 +201,6 @@ class NoCLEventCLCallback:public NanAsyncLaunch {
    }
 
  private:
-   NanCallback* callback;
-   Persistent<Object> persistentHandle;
-   static const uint32_t kIndex = 0;
    int mCLCallbackStatus;
 
 };
@@ -223,7 +212,7 @@ void CL_CALLBACK notifyCB (cl_event event, cl_int event_command_exec_status, voi
 
 NAN_METHOD(SetEventCallback){
   NanScope();
-  REQ_ARGS(4);
+  REQ_ARGS(3);
   NOCL_UNWRAP(event, NoCLEvent, args[0]);
   cl_int callbackStatusType = args[1]->Int32Value();
   Local<Function> callbackHandle = args[2].As<Function>();
