@@ -126,9 +126,10 @@ NAN_METHOD(RetainContext) {
   REQ_ARGS(1);
 
   NOCL_UNWRAP(context, NoCLContext, args[0]);
-  cl_int count=clRetainContext(context->getRaw());
 
-  NanReturnValue(JS_INT(count));
+  cl_int err=context->acquire();
+  CHECK_ERR(err);
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -138,9 +139,9 @@ NAN_METHOD(ReleaseContext) {
   REQ_ARGS(1);
 
   NOCL_UNWRAP(context, NoCLContext, args[0]);
-  cl_int count=clReleaseContext(context->getRaw());
-
-  NanReturnValue(JS_INT(count));
+  cl_int err=context->release();
+  CHECK_ERR(err);
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL

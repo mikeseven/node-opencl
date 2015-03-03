@@ -65,9 +65,9 @@ NAN_METHOD(RetainKernel) {
   REQ_ARGS(1);
 
   NOCL_UNWRAP(k, NoCLKernel, args[0]);
-  cl_int count=clRetainKernel(k->getRaw());
-
-  NanReturnValue(JS_INT(count));
+  cl_int err=k->acquire();
+  CHECK_ERR(err);
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -77,9 +77,9 @@ NAN_METHOD(ReleaseKernel) {
   REQ_ARGS(1);
 
   NOCL_UNWRAP(k, NoCLKernel, args[0]);
-  cl_int count=clRetainKernel(k->getRaw());
-
-  NanReturnValue(JS_INT(count));
+  cl_int err=k->release();
+  CHECK_ERR(err);
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
