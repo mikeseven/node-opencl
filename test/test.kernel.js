@@ -224,8 +224,9 @@ describe("Kernel", function () {
         })
       })
     };
-
-    testForType("KERNEL_ATTRIBUTES", assert.isString.bind(assert));
+    if(cl.VERSION_1_2){
+      testForType("KERNEL_ATTRIBUTES", assert.isString.bind(assert));
+    }
     testForType("KERNEL_FUNCTION_NAME", assert.isString.bind(assert));
     testForType("KERNEL_REFERENCE_COUNT", assert.isNumber.bind(assert));
     testForType("KERNEL_NUM_ARGS", assert.isNumber.bind(assert));
@@ -296,43 +297,44 @@ describe("Kernel", function () {
         })
       })
     };
+    if(cl.VERSION_2_0) {
+      testForType("KERNEL_ARG_ADDRESS_QUALIFIER", assert.isNumber.bind(assert));
+      testForType("KERNEL_ARG_ACCESS_QUALIFIER", assert.isNumber.bind(assert));
+      testForType("KERNEL_ARG_TYPE_QUALIFIER", assert.isNumber.bind(assert));
+    }
 
-    testForType("KERNEL_ARG_ADDRESS_QUALIFIER", assert.isNumber.bind(assert));
-    testForType("KERNEL_ARG_ACCESS_QUALIFIER", assert.isNumber.bind(assert));
-    testForType("KERNEL_ARG_TYPE_QUALIFIER", assert.isNumber.bind(assert));
+    if(cl.VERSION_2_0){
+      it("should return the corresponding names", function(){
+        U.withContext(function (ctx) {
+          U.withProgram(ctx, squareKern, function (prg) {
+            var k = cl.createKernel(prg, "square");
+            var n1 = cl.getKernelArgInfo(k, 0, cl.KERNEL_ARG_NAME);
+            var n2 = cl.getKernelArgInfo(k, 1, cl.KERNEL_ARG_NAME);
+            var n3 = cl.getKernelArgInfo(k, 2, cl.KERNEL_ARG_NAME);
 
-    it("should return the corresponding names", function(){
-      U.withContext(function (ctx) {
-        U.withProgram(ctx, squareKern, function (prg) {
-          var k = cl.createKernel(prg, "square");
-          var n1 = cl.getKernelArgInfo(k, 0, cl.KERNEL_ARG_NAME);
-          var n2 = cl.getKernelArgInfo(k, 1, cl.KERNEL_ARG_NAME);
-          var n3 = cl.getKernelArgInfo(k, 2, cl.KERNEL_ARG_NAME);
-
-          assert.equal(n1, "input");
-          assert.equal(n2, "output");
-          assert.equal(n3, "count");
+            assert.equal(n1, "input");
+            assert.equal(n2, "output");
+            assert.equal(n3, "count");
+          });
         });
       });
-    });
+    
+      it("should return the corresponding types", function(){
+        U.withContext(function (ctx) {
+          U.withProgram(ctx, squareKern, function (prg) {
+            var k = cl.createKernel(prg, "square");
+            var n1 = cl.getKernelArgInfo(k, 0, cl.KERNEL_ARG_TYPE_NAME);
+            var n2 = cl.getKernelArgInfo(k, 1, cl.KERNEL_ARG_TYPE_NAME);
+            var n3 = cl.getKernelArgInfo(k, 2, cl.KERNEL_ARG_TYPE_NAME);
 
-
-    it("should return the corresponding types", function(){
-      U.withContext(function (ctx) {
-        U.withProgram(ctx, squareKern, function (prg) {
-          var k = cl.createKernel(prg, "square");
-          var n1 = cl.getKernelArgInfo(k, 0, cl.KERNEL_ARG_TYPE_NAME);
-          var n2 = cl.getKernelArgInfo(k, 1, cl.KERNEL_ARG_TYPE_NAME);
-          var n3 = cl.getKernelArgInfo(k, 2, cl.KERNEL_ARG_TYPE_NAME);
-
-          assert.equal(n1, "float*");
-          assert.equal(n2, "float*");
-          assert.equal(n3, "uint");
+            assert.equal(n1, "float*");
+            assert.equal(n2, "float*");
+            assert.equal(n3, "uint");
+          });
         });
       });
-    });
+    }
   });
-
   describe("#getKernelWorkGroupInfo", function () {
 
     var testForType = function(clKey, _assert) {
