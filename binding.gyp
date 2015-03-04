@@ -60,10 +60,10 @@
               'INTEL_OPENCL_SDK_LIB' : '<(INTEL_OPENCL_SDK)\\lib\\x64',
             },
             'include_dirs' : [
-              "<(AMD_OPENCL_SDK_INCLUDE)", "<(INTEL_OPENCL_SDK_INCLUDE)"
+              "<(AMD_OPENCL_SDK_INCLUDE)", "<(INTEL_OPENCL_SDK_INCLUDE)","<!(echo %OPENCL_HEADER%)",
             ],
             'library_dirs' : [
-              "<(AMD_OPENCL_SDK_LIB)", "<(INTEL_OPENCL_SDK_LIB)","<!(echo %OPENCL_HEADER%)",
+              "<(AMD_OPENCL_SDK_LIB)", "<(INTEL_OPENCL_SDK_LIB)",
             ],
             'defines' : [
               'WIN32_LEAN_AND_MEAN',
