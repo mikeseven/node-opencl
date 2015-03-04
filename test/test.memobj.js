@@ -111,7 +111,7 @@ describe("MemObj", function() {
     })
 
   });
-  describe("#createImage", function() {
+  versions(["1.2","2.0"]).describe("#createImage", function() {
 
     var f = cl.createImage;
     var imageFormat = {"channel_order": cl.RGBA, "channel_data_type": cl.UNSIGNED_INT8};
@@ -123,7 +123,7 @@ describe("MemObj", function() {
       "image_array_size": 1
     };
 
-    versions(["1.2", "2.x"]).it("should create an image", function() {
+    it("should create an image", function() {
 
       U.withContext(function (context, device, platform) {
 
@@ -325,10 +325,18 @@ describe("MemObj", function() {
       "image_array_size": 1
     };
 
+    var createImageWrapper = function (ctx) {
+      if(cl.VERSION_1_1 && !cl.VERSION_1_2) {
+        return cl.createImage2D(ctx,0,imageFormat,imageDesc.width,imageDesc.height,0,null);
+      }
+      else {
+        return cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+      }
+    };
 
     it("should return CL_IMAGE_FORMAT", function () {
       U.withContext(function (context, device, platform) {
-        var image = cl.createImage(context, 0, imageFormat, imageDesc, null);
+        var image = createImageWrapper(context);
         var imageInfo = f(image, cl.IMAGE_FORMAT);
         assert.isArray(imageInfo);
       });
@@ -336,7 +344,7 @@ describe("MemObj", function() {
 
     it("should return CL_IMAGE_ELEMENT_SIZE", function () {
       U.withContext(function (context, device, platform) {
-        var image = cl.createImage(context, 0, imageFormat, imageDesc, null);
+        var image = createImageWrapper(context);
         var imageInfo = f(image, cl.IMAGE_ELEMENT_SIZE);
         assert.isNumber(imageInfo);
       });
@@ -345,7 +353,7 @@ describe("MemObj", function() {
 
     it("should return CL_IMAGE_ROW_PITCH", function () {
       U.withContext(function (context, device, platform) {
-        var image = cl.createImage(context, 0, imageFormat, imageDesc, null);
+        var image = createImageWrapper(context);
         var imageInfo = f(image, cl.IMAGE_ROW_PITCH);
         assert.isNumber(imageInfo);
       });
@@ -354,7 +362,7 @@ describe("MemObj", function() {
 
     it("should return CL_IMAGE_SLICE_PITCH", function () {
       U.withContext(function (context, device, platform) {
-        var image = cl.createImage(context, 0, imageFormat, imageDesc, null);
+        var image = createImageWrapper(context);
         var imageInfo = f(image, cl.IMAGE_ROW_PITCH);
         assert.isNumber(imageInfo);
       });
@@ -363,7 +371,7 @@ describe("MemObj", function() {
 
     it("should return CL_IMAGE_WIDTH", function () {
       U.withContext(function (context, device, platform) {
-        var image = cl.createImage(context, 0, imageFormat, imageDesc, null);
+        var image = createImageWrapper(context);
         var imageInfo = f(image, cl.IMAGE_WIDTH);
         assert.isNumber(imageInfo);
         assert.strictEqual(imageInfo, 10);
@@ -373,7 +381,7 @@ describe("MemObj", function() {
 
     it("should return CL_IMAGE_HEIGHT", function () {
       U.withContext(function (context, device, platform) {
-        var image = cl.createImage(context, 0, imageFormat, imageDesc, null);
+        var image = createImageWrapper(context);
         var imageInfo = f(image, cl.IMAGE_HEIGHT);
         assert.isNumber(imageInfo);
         assert.strictEqual(imageInfo, 10);
@@ -383,23 +391,23 @@ describe("MemObj", function() {
 
     it("should return CL_IMAGE_DEPTH", function () {
       U.withContext(function (context, device, platform) {
-        var image = cl.createImage(context, 0, imageFormat, imageDesc, null);
+        var image = createImageWrapper(context);
         var imageInfo = f(image, cl.IMAGE_DEPTH);
         assert.isNumber(imageInfo);
       });
 
     });
 
-    it("should return CL_IMAGE_ARRAY_SIZE", function () {
+    versions(["1.2","2.0"]).it("should return CL_IMAGE_ARRAY_SIZE", function () {
       U.withContext(function (context, device, platform) {
-        var image = cl.createImage(context, 0, imageFormat, imageDesc, null);
+        var image = createImageWrapper(context);
         var imageInfo = f(image, cl.IMAGE_ARRAY_SIZE);
         assert.isNumber(imageInfo);
       });
 
     });
 
-    it("should return CL_IMAGE_NUM_MIP_LEVELS", function () {
+    versions(["1.2","2.0"]).it("should return CL_IMAGE_NUM_MIP_LEVELS", function () {
       U.withContext(function (context, device, platform) {
         var image = cl.createImage(context, 0, imageFormat, imageDesc, null);
         var imageInfo = f(image, cl.IMAGE_NUM_MIP_LEVELS);
@@ -408,7 +416,7 @@ describe("MemObj", function() {
 
     });
 
-    it("should return CL_IMAGE_NUM_SAMPLES", function () {
+    versions(["1.2","2.0"]).it("should return CL_IMAGE_NUM_SAMPLES", function () {
       U.withContext(function (context, device, platform) {
         var image = cl.createImage(context, 0, imageFormat, imageDesc, null);
         var imageInfo = f(image, cl.IMAGE_NUM_SAMPLES);
@@ -417,7 +425,7 @@ describe("MemObj", function() {
 
     });
 
-    it("should return CL_IMAGE_BUFFER", function () {
+    versions(["1.2","2.0"]).it("should return CL_IMAGE_BUFFER", function () {
       U.withContext(function (context, device, platform) {
         var image = cl.createImage(context, 0, imageFormat, imageDesc, null);
         var imageInfo = f(image, cl.IMAGE_BUFFER);
