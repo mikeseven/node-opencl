@@ -23,10 +23,12 @@
       ],
       'include_dirs' : [
         "<!(node -e \"require('nan')\")",
-        "<!(echo $OPENCL_HEADER)",
       ],
       'conditions': [
         ['OS=="mac"', {
+          'include_dirs' : [
+            "<!(echo $OPENCL_HEADER)",
+           ],
           'make_global_settings': [
             ['CC', '/usr/bin/clang'],
             ['CXX', '/usr/bin/clang++'],
@@ -39,6 +41,9 @@
           'libraries': ['-framework OpenCL'],
         }],
         ['OS=="linux"', {
+          'include_dirs' : [
+            "<!(echo $OPENCL_HEADER)",
+           ],
           'cflags': ['-std=c++11' ' -Wall'],
           'libraries': ['-lOpenCL']}],
         ['OS=="win"', {
@@ -58,7 +63,7 @@
               "<(AMD_OPENCL_SDK_INCLUDE)", "<(INTEL_OPENCL_SDK_INCLUDE)"
             ],
             'library_dirs' : [
-              "<(AMD_OPENCL_SDK_LIB)", "<(INTEL_OPENCL_SDK_LIB)"
+              "<(AMD_OPENCL_SDK_LIB)", "<(INTEL_OPENCL_SDK_LIB)","<!(echo %OPENCL_HEADER%)",
             ],
             'defines' : [
               'WIN32_LEAN_AND_MEAN',
