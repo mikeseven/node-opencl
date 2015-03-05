@@ -42,7 +42,8 @@ describe("CommandQueue", function() {
 
     versions(["1.x"]).it("should fail given an invalid property", function () {
       U.withContext(function(ctx, device) {
-        U.bind(f,ctx, device, -1).should.throw(cl.INVALID_VALUE.message);
+        // could be INVALID_VALUE or CL_INVALID_QUEUE_PROPERTIES etc...
+        U.bind(f,ctx, device, -1).should.throw();
       });
     });
 
@@ -651,6 +652,14 @@ describe("CommandQueue", function() {
     });
   });
 
+  var createImageWrapper = function (ctx,flags, imageFormat, imageDesc, hostmem) {
+    if(!cl.VERSION_1_2) { // ~=cl.VERSION_1_1 && !cl.VERSION_1_2
+      return cl.createImage2D(ctx, flags, imageFormat, imageDesc.width, imageDesc.height, 0, hostmem);
+    }
+    else {
+      return cl.createImage(ctx, flags, imageFormat, imageDesc, hostmem);
+    }
+  };
 
   describe("#enqueueReadImage", function() {
 
@@ -668,7 +677,7 @@ describe("CommandQueue", function() {
     it("should work with valid image", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var image = createImageWrapper(ctx, 0, imageFormat, imageDesc);
           // command queue, cl_image, blocking, origin, region, row, slice, ptr
           var ret = cl.enqueueReadImage(cq, image, true, [0,0,0], [8,8,1], 0, 0, new Buffer(32));
           cl.releaseMemObject(image);
@@ -689,7 +698,7 @@ describe("CommandQueue", function() {
     it("should throw cl.INVALID_OPERATION if image was created with cl.MEM_HOST_WRITE_ONLY", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, cl.MEM_HOST_WRITE_ONLY, imageFormat, imageDesc, null);
+          var image = createImageWrapper(ctx, cl.MEM_HOST_WRITE_ONLY, imageFormat, imageDesc);
           // this will cause an INVALID_VALUE exception
           var invalidRowPitch = 1000;
           U.bind(cl.enqueueReadImage, cq, image, true, [0,0,0], [8,8,1], 12, 1000, new Buffer(64))
@@ -702,7 +711,7 @@ describe("CommandQueue", function() {
     it("should work if image was created with cl.MEM_HOST_READ_ONLY", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, cl.MEM_HOST_READ_ONLY, imageFormat, imageDesc, null);
+          var image = createImageWrapper(ctx, cl.MEM_HOST_READ_ONLY, imageFormat, imageDesc);
           // this will cause an INVALID_VALUE exception
           var invalidRowPitch = 1000;
           var ret = cl.enqueueReadImage(cq, image, true, [0,0,0], [8,8,1], 12, 1000, new Buffer(64));
@@ -716,7 +725,7 @@ describe("CommandQueue", function() {
     it("should throw cl.INVALID_VALUE if origin has an invalid value", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var image = createImageWrapper(ctx, 0, imageFormat, imageDesc);
           // this will cause an INVALID_VALUE exception
           var invalidOrigin = [1, 1, 1];
           U.bind(cl.enqueueReadImage, cq, image, true, invalidOrigin, [8,8,1], 0, 0, new Buffer(64))
@@ -729,7 +738,7 @@ describe("CommandQueue", function() {
     it("should throw cl.INVALID_VALUE if region is out of bound", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var image = createImageWrapper(ctx, 0, imageFormat, imageDesc);
           // this will cause an INVALID_VALUE exception
           var outOfBoundRegion = [9,9,1];
           U.bind(cl.enqueueReadImage, cq, image, true, [0,0,0], outOfBoundRegion, 0, 0, new Buffer(64))
@@ -742,7 +751,7 @@ describe("CommandQueue", function() {
     it("should throw cl.INVALID_VALUE if region is invalid", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var image = createImageWrapper(ctx, 0, imageFormat, imageDesc);
           // This will cause an INVALID_VALUE exception
           // (region[2] must be 1 for 2D images)
           var invalidRegion = [8,8,2];
@@ -771,7 +780,7 @@ describe("CommandQueue", function() {
     it("should work with cl.MEM_READ_WRITE images", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var image = createImageWrapper(ctx, 0, imageFormat, imageDesc);
           // command queue, cl_image, blocking, origin, region, row, slice, ptr
           var ret = cl.enqueueWriteImage(cq, image, true, [0,0,0], [8,8,1], 0, 0, new Buffer(32));
           cl.releaseMemObject(image);
@@ -783,7 +792,7 @@ describe("CommandQueue", function() {
     it("should work with cl.MEM_HOST_WRITE_ONLY images", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, cl.MEM_HOST_WRITE_ONLY, imageFormat, imageDesc, null);
+          var image = createImageWrapper(ctx, cl.MEM_HOST_WRITE_ONLY, imageFormat, imageDesc, null);
           // command queue, cl_image, blocking, origin, region, row, slice, ptr
           var ret = cl.enqueueWriteImage(cq, image, true, [0,0,0], [8,8,1], 0, 0, new Buffer(32));
           cl.releaseMemObject(image);
@@ -795,7 +804,7 @@ describe("CommandQueue", function() {
     it("should throw cl.INVALID_OPERATION with cl.MEM_HOST_READ_ONLY images", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, cl.MEM_HOST_READ_ONLY, imageFormat, imageDesc, null);
+          var image = createImageWrapper(ctx, cl.MEM_HOST_READ_ONLY, imageFormat, imageDesc, null);
 
           U.bind(cl.enqueueWriteImage, cq, image, true, [0,0,0], [8,8,1], 0, 0, new Buffer(32))
             .should.throw(cl.INVALID_OPERATION.message)
@@ -806,7 +815,7 @@ describe("CommandQueue", function() {
     it("should throw cl.INVALID_VALUE with an invalid origin", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var image = createImageWrapper(ctx, 0, imageFormat, imageDesc);
 
           // This will trigger a cl.INVALID_VALUE exception
           // (origin must be [0,0,0]
@@ -820,7 +829,7 @@ describe("CommandQueue", function() {
     it("should throw cl.INVALID_VALUE with an invalid region", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var image = createImageWrapper(ctx, 0, imageFormat, imageDesc);
 
           // This will trigger a cl.INVALID_VALUE exception
           // (region[2] must be 1 for 2D images)
@@ -834,7 +843,7 @@ describe("CommandQueue", function() {
     it("should throw cl.INVALID_VALUE if region is out of bound", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var image = createImageWrapper(ctx, 0, imageFormat, imageDesc);
 
           // This will trigger a cl.INVALID_VALUE exception
           // (region[2] must be 1 for 2D images)
@@ -863,7 +872,7 @@ describe("CommandQueue", function() {
     it("should fill image with color", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var image = createImageWrapper(ctx, 0, imageFormat, imageDesc);
           var color = new Buffer([0.5,0.5,0.5,0.5]);
 
           var ret = cl.enqueueFillImage(cq, image, color, [0,0,0], [8,8,1]);
@@ -876,7 +885,7 @@ describe("CommandQueue", function() {
     it("should throw cl.INVALID_VALUE if color is null", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var image = createImageWrapper(ctx, 0, imageFormat, imageDesc);
           var color = null
 
           U.bind(cl.enqueueFillImage, cq, image, color, [0,0,0], [8,8,1])
@@ -888,7 +897,7 @@ describe("CommandQueue", function() {
     it("should throw cl.INVALID_VALUE if region is out of bounds", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var image = createImageWrapper(ctx, 0, imageFormat, imageDesc);
           var color = new Buffer([0.5, 0.5, 0.5, 0.5]);
           var outOfBoundsRegion = [9,9,1];
 
@@ -901,7 +910,7 @@ describe("CommandQueue", function() {
     it("should throw cl.INVALID_VALUE if origin is invalid", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var image = createImageWrapper(ctx, 0, imageFormat, imageDesc);
           var color = new Buffer([0.5, 0.5, 0.5, 0.5]);
 
           // origin[2] must be 0
@@ -916,7 +925,7 @@ describe("CommandQueue", function() {
     it("should throw cl.INVALID_VALUE if region is invalid", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var image = createImageWrapper(ctx, 0, imageFormat, imageDesc);
           var color = new Buffer([0.5, 0.5, 0.5, 0.5]);
 
           // origin[2] must be 1
@@ -960,8 +969,8 @@ describe("CommandQueue", function() {
     it("should work with cl.MEM_READ_WRITE images", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image1 = cl.createImage(ctx, cl.MEM_READ_WRITE, imageFormat, imageDesc, null);
-          var image2 = cl.createImage(ctx, cl.MEM_READ_WRITE, imageFormat, imageDesc, null);
+          var image1 = createImageWrapper(ctx, cl.MEM_READ_WRITE, imageFormat, imageDesc, null);
+          var image2 = createImageWrapper(ctx, cl.MEM_READ_WRITE, imageFormat, imageDesc, null);
           // command queue, cl_image_src, cl_image_dst, origin_src, origin_dst, region
           var ret = cl.enqueueCopyImage(cq, image1, image2, [0, 0, 0], [0, 0, 0], [8, 8, 1]);
 
@@ -975,8 +984,8 @@ describe("CommandQueue", function() {
     it("should work with write images", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image1 = cl.createImage(ctx, cl.MEM_HOST_WRITE_ONLY, imageFormat, imageDesc, null);
-          var image2 = cl.createImage(ctx, cl.MEM_HOST_WRITE_ONLY, imageFormat, imageDesc, null);
+          var image1 = createImageWrapper(ctx, cl.MEM_HOST_WRITE_ONLY, imageFormat, imageDesc, null);
+          var image2 = createImageWrapper(ctx, cl.MEM_HOST_WRITE_ONLY, imageFormat, imageDesc, null);
           // command queue, cl_image_src, cl_image_dst, origin_src, origin_dst, region
           var ret = cl.enqueueCopyImage(cq, image1, image2, [0, 0, 0], [0, 0, 0], [8, 8, 1]);
 
@@ -990,8 +999,8 @@ describe("CommandQueue", function() {
     it("should work with read images", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image1 = cl.createImage(ctx, cl.MEM_HOST_READ_ONLY, imageFormat, imageDesc, null);
-          var image2 = cl.createImage(ctx, cl.MEM_HOST_READ_ONLY, imageFormat, imageDesc, null);
+          var image1 = createImageWrapper(ctx, cl.MEM_HOST_READ_ONLY, imageFormat, imageDesc, null);
+          var image2 = createImageWrapper(ctx, cl.MEM_HOST_READ_ONLY, imageFormat, imageDesc, null);
           // command queue, cl_image_src, cl_image_dst, origin_src, origin_dst, region
           var ret = cl.enqueueCopyImage(cq, image1, image2, [0, 0, 0], [0, 0, 0], [8, 8, 1]);
 
@@ -1020,7 +1029,7 @@ describe("CommandQueue", function() {
     it("should work with read only buffers", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, cl.MEM_COPY_HOST_PTR, imageFormat, imageDesc, new Buffer(64));
+          var image = createImageWrapper(ctx, cl.MEM_COPY_HOST_PTR, imageFormat, imageDesc, new Buffer(64));
           var buffer = cl.createBuffer(ctx, cl.MEM_HOST_READ_ONLY, 64, null);
 
           var ret = cl.enqueueCopyImageToBuffer(cq, image, buffer, [0, 0, 0], [1, 1, 1], 0);
@@ -1035,7 +1044,7 @@ describe("CommandQueue", function() {
     it("should work with write buffers", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, cl.MEM_COPY_HOST_PTR, imageFormat, imageDesc, new Buffer(64));
+          var image = createImageWrapper(ctx, cl.MEM_COPY_HOST_PTR, imageFormat, imageDesc, new Buffer(64));
           var buffer = cl.createBuffer(ctx, cl.MEM_HOST_WRITE_ONLY, 64, null);
 
           var ret = cl.enqueueCopyImageToBuffer(cq, image, buffer, [0, 0, 0], [1, 1, 1], 0);
@@ -1050,7 +1059,7 @@ describe("CommandQueue", function() {
     it("should work with different values of source and destination offsets", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, cl.MEM_COPY_HOST_PTR, imageFormat, imageDesc, new Buffer(64));
+          var image = createImageWrapper(ctx, cl.MEM_COPY_HOST_PTR, imageFormat, imageDesc, new Buffer(64));
           var buffer = cl.createBuffer(ctx, cl.MEM_HOST_READ_ONLY, 64, null);
 
           var ret = cl.enqueueCopyImageToBuffer(cq, image, buffer, [1, 1, 0], [1, 1, 1], 2);
@@ -1065,7 +1074,7 @@ describe("CommandQueue", function() {
     it("should throw cl.INVALID_VALUE if origin is invalid", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, cl.MEM_COPY_HOST_PTR, imageFormat, imageDesc, new Buffer(64));
+          var image = createImageWrapper(ctx, cl.MEM_COPY_HOST_PTR, imageFormat, imageDesc, new Buffer(64));
           var buffer = cl.createBuffer(ctx, cl.MEM_HOST_READ_ONLY, 64, null);
 
           // origin[2] must be 0
@@ -1082,7 +1091,7 @@ describe("CommandQueue", function() {
     it("should throw cl.INVALID_VALUE if region is invalid", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, cl.MEM_COPY_HOST_PTR, imageFormat, imageDesc, new Buffer(64));
+          var image = createImageWrapper(ctx, cl.MEM_COPY_HOST_PTR, imageFormat, imageDesc, new Buffer(64));
           var buffer = cl.createBuffer(ctx, cl.MEM_HOST_READ_ONLY, 64, null);
 
           // region[2] must be 1
@@ -1113,7 +1122,7 @@ describe("CommandQueue", function() {
     it("should work with read only buffers", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, cl.MEM_HOST_READ_ONLY, imageFormat, imageDesc, null);
+          var image = createImageWrapper(ctx, cl.MEM_HOST_READ_ONLY, imageFormat, imageDesc, null);
           var buffer = cl.createBuffer(ctx, cl.MEM_HOST_READ_ONLY, 8, null);
 
           var ret = cl.enqueueCopyBufferToImage(cq, buffer, image, 0, [0, 0, 0], [1, 1, 1]);
@@ -1128,7 +1137,7 @@ describe("CommandQueue", function() {
     it("should work with write buffers", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, cl.MEM_HOST_WRITE_ONLY, imageFormat, imageDesc, null);
+          var image = createImageWrapper(ctx, cl.MEM_HOST_WRITE_ONLY, imageFormat, imageDesc, null);
           var buffer = cl.createBuffer(ctx, cl.MEM_HOST_WRITE_ONLY, 8, null);
 
           var ret = cl.enqueueCopyBufferToImage(cq, buffer, image, 0, [0, 0, 0], [1, 1, 1]);
@@ -1143,7 +1152,7 @@ describe("CommandQueue", function() {
     it("should throw cl.INVALID_VALUE if origin is invalid", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, cl.MEM_HOST_WRITE_ONLY, imageFormat, imageDesc, null);
+          var image = createImageWrapper(ctx, cl.MEM_HOST_WRITE_ONLY, imageFormat, imageDesc, null);
           var buffer = cl.createBuffer(ctx, cl.MEM_HOST_WRITE_ONLY, 8, null);
 
           // origin[2] must be 0
@@ -1160,7 +1169,7 @@ describe("CommandQueue", function() {
     it("should throw cl.INVALID_VALUE if region is invalid", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, cl.MEM_HOST_WRITE_ONLY, imageFormat, imageDesc, null);
+          var image = createImageWrapper(ctx, cl.MEM_HOST_WRITE_ONLY, imageFormat, imageDesc, null);
           var buffer = cl.createBuffer(ctx, cl.MEM_HOST_WRITE_ONLY, 8, null);
 
           // region[2] must be 1
@@ -1184,7 +1193,7 @@ describe("CommandQueue", function() {
   describe("# ( TODO ) enqueueUnmapMemObject", function() {
   });
 
-  describe("#enqueueMigrateMemObjects", function() {
+  versions(["1.2","2.0"]).describe("#enqueueMigrateMemObjects", function() {
     var imageFormat = {"channel_order": cl.RGBA, "channel_data_type": cl.UNSIGNED_INT8};
     var imageDesc = {
       "type": cl.MEM_OBJECT_IMAGE2D,
@@ -1199,7 +1208,7 @@ describe("CommandQueue", function() {
     it("should migrate mem objects with flag cl.MIGRATE_MEM_OBJECT_HOST", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, cl.MEM_COPY_HOST_PTR, imageFormat, imageDesc, new Buffer(64));
+          var image = createImageWrapper(ctx, cl.MEM_COPY_HOST_PTR, imageFormat, imageDesc, new Buffer(64));
           var buffer = cl.createBuffer(ctx, cl.MEM_HOST_READ_ONLY, 64, null);
 
           // cq, mem objects, flags
@@ -1213,7 +1222,7 @@ describe("CommandQueue", function() {
     it("should migrate mem objects with flag cl.MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, cl.MEM_COPY_HOST_PTR, imageFormat, imageDesc, new Buffer(64));
+          var image = createImageWrapper(ctx, cl.MEM_COPY_HOST_PTR, imageFormat, imageDesc, new Buffer(64));
           var buffer = cl.createBuffer(ctx, cl.MEM_HOST_READ_ONLY, 64, null);
 
           // cq, mem objects, flags
@@ -1237,7 +1246,7 @@ describe("CommandQueue", function() {
     it("should throw cl.INVALID_MEM_OBJECT if any memory object is null", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, cl.MEM_COPY_HOST_PTR, imageFormat, imageDesc, new Buffer(64));
+          var image = createImageWrapper(ctx, cl.MEM_COPY_HOST_PTR, imageFormat, imageDesc, new Buffer(64));
           var buffer = null;
 
           U.bind(cl.enqueueMigrateMemObjects, cq, [image, buffer], cl.MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED)
@@ -1421,7 +1430,7 @@ describe("CommandQueue", function() {
 
   });
 
-  describe("#enqueueMarkerWithWaitList", function() {
+  versions(["1.2","2.0"]).describe("#enqueueMarkerWithWaitList", function() {
     versions(["1.1"]).hasUndefined(cl.enqueueMarkerWithWaitList);
 
     it("should enqueue marker with event wait list", function() {
@@ -1442,7 +1451,7 @@ describe("CommandQueue", function() {
     });
   });
 
-  describe("#enqueueBarrierWithWaitList", function() {
+  versions(["1.2","2.0"]).describe("#enqueueBarrierWithWaitList", function() {
     versions(["1.1"]).hasUndefined(cl.enqueueBarrierWithWaitList);
 
     it("should enqueue barrier with event wait list", function() {
@@ -1462,6 +1471,34 @@ describe("CommandQueue", function() {
       });
     });
 
+  });
+
+  versions(["1.1"]).describe("#enqueueBarrier", function() {
+    it("should enqueue barrier", function() {
+
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+
+          var ret = cl.enqueueBarrier(cq);
+
+          assert.equal(cl.SUCCESS,ret);
+        });
+      });
+    });
+
+  });
+  versions(["1.1"]).describe("#enqueueMarker", function() {
+    it("should enqueue marker", function() {
+
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+
+          var ret = cl.enqueueMarker(cq,true);
+
+          assert.isObject(ret);
+        });
+      });
+    });
   });
 
 });

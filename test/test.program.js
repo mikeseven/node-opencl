@@ -142,7 +142,7 @@ describe("Program", function () {
   });
 
 
-  describe("#createProgramWithBuiltInKernels", function () {
+  versions(["1.2","2.0"]).describe("#createProgramWithBuiltInKernels", function () {
 
     var f = cl.createProgramWithBuiltInKernels;
 
@@ -295,7 +295,6 @@ describe("Program", function () {
         });
       });
     });
-    });
 
     it("should success in linking one compiled program", function () {
       U.withContext(function (ctx) {
@@ -324,6 +323,7 @@ describe("Program", function () {
         assert.isObject(nprg);
 
       });
+    });
 
     it("should success in linking one compiled program with a list of devices", function () {
       U.withContext(function (ctx, device) {
@@ -349,8 +349,9 @@ describe("Program", function () {
         });
       });
     });
+    });
 
-  });
+
 
   versions(["1.2", "2.0"]).describe("#unloadPlatformCompiler", function () {
     it("should work when using a valid platform", function() {
@@ -380,7 +381,9 @@ describe("Program", function () {
     testForType("PROGRAM_DEVICES", assert.isArray.bind(assert));
     testForType("PROGRAM_BINARY_SIZES", assert.isArray.bind(assert));
     testForType("PROGRAM_SOURCE", assert.isString.bind(assert));
-    testForType("PROGRAM_KERNEL_NAMES", assert.isString.bind(assert));
+    if(cl.VERSION_1_2) {
+      testForType("PROGRAM_KERNEL_NAMES", assert.isString.bind(assert));
+    }
 
       it("should have the same program source as the one given", function () {
         U.withContext(function (ctx) {
@@ -410,9 +413,11 @@ describe("Program", function () {
     };
 
     testForType("PROGRAM_BUILD_STATUS", assert.isNumber.bind(assert));
-    testForType("PROGRAM_BUILD_OPTIONS", assert.isString.bind(assert))
-    testForType("PROGRAM_BUILD_LOG", assert.isString.bind(assert))
-    testForType("PROGRAM_BINARY_TYPE", assert.isNumber.bind(assert))
+    testForType("PROGRAM_BUILD_OPTIONS", assert.isString.bind(assert));
+    testForType("PROGRAM_BUILD_LOG", assert.isString.bind(assert));
+    if(cl.VERSION_1_2) {
+      testForType("PROGRAM_BINARY_TYPE", assert.isNumber.bind(assert));
+    }
 
     it("should return the same options string that was passed before", function () {
       U.withContext(function (ctx, device) {
