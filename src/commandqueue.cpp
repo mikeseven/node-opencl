@@ -1532,7 +1532,7 @@ NAN_METHOD(EnqueueNativeKernel) {
 //                             cl_event *        /* event */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(EnqueueMarkerWithWaitList) {
   NanScope();
-  REQ_ARGS(3);
+  REQ_ARGS(2);
 
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
@@ -1541,27 +1541,22 @@ NAN_METHOD(EnqueueMarkerWithWaitList) {
   Local<Array> js_events = Local<Array>::Cast(args[1]);
   NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
 
-  cl_event event=nullptr;
-  if(ARG_EXISTS(2) && args[2]->BooleanValue()) {
-    cl_context ctx;
-    cl_int err = 0;
-    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
-    CHECK_ERR(err);
 
-    event = ::clCreateUserEvent(ctx, &err);
-    CHECK_ERR(err);
+  if(ARG_EXISTS(2) && args[2]->BooleanValue()) {
+    cl_event event;
+    CHECK_ERR(::clEnqueueMarkerWithWaitList(
+        q->getRaw(),
+        cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
+        &event));
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
   }
 
   CHECK_ERR(::clEnqueueMarkerWithWaitList(
     q->getRaw(),
-    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-    event ? &event : nullptr));
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),nullptr));
 
-  if (event != nullptr) {
-    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
-  } else {
     NanReturnValue(JS_INT(CL_SUCCESS));
-  }
+
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -1570,36 +1565,31 @@ NAN_METHOD(EnqueueMarkerWithWaitList) {
 //                              const cl_event *  /* event_wait_list */,
 //                              cl_event *        /* event */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(EnqueueBarrierWithWaitList) {
-  NanScope();
-  REQ_ARGS(3);
+    NanScope();
+    REQ_ARGS(2);
 
-  // Arg 0
-  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
+    // Arg 0
+    NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  std::vector<NoCLEvent> cl_events;
-  Local<Array> js_events = Local<Array>::Cast(args[1]);
-  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+    std::vector<NoCLEvent> cl_events;
+    Local<Array> js_events = Local<Array>::Cast(args[1]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
 
-  cl_event event=nullptr;
-  if(ARG_EXISTS(2) && args[2]->BooleanValue()) {
-    cl_context ctx;
-    cl_int err = 0;
-    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
-    CHECK_ERR(err);
 
-    event = ::clCreateUserEvent(ctx, &err);
-    CHECK_ERR(err);
-  }
+    if(ARG_EXISTS(2) && args[2]->BooleanValue()) {
+      cl_event event;
+      CHECK_ERR(::clEnqueueBarrierWithWaitList(
+          q->getRaw(),
+          cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
+          &event));
+      NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+    }
 
-  CHECK_ERR(::clEnqueueBarrierWithWaitList(q->getRaw(),
-    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-    event ? &event : nullptr));
+    CHECK_ERR(::clEnqueueBarrierWithWaitList(
+      q->getRaw(),
+      cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),nullptr));
 
-  if (event != nullptr) {
-    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    NanReturnValue(JS_INT(CL_SUCCESS));
-  }
+      NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // // Deprecated OpenCL 1.1 APIs
@@ -1609,25 +1599,22 @@ NAN_METHOD(EnqueueBarrierWithWaitList) {
 //                 cl_event *          /* event */) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
 NAN_METHOD(EnqueueMarker) {
   NanScope();
-  REQ_ARGS(2);
+  REQ_ARGS(1);
 
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  cl_event event=nullptr;
-  if(ARG_EXISTS(1)) {
-    NOCL_UNWRAP(evt, NoCLEvent, args[1]);
-    event = evt->getRaw();
+  if(ARG_EXISTS(1) && args[1]->BooleanValue()) {
+    cl_event event;
+
+    CHECK_ERR(::clEnqueueMarker(q->getRaw(), &event));
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
   }
 
-  CHECK_ERR(::clEnqueueMarker(q->getRaw(), &event));
-
+  CHECK_ERR(::clEnqueueMarker(q->getRaw(), nullptr));
   NanReturnValue(JS_INT(CL_SUCCESS));
 }
-#endif
 
-#ifndef CL_VERSION_1_2
-#ifdef CL_VERSION_1_1
 // extern CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED cl_int CL_API_CALL
 // clEnqueueWaitForEvents(cl_command_queue /* command_queue */,
 //                         cl_uint          /* num_events */,
@@ -1667,7 +1654,7 @@ NAN_METHOD(EnqueueBarrier) {
   NanReturnValue(JS_INT(CL_SUCCESS));
 }
 #endif
-#endif
+
 #ifdef CL_VERSION_2_0
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clEnqueueSVMFree(cl_command_queue  /* command_queue */,
