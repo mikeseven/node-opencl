@@ -200,7 +200,7 @@ describe("Device", function() {
       })
 
     });
-    describe("#retainDevice() for "+device_vendor+" "+device_name,function() {
+    versions(["1.2","2.0"]).describe("#retainDevice() for "+device_vendor+" "+device_name,function() {
 
       var f = cl.retainDevice;
 
@@ -223,7 +223,7 @@ describe("Device", function() {
 
       })
     });
-    describe("#releaseDevice() for "+device_vendor+" "+device_name,function() {
+    versions(["1.2","2.0"]).describe("#releaseDevice() for "+device_vendor+" "+device_name,function() {
 
       var f = cl.releaseDevice;
 

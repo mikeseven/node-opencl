@@ -94,7 +94,7 @@ NAN_METHOD(CreateSubBuffer) {
   CHECK_ERR(CL_INVALID_VALUE);
   NanReturnValue(JS_INT(CL_SUCCESS));
 }
-
+#ifdef CL_VERSION_1_2
 // extern CL_API_ENTRY cl_mem CL_API_CALL
 // clCreateImage(cl_context              /* context */,
 //               cl_mem_flags            /* flags */,
@@ -168,7 +168,70 @@ NAN_METHOD(CreateImage) {
 
   NanReturnValue(NOCL_WRAP(NoCLMem, mem));
 }
+#elif CL_VERSION_1_1
+//TODO createImage2D/3D from 1.1 spec
+/*
+ *  cl_mem clCreateImage2D (
+ *      cl_context context,
+        cl_mem_flags flags,
+        const cl_image_format *image_format,
+        size_t image_width,
+        size_t image_height,
+        size_t image_row_pitch,
+        void *host_ptr,
+        cl_int *errcode_ret)
+ * */
+NAN_METHOD(CreateImage2D) {
+  NanScope();
+  REQ_ARGS(7);
 
+  NOCL_UNWRAP(context, NoCLContext, args[0]);
+
+  // Arg 1
+  cl_mem_flags flags = args[1]->Uint32Value();
+
+  //
+  Local<Object> obj = args[2]->ToObject();
+  cl_image_format image_format;
+  image_format.image_channel_order = obj->Get(JS_STR("channel_order"))->IsUndefined() ? 0 : obj->Get(JS_STR("channel_order"))->Uint32Value();
+  image_format.image_channel_data_type = obj->Get(JS_STR("channel_data_type"))->IsUndefined() ? 0 : obj->Get(JS_STR("channel_data_type"))->Uint32Value();
+
+  size_t image_width = args[3]->Uint32Value();
+  size_t image_height = args[4]->Uint32Value();
+  size_t image_row_pitch = args[5]->Uint32Value();
+
+  void *host_ptr = NULL;
+
+  // Arg 4
+  if(ARG_EXISTS(6)) {
+    if(args[6]->IsArray()) {
+      // JS Array
+      Local<Array> arr=Local<Array>::Cast(args[6]);
+      host_ptr=arr->GetIndexedPropertiesExternalArrayData();
+    }
+    else if(args[6]->IsObject()) {
+      Local<Object> obj=args[6]->ToObject();
+      String::Utf8Value name(obj->GetConstructorName());
+      if(!strcmp("Buffer",*name))
+        host_ptr=Buffer::Data(obj);
+      else {
+        // TypedArray
+        if(!obj->HasIndexedPropertiesInExternalArrayData()) {
+          THROW_ERR(CL_INVALID_MEM_OBJECT)
+        }
+        host_ptr=obj->GetIndexedPropertiesExternalArrayData();
+      }
+    }
+    else
+      NanThrowError("Invalid memory object");
+  }
+
+  cl_int ret=CL_SUCCESS;
+  cl_mem mem = ::clCreateImage2D(context->getRaw(), flags, &image_format, image_width,image_height,image_row_pitch, host_ptr, &ret);
+  CHECK_ERR(ret);
+  NanReturnValue(NOCL_WRAP(NoCLMem, mem));
+}
+#endif
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clRetainMemObject(cl_mem /* memobj */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(RetainMemObject) {
@@ -177,7 +240,7 @@ NAN_METHOD(RetainMemObject) {
 
   NOCL_UNWRAP(mem, NoCLMem, args[0]);
 
-  cl_int ret=clRetainMemObject(mem->getRaw());
+  cl_int ret=mem->acquire();
 
   CHECK_ERR(ret);
   NanReturnValue(JS_INT(CL_SUCCESS));
@@ -190,7 +253,7 @@ NAN_METHOD(ReleaseMemObject) {
   REQ_ARGS(1);
 
   NOCL_UNWRAP(mem, NoCLMem, args[0]);
-  cl_int ret=clReleaseMemObject(mem->getRaw());
+  cl_int ret=mem->release();
 
   CHECK_ERR(ret);
   NanReturnValue(JS_INT(CL_SUCCESS));
@@ -325,12 +388,15 @@ NAN_METHOD(GetImageInfo) {
     case CL_IMAGE_WIDTH:
     case CL_IMAGE_HEIGHT:
     case CL_IMAGE_DEPTH:
+#ifdef CL_VERSION_1_2
     case CL_IMAGE_ARRAY_SIZE:
+#endif
     {
       size_t val;
       CHECK_ERR(::clGetImageInfo(mem->getRaw(),param_name,sizeof(size_t), &val, NULL))
       NanReturnValue(JS_INT(val));
     }
+#ifdef CL_VERSION_1_2
     case CL_IMAGE_BUFFER: {
       cl_mem val;
       CHECK_ERR(::clGetImageInfo(mem->getRaw(),param_name,sizeof(cl_mem), &val, NULL))
@@ -343,6 +409,7 @@ NAN_METHOD(GetImageInfo) {
       CHECK_ERR(::clGetImageInfo(mem->getRaw(),param_name,sizeof(cl_uint), &val, NULL))
       NanReturnValue(JS_INT(val));
     }
+#endif
   }
 
   return NanThrowError(JS_INT(CL_INVALID_VALUE));
@@ -386,7 +453,11 @@ void init(Handle<Object> exports)
 {
   NODE_SET_METHOD(exports, "createBuffer", CreateBuffer);
   NODE_SET_METHOD(exports, "createSubBuffer", CreateSubBuffer);
+#ifdef CL_VERSION_1_2
   NODE_SET_METHOD(exports, "createImage", CreateImage);
+#elif CL_VERSION_1_1
+  NODE_SET_METHOD(exports, "createImage2D", CreateImage2D);
+#endif
   NODE_SET_METHOD(exports, "retainMemObject", RetainMemObject);
   NODE_SET_METHOD(exports, "releaseMemObject", ReleaseMemObject);
   NODE_SET_METHOD(exports, "getSupportedImageFormats", GetSupportedImageFormats);

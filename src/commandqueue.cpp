@@ -98,9 +98,10 @@ NAN_METHOD(RetainCommandQueue) {
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  cl_int count=clRetainCommandQueue(q->getRaw());
+  cl_int err=q->acquire();
+  CHECK_ERR(err)
 
-  NanReturnValue(JS_INT(count));
+  NanReturnValue(JS_INT(err));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -112,9 +113,9 @@ NAN_METHOD(ReleaseCommandQueue) {
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  cl_int count=clReleaseCommandQueue(q->getRaw());
-
-  NanReturnValue(JS_INT(count));
+  cl_int err=q->release();
+  CHECK_ERR(err)
+  NanReturnValue(JS_INT(err));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -487,6 +488,7 @@ NAN_METHOD(EnqueueWriteBufferRect) {
   }
 }
 
+#ifdef CL_VERSION_1_2
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clEnqueueFillBuffer(cl_command_queue   /* command_queue */,
 //                     cl_mem             /* buffer */,
@@ -557,7 +559,7 @@ NAN_METHOD(EnqueueFillBuffer) {
     NanReturnValue(JS_INT(CL_SUCCESS));
   }
 }
-
+#endif
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clEnqueueCopyBuffer(cl_command_queue    /* command_queue */,
 //                     cl_mem              /* src_buffer */,
@@ -836,6 +838,7 @@ NAN_METHOD(EnqueueWriteImage) {
   }
 }
 
+#ifdef CL_VERSION_1_2
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clEnqueueFillImage(cl_command_queue   /* command_queue */,
 //                    cl_mem             /* image */,
@@ -900,7 +903,7 @@ NAN_METHOD(EnqueueFillImage) {
     NanReturnValue(JS_INT(CL_SUCCESS));
   }
 }
-
+#endif
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clEnqueueCopyImage(cl_command_queue     /* command_queue */,
 //                    cl_mem               /* src_image */,
@@ -1288,6 +1291,7 @@ NAN_METHOD(EnqueueUnmapMemObject) {
 //  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
+#ifdef CL_VERSION_1_2
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clEnqueueMigrateMemObjects(cl_command_queue       /* command_queue */,
 //                            cl_uint                /* num_mem_objects */,
@@ -1349,7 +1353,7 @@ NAN_METHOD(EnqueueMigrateMemObjects) {
     NanReturnValue(JS_INT(CL_SUCCESS));
   }
 }
-
+#endif
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clEnqueueNDRangeKernel(cl_command_queue /* command_queue */,
 //                        cl_kernel        /* kernel */,
@@ -1529,7 +1533,7 @@ NAN_METHOD(EnqueueNativeKernel) {
 //                             cl_event *        /* event */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(EnqueueMarkerWithWaitList) {
   NanScope();
-  REQ_ARGS(3);
+  REQ_ARGS(2);
 
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
@@ -1538,27 +1542,22 @@ NAN_METHOD(EnqueueMarkerWithWaitList) {
   Local<Array> js_events = Local<Array>::Cast(args[1]);
   NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
 
-  cl_event event=nullptr;
-  if(ARG_EXISTS(2) && args[2]->BooleanValue()) {
-    cl_context ctx;
-    cl_int err = 0;
-    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
-    CHECK_ERR(err);
 
-    event = ::clCreateUserEvent(ctx, &err);
-    CHECK_ERR(err);
+  if(ARG_EXISTS(2) && args[2]->BooleanValue()) {
+    cl_event event;
+    CHECK_ERR(::clEnqueueMarkerWithWaitList(
+        q->getRaw(),
+        cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
+        &event));
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
   }
 
   CHECK_ERR(::clEnqueueMarkerWithWaitList(
     q->getRaw(),
-    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-    event ? &event : nullptr));
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),nullptr));
 
-  if (event != nullptr) {
-    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
-  } else {
     NanReturnValue(JS_INT(CL_SUCCESS));
-  }
+
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -1567,36 +1566,31 @@ NAN_METHOD(EnqueueMarkerWithWaitList) {
 //                              const cl_event *  /* event_wait_list */,
 //                              cl_event *        /* event */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(EnqueueBarrierWithWaitList) {
-  NanScope();
-  REQ_ARGS(3);
+    NanScope();
+    REQ_ARGS(2);
 
-  // Arg 0
-  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
+    // Arg 0
+    NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  std::vector<NoCLEvent> cl_events;
-  Local<Array> js_events = Local<Array>::Cast(args[1]);
-  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+    std::vector<NoCLEvent> cl_events;
+    Local<Array> js_events = Local<Array>::Cast(args[1]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
 
-  cl_event event=nullptr;
-  if(ARG_EXISTS(2) && args[2]->BooleanValue()) {
-    cl_context ctx;
-    cl_int err = 0;
-    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
-    CHECK_ERR(err);
 
-    event = ::clCreateUserEvent(ctx, &err);
-    CHECK_ERR(err);
-  }
+    if(ARG_EXISTS(2) && args[2]->BooleanValue()) {
+      cl_event event;
+      CHECK_ERR(::clEnqueueBarrierWithWaitList(
+          q->getRaw(),
+          cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
+          &event));
+      NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+    }
 
-  CHECK_ERR(::clEnqueueBarrierWithWaitList(q->getRaw(),
-    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-    event ? &event : nullptr));
+    CHECK_ERR(::clEnqueueBarrierWithWaitList(
+      q->getRaw(),
+      cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),nullptr));
 
-  if (event != nullptr) {
-    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    NanReturnValue(JS_INT(CL_SUCCESS));
-  }
+      NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // // Deprecated OpenCL 1.1 APIs
@@ -1606,19 +1600,19 @@ NAN_METHOD(EnqueueBarrierWithWaitList) {
 //                 cl_event *          /* event */) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
 NAN_METHOD(EnqueueMarker) {
   NanScope();
-  REQ_ARGS(2);
+  REQ_ARGS(1);
 
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
 
-  cl_event event=nullptr;
-  if(ARG_EXISTS(1)) {
-    NOCL_UNWRAP(evt, NoCLEvent, args[1]);
-    event = evt->getRaw();
+  if(ARG_EXISTS(1) && args[1]->BooleanValue()) {
+    cl_event event;
+
+    CHECK_ERR(::clEnqueueMarker(q->getRaw(), &event));
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
   }
 
-  CHECK_ERR(::clEnqueueMarker(q->getRaw(), &event));
-
+  CHECK_ERR(::clEnqueueMarker(q->getRaw(), nullptr));
   NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
@@ -1636,9 +1630,13 @@ NAN_METHOD(EnqueueWaitForEvents) {
   std::vector<NoCLEvent> cl_events;
   Local<Array> js_events = Local<Array>::Cast(args[1]);
   NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  std::vector<cl_event> events;
+  for(unsigned int cpt = 0;cpt<cl_events.size();++cpt)
+      events.push_back((cl_events[cpt]).getRaw());
 
   CHECK_ERR(::clEnqueueWaitForEvents(q->getRaw(),
-        events.size(),events.size() ? &events.front() : nullptr));
+        cl_events.size(),cl_events.size() ?  events.data(): nullptr));
+
 
   NanReturnValue(JS_INT(CL_SUCCESS));
 }
@@ -1656,6 +1654,7 @@ NAN_METHOD(EnqueueBarrier) {
 
   NanReturnValue(JS_INT(CL_SUCCESS));
 }
+#endif
 
 #ifdef CL_VERSION_2_0
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -1709,8 +1708,6 @@ NAN_METHOD(EnqueueBarrier) {
 //                   cl_event *        /* event */) CL_API_SUFFIX__VERSION_2_0;
 #endif
 
-#endif
-
 namespace CommandQueue {
 void init(Handle<Object> exports)
 {
@@ -1728,19 +1725,16 @@ void init(Handle<Object> exports)
   NODE_SET_METHOD(exports, "enqueueReadBufferRect", EnqueueReadBufferRect);
   NODE_SET_METHOD(exports, "enqueueWriteBuffer", EnqueueWriteBuffer);
   NODE_SET_METHOD(exports, "enqueueWriteBufferRect", EnqueueWriteBufferRect);
-  NODE_SET_METHOD(exports, "enqueueFillBuffer", EnqueueFillBuffer);
   NODE_SET_METHOD(exports, "enqueueCopyBuffer", EnqueueCopyBuffer);
   NODE_SET_METHOD(exports, "enqueueCopyBufferRect", EnqueueCopyBufferRect);
   NODE_SET_METHOD(exports, "enqueueReadImage", EnqueueReadImage);
   NODE_SET_METHOD(exports, "enqueueWriteImage", EnqueueWriteImage);
-  NODE_SET_METHOD(exports, "enqueueFillImage", EnqueueFillImage);
   NODE_SET_METHOD(exports, "enqueueCopyImage", EnqueueCopyImage);
   NODE_SET_METHOD(exports, "enqueueCopyImageToBuffer", EnqueueCopyImageToBuffer);
   NODE_SET_METHOD(exports, "enqueueCopyBufferToImage", EnqueueCopyBufferToImage);
   NODE_SET_METHOD(exports, "enqueueMapBuffer", EnqueueMapBuffer);
   NODE_SET_METHOD(exports, "enqueueMapImage", EnqueueMapImage);
   NODE_SET_METHOD(exports, "enqueueUnmapMemObject", EnqueueUnmapMemObject);
-  NODE_SET_METHOD(exports, "enqueueMigrateMemObjects", EnqueueMigrateMemObjects);
   NODE_SET_METHOD(exports, "enqueueNDRangeKernel", EnqueueNDRangeKernel);
 #ifndef CL_VERSION_2_0
   NODE_SET_METHOD(exports, "enqueueTask", EnqueueTask); // removed in 2.0
@@ -1749,9 +1743,12 @@ void init(Handle<Object> exports)
 #ifdef CL_VERSION_1_2
   NODE_SET_METHOD(exports, "enqueueMarkerWithWaitList", EnqueueMarkerWithWaitList);
   NODE_SET_METHOD(exports, "enqueueBarrierWithWaitList", EnqueueBarrierWithWaitList);
+  NODE_SET_METHOD(exports, "enqueueFillBuffer", EnqueueFillBuffer);
+  NODE_SET_METHOD(exports, "enqueueFillImage", EnqueueFillImage);
+  NODE_SET_METHOD(exports, "enqueueMigrateMemObjects", EnqueueMigrateMemObjects);
 #elif defined(CL_VERSION_1_1)
-  NODE_SET_METHOD(exports, "enqueueMarker", EnqueueMarker);
   NODE_SET_METHOD(exports, "enqueueWaitForEvents", EnqueueWaitForEvents);
+  NODE_SET_METHOD(exports, "enqueueMarker", EnqueueMarker);
   NODE_SET_METHOD(exports, "enqueueBarrier", EnqueueBarrier);
 #endif
 }
