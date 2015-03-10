@@ -145,12 +145,12 @@ NAN_METHOD(GetCommandQueueInfo) {
     }
     case CL_QUEUE_REFERENCE_COUNT: {
       cl_uint val;
-      CHECK_ERR(::clGetCommandQueueInfo(q,param_name,sizeof(cl_uint), &val, nullptr))
+      CHECK_ERR(::clGetCommandQueueInfo(q->getRaw(),param_name,sizeof(cl_uint), &val, nullptr))
       NanReturnValue(JS_INT(val));
     }
     case CL_QUEUE_PROPERTIES: {
       cl_command_queue_properties val;
-      CHECK_ERR(::clGetCommandQueueInfo(q,param_name,sizeof(cl_command_queue_properties), &val, nullptr))
+      CHECK_ERR(::clGetCommandQueueInfo(q->getRaw(),param_name,sizeof(cl_command_queue_properties), &val, nullptr))
       NanReturnValue(JS_INT(val));
     }
   }
