@@ -1,7 +1,6 @@
 var cl = require("../../lib/opencl");
 var fs = require("fs");
 
-
 var Square = function() {
 
   var ctx = cl.createContextFromType(
@@ -15,7 +14,7 @@ var Square = function() {
   }
 
   var source = fs.readFileSync(__dirname + "/square.cl").toString();
-
+    
   var prog = cl.createProgramWithSource(ctx, source);
 
   cl.buildProgram(prog);
@@ -38,16 +37,19 @@ var Square = function() {
   } else {
     cq = cl.createCommandQueue(ctx, device, null);
   }
-
+  
   cl.enqueueNDRangeKernel(
-    cq, kern, 1, null, [10000], null);
+    cq, kern, 1, null, [10000], null,
+    [], true);
 
-  cl.enqueueReadBuffer(
-    cq, outputsMem, true, 0, 10000 * 4, outputs);
+  var ev = cl.enqueueReadBuffer(
+    cq, outputsMem, true, 0, 10000 * 4, outputs,
+    [], true);
 
-  cl.finish(cq);
+  cl.setEventCallback(ev, cl.COMPLETE, function(){
+    console.log("Last value is : " + outputs.readUInt32LE(40000 - 4));
+  });
 
-  console.log("Last value is : " + outputs.readUInt32LE(40000 - 4));
 };
 
 
