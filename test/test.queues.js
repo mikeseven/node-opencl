@@ -1184,13 +1184,120 @@ describe("CommandQueue", function() {
     });
   });
 
-  describe("# ( TODO ) enqueueMapBuffer", function() {
+  describe("# enqueueMapBuffer", function() {
+    /** @Fabien
+        Je considere que map renvoie une structure avec {evt: l'event, getPtr(): une fonction qui renvoie le buffer}
+     **/
+    it("should return a valid buffer", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var buf = cl.createBuffer(buf, 0, 8, null);
+          var ret = cl.enqueueMapBuffer(cq, buf, true, 0, 0, 8);
+          assert.isObject(ret.getPtr());
+        });
+      });
+    });
+    
+
+    it("should throw as we are trying to read from a not already allocated pointer", function () {
+      U.withContext(function (ctx, device, _) {
+        U.withCQ(ctx, device, function (cq) {
+          var buf = cl.createBuffer(buf, 0, 8, null);
+          var ret = cl.enqueueMapBuffer(cq, buf, false, 0, 0, 8, [], true);
+
+          U.bind(ret, getPtr).should.throw(/*...*/);
+        });
+      });
+    });
+
+    it("should not throw as we are using the pointer from an event", function (done) {
+      U.withAsyncContext(function (ctx, device, _, ctxDone) {
+        U.withAsyncCQ(ctx, device, function (cq, cqDone) {
+          var buf = cl.createBuffer(buf, 0, 8, null);
+          var ret = cl.enqueueMapBuffer(cq, buf, false, 0, 0, 8, [], true);
+
+          cl.setEventCallback(ret.evt, cl.COMPLETE, function(){
+            assert.isObject(ret.getPtr());
+            ctxDone();
+            cqDone();
+            done();
+          });
+        });
+      });
+
+    });
+
   });
 
-  describe("# ( TODO ) enqueueMapImage", function() {
+  describe("# enqueueMapImage", function() {
+
+    var imageFormat = {"channel_order": cl.RGBA, "channel_data_type": cl.UNSIGNED_INT8};
+    var imageDesc = {
+      "type": cl.MEM_OBJECT_IMAGE2D,
+      "width": 10,
+      "height": 10,
+      "depth": 8,
+      "image_array_size": 1
+    };
+    
+    it("should return a valid buffer", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var image = cl.createImage(context, 0, imageFormat, imageDesc, null);
+          var ret = cl.enqueueMapImage(cq, image, true, 0, [0,0,0], [2,2,2], null, null);
+          assert.isObject(ret.getPtr());
+        });
+      });
+    });
+    
+
+    it("should throw as we are trying to read from a not already allocated pointer", function () {
+      U.withContext(function (ctx, device, _) {
+        U.withCQ(ctx, device, function (cq) {
+          var image = cl.createImage(context, 0, imageFormat, imageDesc, null);          
+          var ret = cl.enqueueMapImage(cq, image, false, 0, [0,0,0], [2,2,2], null, null, [], true);
+          U.bind(ret, getPtr).should.throw(/*...*/);
+        });
+      });
+    });
+
+    it("should not throw as we are using the pointer from an event", function (done) {
+      U.withAsyncContext(function (ctx, device, _, ctxDone) {
+        U.withAsyncCQ(ctx, device, function (cq, cqDone) {
+          var image = cl.createImage(context, 0, imageFormat, imageDesc, null);                    
+          var ret = cl.enqueueMapImage(cq, image, false, 0, [0,0,0], [2,2,2], null, null, [], true);          
+
+          cl.setEventCallback(ret.evt, cl.COMPLETE, function(){
+            assert.isObject(ret.getPtr());
+            ctxDone();
+            cqDone();
+            done();
+          });
+        });
+      });
+
+    });
   });
 
-  describe("# ( TODO ) enqueueUnmapMemObject", function() {
+  describe("# enqueueUnmapMemObject", function() {
+    it("should throw as we are unmapping a non mapped memobject", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var buf = cl.createBuffer(buf, 0, 8, null);
+          U.bind(cl.enqueueUnmapMemObject, cq, buf, new Buffer(8)).should.throw(/*...*/);
+        });
+      });
+    });
+
+    it("should return success", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var buf = cl.createBuffer(buf, 0, 8, null);
+          var ret = cl.enqueueMapBuffer(cq, buf, true, 0, 0, 8);
+          cl.enqueueUnmapMemObject(cq, buf, ret.getPtr());
+        });
+      });
+    });
   });
 
   versions(["1.2","2.0"]).describe("#enqueueMigrateMemObjects", function() {
