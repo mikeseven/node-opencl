@@ -1,5 +1,7 @@
 #include "commandqueue.h"
 #include "types.h"
+#include <map>
+#include "nanextension.h"
 
 namespace opencl {
 
@@ -1102,6 +1104,60 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
   }
 }
 
+static std::map<void*,int> mapPointers;
+
+class NoCLMapCB:public NanAsyncLaunch {
+ public:
+   NoCLMapCB(const v8::Local<v8::Object> &buffer,size_t size,void* mPtr):NanAsyncLaunch(nullptr),size(size),mPtr(mPtr){
+       NanScope();
+       v8::Local<v8::Object> obj = NanNew<v8::Object>();
+       NanAssignPersistent(persistentHandle, obj);
+       v8::Local<v8::Object>  handle = NanNew(persistentHandle);
+       handle->Set(kIndex, buffer);
+   }
+
+   void CallBackIsDone(){
+       this->FireAndForget();
+   }
+
+   void Execute() {
+     NanScope();
+     v8::Local<v8::Object> handle = NanNew(persistentHandle);
+     v8::Local<v8::Object> buffer= (handle->Get(kIndex)).As<v8::Object>();
+     buffer->SetIndexedPropertiesToExternalArrayData(this->mPtr, v8::kExternalByteArray, this->size);
+   }
+
+ private:
+   size_t size;
+   void* mPtr;
+
+};
+
+void CL_CALLBACK notifyMapCB (cl_event event, cl_int event_command_exec_status, void *user_data) {
+    NoCLMapCB* asyncCB = static_cast<NoCLMapCB*>(user_data);
+    if(asyncCB!=nullptr)
+        asyncCB->CallBackIsDone();
+}
+
+struct unMapInfo {
+  cl_command_queue cq;
+  cl_mem mem;
+};
+
+void freeMapedPtr(char* ptr,void* hint) {
+    mapPointers[ptr]--;
+    unMapInfo* umi = static_cast<unMapInfo*>(hint);
+    clEnqueueUnmapMemObject (umi->cq ,
+        umi->mem,
+        ptr,
+        0 ,
+        nullptr ,
+        nullptr );
+    clReleaseCommandQueue(umi->cq);
+    clReleaseMemObject(umi->mem);
+    delete umi;
+}
+
 // extern CL_API_ENTRY void * CL_API_CALL
 // clEnqueueMapBuffer(cl_command_queue /* command_queue */,
 //                    cl_mem           /* buffer */,
@@ -1117,23 +1173,67 @@ NAN_METHOD(EnqueueMapBuffer) {
   NanScope();
   REQ_ARGS(8);
 
-  return NanThrowError("Not implemented yet");
+  // Arg 0
+  NOCL_UNWRAP(cq, NoCLCommandQueue, args[0]);
 
-//  // Arg 0
-//  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
-//
-//  // Arg 1
-//  NOCL_UNWRAP(buffer, NoCLMem, args[1]);
-//
-//
-//  cl_bool blocking_map = args[2]->BooleanValue() ? CL_TRUE : CL_FALSE;
-//  cl_map_flags map_flags = args[3]->Uint32Value();
-//  size_t offset = args[4]->Uint32Value();
-//  size_t size = args[5]->Uint32Value();
-//
-//  std::vector<NoCLEvent> cl_events;
-//  Local<Array> js_events = Local<Array>::Cast(args[6]);
-//  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  // Arg 1
+  NOCL_UNWRAP(mem, NoCLMem, args[1]);
+
+
+  cl_bool blocking_map = args[2]->BooleanValue() ? CL_TRUE : CL_FALSE;
+  cl_map_flags map_flags = args[3]->Uint32Value();
+  size_t offset = args[4]->Uint32Value();
+  size_t size = args[5]->Uint32Value();
+
+  std::vector<NoCLEvent> cl_events;
+  Local<Array> js_events = Local<Array>::Cast(args[6]);
+  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  void* mPtr = nullptr;
+  cl_int err;
+  cl_event* eventPtr = nullptr;
+  cl_event event;
+
+  if(ARG_EXISTS(7) && args[7]->BooleanValue())
+      eventPtr = &event;
+
+  mPtr = clEnqueueMapBuffer(cq->getRaw(),mem->getRaw(),
+                              blocking_map,map_flags, offset,
+                              size, cl_events.size(),
+                              NOCL_TO_CL_ARRAY(
+                                cl_events, NoCLEvent),
+                              eventPtr,&err);
+
+  CHECK_ERR(err)
+
+  if( mapPointers.count(mPtr)>0 ) {
+    mapPointers[mPtr]++;
+  }
+  else {
+    mapPointers[mPtr] = 1;
+  }
+
+  Local<Object> obj = NanNew<Object>();
+
+  if(eventPtr) {
+    obj->Set(NanNew<String>("event"), NOCL_WRAP(NoCLEvent,event));
+  }
+  unMapInfo* umi = new unMapInfo();
+  umi->cq = cq->getRaw();
+  clRetainCommandQueue(umi->cq);
+  umi->mem = mem->getRaw();
+  clRetainMemObject(umi->mem);
+
+  Local<Object> buf = NanNewBufferHandle((char*)mPtr,size,freeMapedPtr,umi);
+  obj->Set(NanNew<String>("buffer"), buf);
+
+  if(!blocking_map) {
+    buf->SetIndexedPropertiesToExternalArrayData(mPtr, v8::kExternalByteArray, 0);
+    NoCLMapCB* cb = new NoCLMapCB(buf,size,mPtr);
+    err = clSetEventCallback(event,CL_COMPLETE,notifyMapCB,cb);
+    CHECK_ERR(err)
+  }
+  NanReturnValue(obj);
+
 //
 //  cl_event event=nullptr;
 //  if(ARG_EXISTS(7)) {
@@ -1259,37 +1359,42 @@ NAN_METHOD(EnqueueMapImage) {
 //                         cl_event *        /* event */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueUnmapMemObject) {
   NanScope();
-  REQ_ARGS(5);
+  REQ_ARGS(3);
+  NOCL_UNWRAP(cq, NoCLCommandQueue, args[0]);
+  NOCL_UNWRAP(mem, NoCLMem, args[1]);
 
-  return NanThrowError("Not implemented yet");
+  void *ptr=nullptr;
+  int len=0;
+  if(args[2]->IsUndefined() || args[2]->IsNull()) {
+    THROW_ERR(CL_INVALID_VALUE);
+  }
+  else {
+    getPtrAndLen(args[2], ptr, len);
+  }
 
-//  // Arg 0
-//  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
-//
-//  // Arg 1
-//  NOCL_UNWRAP(memobj, NoCLMem, args[1]);
-//
-//  // Arg 2
-//  NOCL_UNWRAP(mapped_ptr, NoCLMappedPtr, args[2]);
-//
-//  std::vector<NoCLEvent> cl_events;
-//  Local<Array> js_events = Local<Array>::Cast(args[3]);
-//  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-//
-//  cl_event event=nullptr;
-//  if(ARG_EXISTS(4)) {
-//    NOCL_UNWRAP(evt, NoCLEvent, args[4]);
-//    event = evt->getRaw();;
-//  }
-//
-//  CHECK_ERR(::clEnqueueUnmapMemObject(
-//    q->getRaw(),memobj->getRaw(),
-//    mapped_ptr,
-//    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-//    event ? &event : nullptr));
-//
-//  NanReturnValue(JS_INT(CL_SUCCESS));
-}
+  if(mapPointers.count(ptr) && mapPointers[ptr]>0) {
+    mapPointers[ptr]--;
+  }
+  else {
+    THROW_ERR(CL_INVALID_VALUE);
+  }
+
+  std::vector<NoCLEvent> cl_events;
+  Local<Array> js_events = Local<Array>::Cast(args[3]);
+  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+
+  //args 4
+  if(ARG_EXISTS(4) && args[4]->BooleanValue()) {
+    cl_event event;
+    CHECK_ERR(clEnqueueUnmapMemObject(cq->getRaw(),mem->getRaw(),ptr,
+       cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),&event))
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  }
+
+  CHECK_ERR(clEnqueueUnmapMemObject(cq->getRaw(),mem->getRaw(),ptr,
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),nullptr))
+  NanReturnValue(JS_INT(CL_SUCCESS));
+ }
 
 #ifdef CL_VERSION_1_2
 // extern CL_API_ENTRY cl_int CL_API_CALL

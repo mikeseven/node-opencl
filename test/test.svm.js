@@ -21,7 +21,7 @@ versions(["2.0"]).describe("SVM", function() {
     });
 
     it("should fail as context is invalid", function() {
-      U.bind(cl.SVMAlloc(null, 0, 200, null).should.throw(cl.INVALID_CONTEXT.message);
+      U.bind(cl.SVMAlloc,null, 0, 200, null).should.throw(cl.INVALID_CONTEXT.message);
     });
     
   });

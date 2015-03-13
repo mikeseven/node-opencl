@@ -384,7 +384,7 @@ NAN_METHOD(GetMemObjectInfo) {
       void* val;
       CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(void*), &val, NULL))
 
-      NanReturnValue(NOCL_WRAP(NoCLMappedPtr, val));
+      //NanReturnValue(NOCL_WRAP(NoCLMappedPtr, val));
     }
     case CL_MEM_CONTEXT: {
       cl_context val;
@@ -462,34 +462,6 @@ NAN_METHOD(GetImageInfo) {
 // clSetMemObjectDestructorCallback(  cl_mem /* memobj */,
 //                                     void (CL_CALLBACK * /*pfn_notify*/)( cl_mem /* memobj */, void* /*user_data*/),
 //                                     void * /*user_data */ )             CL_API_SUFFIX__VERSION_1_1;
-
-#ifdef CL_VERSION_2_0
-// extern CL_API_ENTRY cl_mem CL_API_CALL
-// clCreatePipe(cl_context                 /* context */,
-//              cl_mem_flags               /* flags */,
-//              cl_uint                    /* pipe_packet_size */,
-//              cl_uint                    /* pipe_max_packets */,
-//              const cl_pipe_properties * /* properties */,
-//              cl_int *                   /* errcode_ret */) CL_API_SUFFIX__VERSION_2_0;
-
-// extern CL_API_ENTRY cl_int CL_API_CALL
-// clGetPipeInfo(cl_mem           /* pipe */,
-//               cl_pipe_info     /* param_name */,
-//               size_t           /* param_value_size */,
-//               void *           /* param_value */,
-//               size_t *         /* param_value_size_ret */) CL_API_SUFFIX__VERSION_2_0;
-
-/* SVM Allocation APIs */
-// extern CL_API_ENTRY void * CL_API_CALL
-// clSVMAlloc(cl_context       /* context */,
-//            cl_svm_mem_flags /* flags */,
-//            size_t           /* size */,
-//            cl_uint          /* alignment */) CL_API_SUFFIX__VERSION_2_0;
-
-// extern CL_API_ENTRY void CL_API_CALL
-// clSVMFree(cl_context        /* context */,
-//           void *            /* svm_pointer */) CL_API_SUFFIX__VERSION_2_0;
-#endif
 
 namespace MemObj {
 void init(Handle<Object> exports)

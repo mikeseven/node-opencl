@@ -317,12 +317,13 @@ public:
   }
 };
 
+/*
 class NoCLMappedPtr : public NoCLObject<void *, 10, CL_INVALID_VALUE> {
 
 public:
   NoCLMappedPtr(void * raw) : NoCLObject(raw) {
   }
-};
+};*/
 
 NAN_METHOD(Equals);
 

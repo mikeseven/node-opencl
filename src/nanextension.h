@@ -3,6 +3,7 @@
 
 #include "node.h"
 #include "uv.h"
+#include "nan.h"
 
 //// async Fire and Forget call ////
 
