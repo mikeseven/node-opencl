@@ -1,6 +1,6 @@
 {
   "name": "node-opencl",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "A binding to OpenCL for Node.JS",
   "main": "lib/opencl.js",
   "author": "Ioweb <context@ioweb.fr>, Mikael Bourges-Sevenier <mikeseven@gmail.com>",
