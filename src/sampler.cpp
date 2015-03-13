@@ -108,9 +108,10 @@ NAN_METHOD(RetainSampler) {
 
   NOCL_UNWRAP(sampler, NoCLSampler, args[0]);
 
-  cl_int count=clRetainSampler(sampler->getRaw());
+  cl_int err=sampler->acquire();
+  CHECK_ERR(err)
 
-  NanReturnValue(JS_INT(count));
+  NanReturnValue(JS_INT(err));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -120,9 +121,10 @@ NAN_METHOD(ReleaseSampler) {
   REQ_ARGS(1);
 
   NOCL_UNWRAP(sampler, NoCLSampler, args[0]);
-  cl_int count=clReleaseSampler(sampler->getRaw());
+  cl_int err=sampler->release();
 
-  NanReturnValue(JS_INT(count));
+  CHECK_ERR(err)
+  NanReturnValue(JS_INT(err));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
