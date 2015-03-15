@@ -4,6 +4,7 @@
       'target_name': 'opencl',
       'defines': [
         'VERSION=0.1.0',
+        'NOCL_REALEASE_DRIVER_ISSUES'
       ],
       'sources': [
         'src/addon.cpp',
@@ -26,6 +27,9 @@
       ],
       'conditions': [
         ['OS=="mac"', {
+          'include_dirs' : [
+            "<!(echo $OPENCL_HEADER)",
+           ],
           'make_global_settings': [
             ['CC', '/usr/bin/clang'],
             ['CXX', '/usr/bin/clang++'],
@@ -38,6 +42,9 @@
           'libraries': ['-framework OpenCL'],
         }],
         ['OS=="linux"', {
+          'include_dirs' : [
+            "<!(echo $OPENCL_HEADER)",
+           ],
           'cflags': ['-std=c++11' ' -Wall'],
           'libraries': ['-lOpenCL']}],
         ['OS=="win"', {
@@ -54,10 +61,10 @@
               'INTEL_OPENCL_SDK_LIB' : '<(INTEL_OPENCL_SDK)\\lib\\x64',
             },
             'include_dirs' : [
-              "<(AMD_OPENCL_SDK_INCLUDE)", "<(INTEL_OPENCL_SDK_INCLUDE)"
+              "<(AMD_OPENCL_SDK_INCLUDE)", "<(INTEL_OPENCL_SDK_INCLUDE)","<!(echo %OPENCL_HEADER%)",
             ],
             'library_dirs' : [
-              "<(AMD_OPENCL_SDK_LIB)", "<(INTEL_OPENCL_SDK_LIB)"
+              "<(AMD_OPENCL_SDK_LIB)", "<(INTEL_OPENCL_SDK_LIB)",
             ],
             'defines' : [
               'WIN32_LEAN_AND_MEAN',

@@ -65,9 +65,9 @@ NAN_METHOD(RetainKernel) {
   REQ_ARGS(1);
 
   NOCL_UNWRAP(k, NoCLKernel, args[0]);
-  cl_int count=clRetainKernel(k->getRaw());
-
-  NanReturnValue(JS_INT(count));
+  cl_int err=k->acquire();
+  CHECK_ERR(err);
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -77,9 +77,9 @@ NAN_METHOD(ReleaseKernel) {
   REQ_ARGS(1);
 
   NOCL_UNWRAP(k, NoCLKernel, args[0]);
-  cl_int count=clRetainKernel(k->getRaw());
-
-  NanReturnValue(JS_INT(count));
+  cl_int err=k->release();
+  CHECK_ERR(err);
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -223,7 +223,9 @@ NAN_METHOD(GetKernelInfo) {
   cl_kernel_info param_name = args[1]->Uint32Value();
 
   switch(param_name) {
+#ifdef CL_VERSION_1_2
     case CL_KERNEL_ATTRIBUTES:
+#endif
     case CL_KERNEL_FUNCTION_NAME: {
       size_t nchars=0;
       CHECK_ERR(::clGetKernelInfo(k->getRaw(),param_name,0,NULL,&nchars));
@@ -252,6 +254,7 @@ NAN_METHOD(GetKernelInfo) {
   return NanThrowError(JS_INT(CL_INVALID_VALUE));
 }
 
+#ifdef CL_VERSION_1_2
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clGetKernelArgInfo(cl_kernel       /* kernel */,
 //                    cl_uint         /* arg_indx */,
@@ -295,6 +298,7 @@ NAN_METHOD(GetKernelArgInfo) {
 
   return NanThrowError(JS_INT(CL_INVALID_VALUE));
 }
+#endif
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clGetKernelWorkGroupInfo(cl_kernel                  /* kernel */,
@@ -313,8 +317,10 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
   cl_kernel_work_group_info param_name = args[2]->Uint32Value();
 
   switch(param_name) {
-    case CL_KERNEL_COMPILE_WORK_GROUP_SIZE:
-    case CL_KERNEL_GLOBAL_WORK_SIZE: {
+#ifdef CL_VERSION_1_2
+    case CL_KERNEL_GLOBAL_WORK_SIZE:
+#endif
+    case CL_KERNEL_COMPILE_WORK_GROUP_SIZE: {
       size_t sz[3] = {0,0,0};
       CHECK_ERR(::clGetKernelWorkGroupInfo(k->getRaw(),d->getRaw(),param_name,3*sizeof(size_t),sz, NULL));
       Local<Array> szarr = NanNew<Array>();
@@ -332,7 +338,7 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
     case CL_KERNEL_LOCAL_MEM_SIZE:
     case CL_KERNEL_PRIVATE_MEM_SIZE: {
       cl_ulong sz=0;
-      CHECK_ERR(::clGetKernelWorkGroupInfo(k,d,param_name,sizeof(cl_ulong),&sz, NULL));
+      CHECK_ERR(::clGetKernelWorkGroupInfo(k->getRaw(),d->getRaw(),param_name,sizeof(cl_ulong),&sz, NULL));
       NanReturnValue(JS_INT(sz));
     }
   }
@@ -362,7 +368,9 @@ void init(Handle<Object> exports)
   NODE_SET_METHOD(exports, "releaseKernel", ReleaseKernel);
   NODE_SET_METHOD(exports, "setKernelArg", SetKernelArg);
   NODE_SET_METHOD(exports, "getKernelInfo", GetKernelInfo);
+#ifdef CL_VERSION_1_2
   NODE_SET_METHOD(exports, "getKernelArgInfo", GetKernelArgInfo);
+#endif
   NODE_SET_METHOD(exports, "getKernelWorkGroupInfo", GetKernelWorkGroupInfo);
 }
 } //namespace Kernel

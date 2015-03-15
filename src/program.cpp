@@ -1,8 +1,47 @@
 #include "program.h"
 #include "types.h"
 #include <vector>
+#include "nanextension.h"
 
 namespace opencl {
+
+class NoCLProgramCLCallback:public NanAsyncLaunch {
+ public:
+   NoCLProgramCLCallback(NanCallback* callback,const v8::Local<v8::Object> &userData):NanAsyncLaunch(callback){
+       NanScope();
+       v8::Local<v8::Object> obj = NanNew<v8::Object>();
+       NanAssignPersistent(persistentHandle, obj);
+       v8::Local<v8::Object>  handle = NanNew(persistentHandle);
+       handle->Set(kIndex, userData);
+   }
+
+   void CallBackIsDone(cl_program prg){
+       this->program = prg;
+       this->FireAndForget();
+   }
+
+   void Execute() {
+     NanEscapableScope();
+     v8::Local<v8::Object> handle = NanNew(persistentHandle);
+     v8::Local<v8::Object> userData= (handle->Get(kIndex)).As<v8::Object>();
+     Handle<Value> argv[] = {
+         NanNew(NOCL_WRAP(NoCLProgram, program)),
+         NanNew(userData)
+     };
+     callback->Call(2,argv);
+   }
+
+ private:
+   cl_program program;
+
+};
+
+void CL_CALLBACK notifyPCB (cl_program program, void *user_data) {
+    NoCLProgramCLCallback* asyncCB = static_cast<NoCLProgramCLCallback*>(user_data);
+    if(asyncCB!=nullptr)
+        asyncCB->CallBackIsDone(program);
+}
+
 
 // /* Program Object APIs  */
 // extern CL_API_ENTRY cl_program CL_API_CALL
@@ -85,7 +124,7 @@ NAN_METHOD(CreateProgramWithBinary) {
   NanReturnValue(NOCL_WRAP(NoCLProgram, p));
 }
 
-
+#ifdef CL_VERSION_1_2
 // extern CL_API_ENTRY cl_program CL_API_CALL
 // clCreateProgramWithBuiltInKernels(cl_context            /* context */,
 //                                   cl_uint               /* num_devices */,
@@ -129,7 +168,7 @@ NAN_METHOD(CreateProgramWithBuiltInKernels) {
 
   NanReturnValue(NOCL_WRAP(NoCLProgram, prg));
 }
-
+#endif
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clRetainProgram(cl_program /* program */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(RetainProgram) {
@@ -137,9 +176,9 @@ NAN_METHOD(RetainProgram) {
   REQ_ARGS(1);
 
   NOCL_UNWRAP(p, NoCLProgram, args[0]);
-  cl_int count=clRetainProgram(p->getRaw());
-
-  NanReturnValue(JS_INT(count));
+  cl_int err=p->acquire();
+  CHECK_ERR(err);
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -149,9 +188,9 @@ NAN_METHOD(ReleaseProgram) {
   REQ_ARGS(1);
 
   NOCL_UNWRAP(p, NoCLProgram, args[0]);
-  cl_int count=clReleaseProgram(p->getRaw());
-
-  NanReturnValue(JS_INT(count));
+  cl_int err=p->release();
+  CHECK_ERR(err);
+  NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -178,29 +217,45 @@ NAN_METHOD(BuildProgram) {
 
   if (ARG_EXISTS(2)){
     if (!args[2]->IsString()) {
-      THROW_ERR(CL_INVALID_COMPILER_OPTIONS)
+      THROW_ERR(CL_INVALID_BUILD_OPTIONS)
     }
     options = new String::Utf8Value(args[2]);
   }
 
   //REQ_STR_ARG(2,options);
 
-  // TODO callback + userdata
+  //  callback + userdata
+  int err;
 
-  int err = ::clBuildProgram(p->getRaw(),
-    devices.size(), NOCL_TO_CL_ARRAY(devices, NoCLDeviceId),
-    options != NULL ? **options : nullptr,
-    nullptr, nullptr);
+  if (ARG_EXISTS(3)) {
+   Local<Function> callbackHandle = args[3].As<Function>();
+   NanCallback *callback = new NanCallback(callbackHandle);
+   Local<Object> userData = args[4].As<Object>();
+   NoCLProgramCLCallback* cb = new NoCLProgramCLCallback(callback,userData);
+
+   err = ::clBuildProgram(p->getRaw(),
+          devices.size(), NOCL_TO_CL_ARRAY(devices, NoCLDeviceId),
+          options != NULL ? **options : nullptr,
+          notifyPCB, cb);
+  }
+
+
+  else
+    err = ::clBuildProgram(p->getRaw(),
+          devices.size(), NOCL_TO_CL_ARRAY(devices, NoCLDeviceId),
+          options != NULL ? **options : nullptr,
+          nullptr, nullptr);
 
   delete options;
 
 
-  CHECK_ERR(err); // TODO CB
+  CHECK_ERR(err);
 
 
   NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
+#ifdef CL_VERSION_1_2
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clCompileProgram(cl_program           /* program */,
 //                  cl_uint              /* num_devices */,
@@ -261,15 +316,34 @@ NAN_METHOD(CompileProgram) {
   }
 
   // CL CALL
-  // TODO Callbacks
+  //  callback + userdata
+  int err;
 
-  int err = ::clCompileProgram(
-    p->getRaw(),
-    cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
-    options != NULL ? **options : nullptr,
-    program_headers.size(), NOCL_TO_CL_ARRAY(program_headers, NoCLProgram),
-    &names.front(),
-    nullptr, nullptr);
+  if (ARG_EXISTS(5)) {
+   Local<Function> callbackHandle = args[5].As<Function>();
+   NanCallback *callback = new NanCallback(callbackHandle);
+   Local<Object> userData = args[6].As<Object>();
+   NoCLProgramCLCallback* cb = new NoCLProgramCLCallback(callback,userData);
+
+   err = ::clCompileProgram(
+               p->getRaw(),
+               cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
+               options != NULL ? **options : nullptr,
+               program_headers.size(), NOCL_TO_CL_ARRAY(program_headers, NoCLProgram),
+               &names.front(),
+               notifyPCB, cb);
+  }
+
+
+  else
+    err = ::clCompileProgram(
+                p->getRaw(),
+                cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
+                options != NULL ? **options : nullptr,
+                program_headers.size(), NOCL_TO_CL_ARRAY(program_headers, NoCLProgram),
+                &names.front(),
+                nullptr, nullptr);
+
 
   delete options;
 
@@ -328,7 +402,24 @@ NAN_METHOD(LinkProgram) {
   */
   cl_int ret = CL_SUCCESS;
 
-  cl_program prg = ::clLinkProgram(
+  cl_program prg;
+
+  if (ARG_EXISTS(4)) {
+   Local<Function> callbackHandle = args[4].As<Function>();
+   NanCallback *callback = new NanCallback(callbackHandle);
+   Local<Object> userData = args[5].As<Object>();
+   NoCLProgramCLCallback* cb = new NoCLProgramCLCallback(callback,userData);
+   prg = ::clLinkProgram(
+     ctx->getRaw(),
+     cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
+     options != NULL ? **options : nullptr,
+     cl_programs.size(), NOCL_TO_CL_ARRAY(cl_programs, NoCLProgram),
+     notifyPCB, cb,
+     &ret);
+  }
+
+  else
+    prg = ::clLinkProgram(
     ctx->getRaw(),
     cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
     options != NULL ? **options : nullptr,
@@ -339,12 +430,13 @@ NAN_METHOD(LinkProgram) {
   CHECK_ERR(ret);
   NanReturnValue(NOCL_WRAP(NoCLProgram, prg));
 }
-
+#endif
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clUnloadPlatformCompiler(cl_platform_id /* platform */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(UnloadPlatformCompiler) {
   NanScope();
+#ifdef CL_VERSION_1_2
   REQ_ARGS(1);
 
 
@@ -353,6 +445,11 @@ NAN_METHOD(UnloadPlatformCompiler) {
 
   CHECK_ERR(::clUnloadPlatformCompiler(platform->getRaw()));
   NanReturnValue(JS_INT(CL_SUCCESS));
+#else
+  CHECK_ERR(::clUnloadCompiler());
+  NanReturnValue(JS_INT(CL_SUCCESS));
+#endif
+
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -464,14 +561,16 @@ NAN_METHOD(GetProgramInfo) {
 
       NanReturnValue(arr);
     }
+#ifdef CL_VERSION_1_2
     case CL_PROGRAM_NUM_KERNELS:
     {
       size_t val;
       CHECK_ERR(::clGetProgramInfo(prog->getRaw(),param_name,sizeof(size_t), &val, NULL))
       NanReturnValue(JS_INT(val));
     }
-    case CL_PROGRAM_SOURCE:
     case CL_PROGRAM_KERNEL_NAMES:
+#endif
+    case CL_PROGRAM_SOURCE:
     {
       size_t nchars;
       CHECK_ERR(::clGetProgramInfo(prog->getRaw(), param_name, 0, NULL, &nchars));
@@ -514,12 +613,14 @@ NAN_METHOD(GetProgramBuildInfo) {
       CHECK_ERR(::clGetProgramBuildInfo(prog->getRaw(), device->getRaw(), param_name, param_value_size_ret, param_value.get(), NULL));
       NanReturnValue(JS_STR(param_value.get(),(int)param_value_size_ret));
     }
+#ifdef CL_VERSION_1_2
     case CL_PROGRAM_BINARY_TYPE:
     {
       cl_program_binary_type val;
       CHECK_ERR(::clGetProgramBuildInfo(prog->getRaw(), device->getRaw(), param_name,sizeof(cl_program_binary_type), &val, NULL))
       NanReturnValue(JS_INT(val));
     }
+#endif
   }
   THROW_ERR(CL_INVALID_VALUE);
 }
@@ -529,13 +630,19 @@ void init(Handle<Object> exports)
 {
   NODE_SET_METHOD(exports, "createProgramWithSource", CreateProgramWithSource);
   NODE_SET_METHOD(exports, "createProgramWithBinary", CreateProgramWithBinary);
+#ifdef CL_VERSION_1_2
   NODE_SET_METHOD(exports, "createProgramWithBuiltInKernels", CreateProgramWithBuiltInKernels);
+#endif
   NODE_SET_METHOD(exports, "retainProgram", RetainProgram);
   NODE_SET_METHOD(exports, "releaseProgram", ReleaseProgram);
   NODE_SET_METHOD(exports, "buildProgram", BuildProgram);
+#ifdef CL_VERSION_1_2
   NODE_SET_METHOD(exports, "compileProgram", CompileProgram);
   NODE_SET_METHOD(exports, "linkProgram", LinkProgram);
   NODE_SET_METHOD(exports, "unloadPlatformCompiler", UnloadPlatformCompiler);
+#else
+  NODE_SET_METHOD(exports, "unloadCompiler", UnloadPlatformCompiler);
+#endif
   NODE_SET_METHOD(exports, "getProgramInfo", GetProgramInfo);
   NODE_SET_METHOD(exports, "getProgramBuildInfo", GetProgramBuildInfo);
 }

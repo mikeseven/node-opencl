@@ -111,6 +111,8 @@ describe("Event", function() {
         cl.retainEvent(uEvent);
         var after = cl.getEventInfo(uEvent, cl.EVENT_REFERENCE_COUNT);
         assert(before + 1 == after);
+        cl.releaseEvent(uEvent);
+        cl.releaseEvent(uEvent);
       });
     });
   });

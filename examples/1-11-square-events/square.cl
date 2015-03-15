@@ -1,7 +1,7 @@
 __kernel void square(
-    __global float* input,
-   __global float* output,
-   const unsigned int count)
+    __global uint* input,
+   __global uint* output,
+   unsigned int count)
 {
     unsigned int i = get_global_id(0);
     if (i < count)

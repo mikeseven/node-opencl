@@ -52,6 +52,19 @@ var Utils = {
     cl.releaseCommandQueue(cq);
   },
 
+  withAsyncCQ: function (ctx, device, exec) {
+    var cq;
+    if (Utils.checkVersion("1.x")) {
+      cq = cl.createCommandQueue(ctx, device, null);
+    } else {
+      cq = cl.createCommandQueueWithProperties(ctx, device, []);
+    }
+
+    exec(cq, function() {
+      cl.releaseCommandQueue(cq);
+    });
+  },
+
   bind : function(/*...*/) {
     var args = Array.prototype.slice.call(arguments);
     var fct = args.shift();
