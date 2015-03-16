@@ -1107,33 +1107,6 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
 
 static std::map<void*,int> mapPointers;
 
-class NoCLMapCB:public NanAsyncLaunch {
- public:
-   NoCLMapCB(const v8::Local<v8::Object> &buffer,size_t size,void* mPtr):NanAsyncLaunch(nullptr),size(size),mPtr(mPtr){
-       NanScope();
-       v8::Local<v8::Object> obj = NanNew<v8::Object>();
-       NanAssignPersistent(persistentHandle, obj);
-       v8::Local<v8::Object>  handle = NanNew(persistentHandle);
-       handle->Set(kIndex, buffer);
-   }
-
-   void CallBackIsDone(){
-       this->FireAndForget();
-   }
-
-   void Execute() {
-     NanScope();
-     v8::Local<v8::Object> handle = NanNew(persistentHandle);
-     v8::Local<v8::Object> buffer= (handle->Get(kIndex)).As<v8::Object>();
-     buffer->SetIndexedPropertiesToExternalArrayData(this->mPtr, v8::kExternalByteArray, this->size);
-   }
-
- private:
-   size_t size;
-   void* mPtr;
-
-};
-
 void CL_CALLBACK notifyMapCB (cl_event event, cl_int event_command_exec_status, void *user_data) {
     NoCLMapCB* asyncCB = static_cast<NoCLMapCB*>(user_data);
     if(asyncCB!=nullptr)
@@ -1405,6 +1378,10 @@ NAN_METHOD(EnqueueUnmapMemObject) {
   err = clEnqueueUnmapMemObject(cq->getRaw(),mem->getRaw(),ptr,
     cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),nullptr);
   CHECK_ERR(err)
+
+  Local<Object> obj = args[2].As<Object>();
+  obj->SetIndexedPropertiesToExternalArrayData(NULL, obj->GetIndexedPropertiesExternalArrayDataType(), 0);
+
   NanReturnValue(JS_INT(CL_SUCCESS));
  }
 

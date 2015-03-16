@@ -162,7 +162,7 @@ class NoCLRefCountObject : public NoCLObject<T,elid,err> {
      return *this;
    }
 
-   ~NoCLRefCountObject() {
+   virtual ~NoCLRefCountObject() {
      this->release();
    }
 

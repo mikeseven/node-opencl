@@ -1297,6 +1297,7 @@ describe("CommandQueue", function() {
           var buf = cl.createBuffer(ctx, 0, 8, null);
           var ret = cl.enqueueMapBuffer(cq, buf, true, cl.MAP_READ, 0, 8,[],false);
           cl.enqueueUnmapMemObject(cq, buf, ret.buffer);
+          assert.isUndefined(ret.buffer[0]);
         });
       });
     });
