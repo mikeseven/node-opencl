@@ -1,6 +1,6 @@
 {
   "name": "node-opencl",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "A binding to OpenCL for Node.JS",
   "main": "lib/opencl.js",
   "author": "Ioweb <context@ioweb.fr>, Mikael Bourges-Sevenier <mikeseven@gmail.com>",
@@ -66,5 +66,5 @@
   "engines" : {
     "node" : ">=0.10"
   },
-  "engineStrict" : true
+  "engine-strict" : true
 }

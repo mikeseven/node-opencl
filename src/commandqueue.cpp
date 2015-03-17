@@ -1,5 +1,8 @@
 #include "commandqueue.h"
 #include "types.h"
+#include <map>
+#include "nanextension.h"
+#include <algorithm>
 
 namespace opencl {
 
@@ -286,13 +289,13 @@ NAN_METHOD(EnqueueReadBufferRect) {
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(args[3]);
   uint32_t i;
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       buffer_offset[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(args[4]);
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       host_offset[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(args[5]);
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
   size_t buffer_row_pitch = args[6]->Uint32Value();
@@ -435,13 +438,13 @@ NAN_METHOD(EnqueueWriteBufferRect) {
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(args[3]);
   uint32_t i;
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       buffer_offset[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(args[4]);
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       host_offset[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(args[5]);
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
   size_t buffer_row_pitch = args[6]->Uint32Value();
@@ -644,13 +647,13 @@ NAN_METHOD(EnqueueCopyBufferRect) {
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(args[3]);
   uint32_t i;
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       src_origin[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(args[4]);
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       dst_origin[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(args[5]);
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       region[i]=arr->Get(i)->Uint32Value();
   size_t src_row_pitch = args[6]->Uint32Value();
   size_t src_slice_pitch = args[7]->Uint32Value();
@@ -716,10 +719,10 @@ NAN_METHOD(EnqueueReadImage) {
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(args[3]);
   uint32_t i;
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       origin[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(args[4]);
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
   size_t row_pitch = args[5]->Uint32Value();
@@ -792,10 +795,10 @@ NAN_METHOD(EnqueueWriteImage) {
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(args[3]);
   uint32_t i;
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       origin[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(args[4]);
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
   size_t row_pitch = args[5]->Uint32Value();
@@ -868,10 +871,10 @@ NAN_METHOD(EnqueueFillImage) {
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(args[3]);
   uint32_t i;
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       origin[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(args[4]);
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
   std::vector<NoCLEvent> cl_events;
@@ -932,13 +935,13 @@ NAN_METHOD(EnqueueCopyImage) {
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(args[3]);
   uint32_t i;
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       src_origin[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(args[4]);
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       dst_origin[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(args[5]);
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
   std::vector<NoCLEvent> cl_events;
@@ -998,10 +1001,10 @@ NAN_METHOD(EnqueueCopyImageToBuffer) {
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(args[3]);
   uint32_t i;
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       src_origin[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(args[4]);
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
   size_t dst_offset = args[5]->Uint32Value();
@@ -1066,10 +1069,10 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
   Local<Array> arr= Local<Array>::Cast(args[4]);
   uint32_t i;
 
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       dst_origin[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(args[5]);
-  for(i=0;i<arr->Length();i++)
+  for(i=0;i<max(arr->Length(),2u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
   std::vector<NoCLEvent> cl_events;
@@ -1102,6 +1105,33 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
   }
 }
 
+static std::map<void*,int> mapPointers;
+
+void CL_CALLBACK notifyMapCB (cl_event event, cl_int event_command_exec_status, void *user_data) {
+    NoCLMapCB* asyncCB = static_cast<NoCLMapCB*>(user_data);
+    if(asyncCB!=nullptr)
+        asyncCB->CallBackIsDone();
+}
+
+struct unMapInfo {
+  cl_command_queue cq;
+  cl_mem mem;
+};
+
+void freeMapedPtr(char* ptr,void* hint) {
+    mapPointers[ptr]--;
+    unMapInfo* umi = static_cast<unMapInfo*>(hint);
+    clEnqueueUnmapMemObject (umi->cq ,
+        umi->mem,
+        ptr,
+        0 ,
+        nullptr ,
+        nullptr );
+    clReleaseCommandQueue(umi->cq);
+    clReleaseMemObject(umi->mem);
+    delete umi;
+}
+
 // extern CL_API_ENTRY void * CL_API_CALL
 // clEnqueueMapBuffer(cl_command_queue /* command_queue */,
 //                    cl_mem           /* buffer */,
@@ -1117,58 +1147,69 @@ NAN_METHOD(EnqueueMapBuffer) {
   NanScope();
   REQ_ARGS(8);
 
-  return NanThrowError("Not implemented yet");
+  // Arg 0
+  NOCL_UNWRAP(cq, NoCLCommandQueue, args[0]);
 
-//  // Arg 0
-//  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
-//
-//  // Arg 1
-//  NOCL_UNWRAP(buffer, NoCLMem, args[1]);
-//
-//
-//  cl_bool blocking_map = args[2]->BooleanValue() ? CL_TRUE : CL_FALSE;
-//  cl_map_flags map_flags = args[3]->Uint32Value();
-//  size_t offset = args[4]->Uint32Value();
-//  size_t size = args[5]->Uint32Value();
-//
-//  std::vector<NoCLEvent> cl_events;
-//  Local<Array> js_events = Local<Array>::Cast(args[6]);
-//  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-//
-//  cl_event event=nullptr;
-//  if(ARG_EXISTS(7)) {
-//    NOCL_UNWRAP(evt, NoCLEvent, args[7]);
-//    event = evt->getRaw();
-//  }
-//
-//  // Creating the output buffer
-//  node::Buffer * outputBuffer = node::Buffer::New(1);
-//
-//  cl_int ret=CL_SUCCESS;
-//  void *ptr = ::clEnqueueMapBuffer(
-//    q->getRaw(),buffer->getRaw(),blocking_map,
-//    map_flags, offset, size,
-//    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-//    event ? &event : nullptr,
-//    &ret);
-//
-//  CHECK_ERR(ret);
-//
-//  delete node::Buffer::Data(outputBuffer);
-//
-//  // Replacing the buffer data pointer
-//
-//  outputBuffer->handle_.As<v8::Object>()
-//    ->SetIndexedPropertiesToExternalArrayData(
-//      ptr, kExternalByteArray, size);
-//
-//  // From https://gist.github.com/luismreis/4160350
-//  Local<Object> globalObj = Context::GetCurrent()->Global();
-//  Local<Function> bufferConstructor = Local<Function>::Cast(globalObj->Get(String::New("Buffer")));
-//  Handle<Value> constructorArgs[3] = { outputBuffer->handle_, v8::Integer::New(size), v8::Integer::New(0) };
-//  Local<Object> actualBuffer = bufferConstructor->NewInstance(3, constructorArgs);
-//
-//  NanReturnValue(actualBuffer);
+  // Arg 1
+  NOCL_UNWRAP(mem, NoCLMem, args[1]);
+
+
+  cl_bool blocking_map = args[2]->BooleanValue() ? CL_TRUE : CL_FALSE;
+  cl_map_flags map_flags = args[3]->Uint32Value();
+  size_t offset = args[4]->Uint32Value();
+  size_t size = args[5]->Uint32Value();
+
+  std::vector<NoCLEvent> cl_events;
+  if(ARG_EXISTS(6)) {
+    Local<Array> js_events = Local<Array>::Cast(args[6]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  }
+  void* mPtr = nullptr;
+  cl_int err;
+  cl_event* eventPtr = nullptr;
+  cl_event event;
+
+  if(ARG_EXISTS(7) && args[7]->BooleanValue())
+      eventPtr = &event;
+
+  mPtr = clEnqueueMapBuffer(cq->getRaw(),mem->getRaw(),
+                              blocking_map,map_flags, offset,
+                              size, cl_events.size(),
+                              NOCL_TO_CL_ARRAY(
+                                cl_events, NoCLEvent),
+                              eventPtr,&err);
+
+  CHECK_ERR(err)
+
+  if( mapPointers.count(mPtr)>0 ) {
+    mapPointers[mPtr]++;
+  }
+  else {
+    mapPointers[mPtr] = 1;
+  }
+
+  Local<Object> obj = NanNew<Object>();
+
+  if(eventPtr) {
+    obj->Set(NanNew<String>("event"), NOCL_WRAP(NoCLEvent,event));
+  }
+  unMapInfo* umi = new unMapInfo();
+  umi->cq = cq->getRaw();
+  clRetainCommandQueue(umi->cq);
+  umi->mem = mem->getRaw();
+  clRetainMemObject(umi->mem);
+
+  Local<Object> buf = NanNewBufferHandle((char*)mPtr,size,freeMapedPtr,umi);
+  obj->Set(NanNew<String>("buffer"), buf);
+
+  if(!blocking_map) {
+    buf->SetIndexedPropertiesToExternalArrayData(NULL, buf->GetIndexedPropertiesExternalArrayDataType(), 0);
+    NoCLMapCB* cb = new NoCLMapCB(buf,size,mPtr);
+    err = clSetEventCallback(event,CL_COMPLETE,notifyMapCB,cb);
+    CHECK_ERR(err)
+  }
+  NanReturnValue(obj);
+
 }
 
 // extern CL_API_ENTRY void * CL_API_CALL
@@ -1186,50 +1227,89 @@ NAN_METHOD(EnqueueMapBuffer) {
 //                   cl_int *          /* errcode_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueMapImage) {
   NanScope();
-  REQ_ARGS(10);
+  REQ_ARGS(6);
 
-  return NanThrowError("Not implemented yet");
+  // Arg 0
+  NOCL_UNWRAP(cq, NoCLCommandQueue, args[0]);
 
-  // NOTE
-  // An implementation with common Node buffers is available in EnqueueMapBUffer
+  // Arg 1
+  NOCL_UNWRAP(mem, NoCLMem, args[1]);
 
-//  // Arg 0
-//  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
-//
-//  // Arg 1
-//  NOCL_UNWRAP(image, NoCLMem, args[1]);
-//
-//  cl_bool blocking_map = args[2]->BooleanValue();
-//  cl_map_flags map_flags = args[3]->BooleanValue();
-//  size_t origin[]={0,0,0};
-//  size_t region[]={1,1,1};
-//  Local<Array> arr= Local<Array>::Cast(args[4]);
-//  uint32_t i;
-//  for(i=0;i<arr->Length();i++)
-//      origin[i]=arr->Get(i)->Uint32Value();
-//  arr= Local<Array>::Cast(args[5]);
-//  for(i=0;i<arr->Length();i++)
-//      region[i]=arr->Get(i)->Uint32Value();
-//
-//  void *image_row_pitch=nullptr;
-//  int len_image_row_pitch=0;
-//  if(args[6]->IsUndefined() || args[6]->IsNull()) {
-//    CHECK_ERR(CL_INVALID_VALUE);
-//  }
-//  else
-//    getPtrAndLen(args[6],image_row_pitch,len_image_row_pitch);
-//
-//  void *image_slice_pitch=nullptr;
-//  int len_image_slice_pitch=0;
-//  if(args[7]->IsUndefined() || args[7]->IsNull()) {
-//    CHECK_ERR(CL_INVALID_VALUE);
-//  }
-//  else
-//    getPtrAndLen(args[7],image_slice_pitch,len_image_slice_pitch);
-//
-//  std::vector<NoCLEvent> cl_events;
-//  Local<Array> js_events = Local<Array>::Cast(args[8]);
-//  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  cl_bool blocking_map = args[2]->BooleanValue();
+  cl_map_flags map_flags = args[3]->Uint32Value();
+  size_t origin[]={0,0,0};
+  size_t region[]={1,1,1};
+  Local<Array> arr= Local<Array>::Cast(args[4]);
+  uint32_t i;
+  for(i=0;i<max(arr->Length(),2u);i++)
+    origin[i]=arr->Get(i)->Int32Value();
+  arr= Local<Array>::Cast(args[5]);
+  for(i=0;i<max(arr->Length(),2u);i++)
+    region[i]=arr->Get(i)->Int32Value();
+
+  size_t image_row_pitch;
+
+  size_t image_slice_pitch[region[2]];
+
+  std::vector<NoCLEvent> cl_events;
+  if(ARG_EXISTS(6)) {
+    Local<Array> js_events = Local<Array>::Cast(args[6]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  }
+
+
+  void* mPtr = nullptr;
+  cl_int err;
+  cl_event* eventPtr = nullptr;
+  cl_event event;
+
+  if(ARG_EXISTS(7) && args[7]->BooleanValue())
+      eventPtr = &event;
+
+  mPtr = clEnqueueMapImage (cq->getRaw(),mem->getRaw(),
+                              blocking_map,map_flags, origin,
+                              region,
+                              &image_row_pitch,image_slice_pitch,
+                              cl_events.size(),
+                              NOCL_TO_CL_ARRAY(
+                                cl_events, NoCLEvent),
+                              eventPtr,&err);
+
+  CHECK_ERR(err)
+
+  size_t size = image_row_pitch*region[1]*region[2];
+
+  if( mapPointers.count(mPtr)>0 ) {
+    mapPointers[mPtr]++;
+  }
+  else {
+    mapPointers[mPtr] = 1;
+  }
+
+  Local<Object> obj = NanNew<Object>();
+  obj->Set(NanNew<String>("image_row_pitch"), NanNew(static_cast<int>(image_row_pitch)));
+  Local<Object> slice_pitch  = NanNewBufferHandle((char*)image_slice_pitch,sizeof(size_t)*region[2]);
+  obj->Set(NanNew<String>("image_slice_pitch"), slice_pitch);
+
+  if(eventPtr) {
+    obj->Set(NanNew<String>("event"), NOCL_WRAP(NoCLEvent,event));
+  }
+  unMapInfo* umi = new unMapInfo();
+  umi->cq = cq->getRaw();
+  clRetainCommandQueue(umi->cq);
+  umi->mem = mem->getRaw();
+  clRetainMemObject(umi->mem);
+
+  Local<Object> buf = NanNewBufferHandle((char*)mPtr,size,freeMapedPtr,umi);
+  obj->Set(NanNew<String>("buffer"), buf);
+
+  if(!blocking_map) {
+    buf->SetIndexedPropertiesToExternalArrayData(NULL, buf->GetIndexedPropertiesExternalArrayDataType(), 0);
+    NoCLMapCB* cb = new NoCLMapCB(buf,size,mPtr);
+    err = clSetEventCallback(event,CL_COMPLETE,notifyMapCB,cb);
+    CHECK_ERR(err)
+  }
+  NanReturnValue(obj);
 //
 //  cl_event event=nullptr;
 //  if(ARG_EXISTS(9)) {
@@ -1259,37 +1339,51 @@ NAN_METHOD(EnqueueMapImage) {
 //                         cl_event *        /* event */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueUnmapMemObject) {
   NanScope();
-  REQ_ARGS(5);
+  REQ_ARGS(3);
+  NOCL_UNWRAP(cq, NoCLCommandQueue, args[0]);
+  NOCL_UNWRAP(mem, NoCLMem, args[1]);
 
-  return NanThrowError("Not implemented yet");
+  void *ptr=nullptr;
+  int len=0;
+  if(args[2]->IsUndefined() || args[2]->IsNull()) {
+    THROW_ERR(CL_INVALID_VALUE);
+  }
+  else {
+    getPtrAndLen(args[2], ptr, len);
+  }
 
-//  // Arg 0
-//  NOCL_UNWRAP(q, NoCLCommandQueue, args[0]);
-//
-//  // Arg 1
-//  NOCL_UNWRAP(memobj, NoCLMem, args[1]);
-//
-//  // Arg 2
-//  NOCL_UNWRAP(mapped_ptr, NoCLMappedPtr, args[2]);
-//
-//  std::vector<NoCLEvent> cl_events;
-//  Local<Array> js_events = Local<Array>::Cast(args[3]);
-//  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-//
-//  cl_event event=nullptr;
-//  if(ARG_EXISTS(4)) {
-//    NOCL_UNWRAP(evt, NoCLEvent, args[4]);
-//    event = evt->getRaw();;
-//  }
-//
-//  CHECK_ERR(::clEnqueueUnmapMemObject(
-//    q->getRaw(),memobj->getRaw(),
-//    mapped_ptr,
-//    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-//    event ? &event : nullptr));
-//
-//  NanReturnValue(JS_INT(CL_SUCCESS));
-}
+  if(mapPointers.count(ptr) && mapPointers[ptr]>0) {
+    mapPointers[ptr]--;
+  }
+  else {
+    THROW_ERR(CL_INVALID_VALUE);
+  }
+
+  std::vector<NoCLEvent> cl_events;
+  if(ARG_EXISTS(3)) {
+    Local<Array> js_events = Local<Array>::Cast(args[3]);
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  }
+
+  cl_int err;
+  //args 4
+  if(ARG_EXISTS(4) && args[4]->BooleanValue()) {
+    cl_event event;
+    err = clEnqueueUnmapMemObject(cq->getRaw(),mem->getRaw(),ptr,
+       cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),&event);
+    CHECK_ERR(err)
+    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+  }
+
+  err = clEnqueueUnmapMemObject(cq->getRaw(),mem->getRaw(),ptr,
+    cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),nullptr);
+  CHECK_ERR(err)
+
+  Local<Object> obj = args[2].As<Object>();
+  obj->SetIndexedPropertiesToExternalArrayData(NULL, obj->GetIndexedPropertiesExternalArrayDataType(), 0);
+
+  NanReturnValue(JS_INT(CL_SUCCESS));
+ }
 
 #ifdef CL_VERSION_1_2
 // extern CL_API_ENTRY cl_int CL_API_CALL

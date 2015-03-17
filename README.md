@@ -38,7 +38,7 @@ To run unit tests, you will need mocha as a global package. Then you can simply 
 You should only need : 
 
 - XCode Developers tools (for C++ bindings compilation)
-- NodeJS >= 0.12
+- NodeJS >= 0.10
 - OpenCL 1.2 is natively included
 
 ## Linux / Docker 
@@ -54,7 +54,7 @@ This dockerfile is based on the following guide : http://streamcomputing.eu/blog
 You need : 
 
 - Visual Studio 2013
-- NodeJS >= 0.12
+- NodeJS >= 0.10
 - AMD APP SDK
 
 Please note that while node-gyp should work for compilation, it is possible that another DLL will be used on dynamic linking, leading to errors.
@@ -81,7 +81,7 @@ Javascript does not support 64 bits integers. OpenCL returns some int64, mainly 
 that changes depending on what kind of value is returned : 
 
 - Instead of a 64 bits integer representing nanoseconds time, we return an array with [milliseconds, nanoseconds]
-- Instead of a 64 bits integer reprensenting bytes, we return an array with [megabytes, bytes]
+- Instead of a 64 bits integer representing bytes, we return an array with [megabytes, bytes]
 
 ## Differences between Node-OpenCL and WebCL
 
@@ -89,17 +89,6 @@ that changes depending on what kind of value is returned :
 
 Buffers are used mostly everywhere in Node.JS. WebCL natively uses TypedArray, but Node OpenCL uses buffers since
 they provide a lot more features and copying them into a TyoedArray is hence not needed.
-
-### Memory management
-
-TODO
-
-# Coming soon
-
-- Map and unmap
-- Memory cleanup on process exit
-- SVM
-- Async buildProgram
 
 # Contributions Guidelines
 
