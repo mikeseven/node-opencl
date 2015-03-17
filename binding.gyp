@@ -20,7 +20,8 @@
         'src/sampler.cpp',
         'src/commandqueue.cpp',
         'src/pipe.cpp',
-        'src/manager.cpp'
+        'src/manager.cpp',
+        'src/svm.cpp'
       ],
       'include_dirs' : [
         "<!(node -e \"require('nan')\")",
