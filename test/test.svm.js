@@ -21,7 +21,7 @@ versions(["2.0"]).describe("SVM", function() {
     });
 
     it("should fail as context is invalid", function() {
-      U.bind(cl.SVMAlloc(null, 0, 200, null).should.throw(cl.INVALID_CONTEXT.message);
+      U.bind(cl.SVMAlloc,null, 0, 200, null).should.throw(cl.INVALID_CONTEXT.message);
     });
     
   });
@@ -31,21 +31,22 @@ versions(["2.0"]).describe("SVM", function() {
     it("should execute successfully when freeing an svm buffer", function() {
       U.withContext(function (ctx) {
         var buf = cl.SVMAlloc(ctx, 0, 200, null);
-        cl.SVMFree(buf);
+        cl.SVMFree(ctx,buf);
+        assert.isUndefined(buf[0]);
       });
     });
 
     it("should do nothing  when freeing a buffer which is not a SVM", function() {
       U.withContext(function (ctx) {
-        cl.SVMFree(new Buffer(200));
+        U.bind(cl.SVMFree,ctx,new Buffer(200)).should.throw(cl.INVALID_ARG_VALUE.message);
       });
     });
 
     it("should do nothing when called twice", function(){
       U.withContext(function (ctx) {
         var buf = cl.SVMAlloc(ctx, 0, 200, null);
-        cl.SVMFree(buf);
-        cl.SVMFree(buf);
+        cl.SVMFree(ctx,buf);
+        U.bind(cl.SVMFree,ctx,buf).should.throw(cl.INVALID_ARG_VALUE.message);
       });
     });
   });
@@ -71,12 +72,12 @@ versions(["2.0"]).describe("SVM", function() {
     });
 
     it("should call the given callback", function(done) {
-      U.withAsyncContext(function (ctx, device, ctxDone) {
-        U.withCQ(ctx, device, function (cq, cqDone) {
+      U.withAsyncContext(function (ctx, device,platform, ctxDone) {
+        U.withAsyncCQ(ctx, device, function (cq, cqDone) {
           var buf = cl.SVMAlloc(ctx, 0, 200, null);
           cl.enqueueSVMFree(cq, [buf], function() {
-            ctxDone();
             cqDone();
+            ctxDone();
             done();
           });
         });
@@ -86,7 +87,7 @@ versions(["2.0"]).describe("SVM", function() {
     it("should fail as SVM buffers list is empty", function() {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          U.bind(cl.enqueueSVMFree, cq, []).should.throw(cl.INVALID_VALUE);
+          U.bind(cl.enqueueSVMFree, cq, []).should.throw(/*..*/);
         });
       });
     });
@@ -98,7 +99,8 @@ versions(["2.0"]).describe("SVM", function() {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           var buf = cl.SVMAlloc(ctx, 0, 200, null);
-          cl.enqueueSVMMap(cq, true, 0, buf, 200);
+          cl.enqueueSVMMap(cq, true, cl.MAP_READ, buf, 200);
+
         });
       });
     });
@@ -118,9 +120,9 @@ versions(["2.0"]).describe("SVM", function() {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           var buf = cl.SVMAlloc(ctx, 0, 200, null);
-          cl.enqueueSVMMap(cq, true, 0, buf, 200);
+          cl.enqueueSVMMap(cq, true, cl.MAP_READ, buf, 200);
           cl.enqueueSVMUnmap(cq, buf);
-          cl.finish();
+          cl.finish(cq);
         });
       });
     });
@@ -128,7 +130,7 @@ versions(["2.0"]).describe("SVM", function() {
     it("should fail as buffer is null", function() {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          U.bind(cl.enqueueSVMUnmap, cq, null).should.throw(cl.INVALID_VALUE);
+          U.bind(cl.enqueueSVMUnmap, cq, null).should.throw(/*..*/);
         });
       });
     });
@@ -143,7 +145,8 @@ versions(["2.0"]).describe("SVM", function() {
           var buf = cl.SVMAlloc(ctx, 0, 200, null);
           var ovv = new Buffer([0, 1, 2, 3, 4]);
           
-          cl.enqueueSVMMemcpy(cq, true, 5, buf, ovv);
+          cl.enqueueSVMMemcpy(cq, true, buf, ovv,5);
+          cl.finish(cq);
 
           assert(buf[0] == ovv[0]);
           assert(buf[1] == ovv[1]);
@@ -158,18 +161,24 @@ versions(["2.0"]).describe("SVM", function() {
 
   
   describe("# enqueueSVMMemFill", function() {
-    it("should set the buffer with the given pattern", function() {
+    it.skip("should set the buffer with the given pattern", function() {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var buf = cl.SVMAlloc(ctx, 0, 200, null);
+          var buf = cl.SVMAlloc(ctx, cl.MEM_READ_WRITE, 160, 16);
+          var ovv = new Buffer(16);
           
-          cl.enqueueSVMMemFill(cq, buf, [2, 5], 2, 4);
-          cl.finish();
+          cl.enqueueSVMMemFill(cq, buf, ovv, 16);
+
+          cl.enqueueSVMMap(cq,true,cl.MAP_READ,buf,200);
+          cl.finish(cq);
           
-          assert(buf[0] == 2);
-          assert(buf[1] == 5);
+          assert(buf[0] == 0);
+          assert(buf[1] == 1);
           assert(buf[2] == 2);
-          assert(buf[3] == 5);
+          assert(buf[3] == 3);
+
+          cl.enqueueSVMUnmap(cq,buf);
+          cl.finish(cq);
         });
       });
     });
@@ -178,8 +187,9 @@ versions(["2.0"]).describe("SVM", function() {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           var buf = cl.SVMAlloc(ctx, 0, 200, null);
+          var ovv = new Buffer([0, 1, 2, 3, 4]);
 
-          U.bind(cl.enqueueSVMMemFill, cq, buf, [2, 5], 2, 5)
+          U.bind(cl.enqueueSVMMemFill, cq, buf, ovv, ovv.length)
             .should.throw(cl.INVALID_VALUE.message);
         });
       });      

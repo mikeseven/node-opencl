@@ -2,10 +2,37 @@
 #include "types.h"
 #include "common.h"
 #include <node_buffer.h>
+#include "nanextension.h"
 
 using namespace node;
 
 namespace opencl {
+
+
+class NoCLAvoidGC:public NanAsyncLaunch {
+ public:
+   NoCLAvoidGC(const v8::Local<v8::Object> &array):NanAsyncLaunch(nullptr){
+       NanScope();
+       v8::Local<v8::Object> obj = NanNew<v8::Object>();
+       NanAssignPersistent(persistentHandle, obj);
+       v8::Local<v8::Object>  handle = NanNew(persistentHandle);
+       handle->Set(kIndex, array);
+   }
+
+   void Execute() {
+       return;
+   }
+
+ private:
+
+};
+
+void CL_CALLBACK notifyFreeClMemObj (cl_mem mem,void* user_data) {
+    NoCLAvoidGC* asyncCB = static_cast<NoCLAvoidGC*>(user_data);
+    if(asyncCB!=nullptr)
+        asyncCB->FireAndForget();
+}
+
 
 // /* Memory Object APIs */
 // extern CL_API_ENTRY cl_mem CL_API_CALL
@@ -55,6 +82,11 @@ NAN_METHOD(CreateBuffer) {
   cl_int ret=CL_SUCCESS;
   cl_mem mem = ::clCreateBuffer(context->getRaw(), flags, size, host_ptr, &ret);
   CHECK_ERR(ret);
+
+  if(host_ptr) {
+    NoCLAvoidGC* user_data = new NoCLAvoidGC(args[3].As<Object>());
+    clSetMemObjectDestructorCallback(mem,notifyFreeClMemObj,user_data);
+  }
 
   NanReturnValue(NOCL_WRAP(NoCLMem, mem));
 }
@@ -166,6 +198,11 @@ NAN_METHOD(CreateImage) {
   cl_mem mem = ::clCreateImage(context->getRaw(), flags, &image_format, &desc, host_ptr, &ret);
   CHECK_ERR(ret);
 
+  if(host_ptr) {
+    NoCLAvoidGC* user_data = new NoCLAvoidGC(args[3].As<Object>());
+    clSetMemObjectDestructorCallback(mem,notifyFreeClMemObj,user_data);
+  }
+
   NanReturnValue(NOCL_WRAP(NoCLMem, mem));
 }
 #elif CL_VERSION_1_1
@@ -229,6 +266,12 @@ NAN_METHOD(CreateImage2D) {
   cl_int ret=CL_SUCCESS;
   cl_mem mem = ::clCreateImage2D(context->getRaw(), flags, &image_format, image_width,image_height,image_row_pitch, host_ptr, &ret);
   CHECK_ERR(ret);
+
+  if(host_ptr) {
+    NoCLAvoidGC* user_data = new NoCLAvoidGC(args[3].As<Object>());
+    clSetMemObjectDestructorCallback(mem,notifyFreeClMemObj,user_data);
+  }
+
   NanReturnValue(NOCL_WRAP(NoCLMem, mem));
 }
 #endif
@@ -341,7 +384,7 @@ NAN_METHOD(GetMemObjectInfo) {
       void* val;
       CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(void*), &val, NULL))
 
-      NanReturnValue(NOCL_WRAP(NoCLMappedPtr, val));
+      //NanReturnValue(NOCL_WRAP(NoCLMappedPtr, val));
     }
     case CL_MEM_CONTEXT: {
       cl_context val;
@@ -419,34 +462,6 @@ NAN_METHOD(GetImageInfo) {
 // clSetMemObjectDestructorCallback(  cl_mem /* memobj */,
 //                                     void (CL_CALLBACK * /*pfn_notify*/)( cl_mem /* memobj */, void* /*user_data*/),
 //                                     void * /*user_data */ )             CL_API_SUFFIX__VERSION_1_1;
-
-#ifdef CL_VERSION_2_0
-// extern CL_API_ENTRY cl_mem CL_API_CALL
-// clCreatePipe(cl_context                 /* context */,
-//              cl_mem_flags               /* flags */,
-//              cl_uint                    /* pipe_packet_size */,
-//              cl_uint                    /* pipe_max_packets */,
-//              const cl_pipe_properties * /* properties */,
-//              cl_int *                   /* errcode_ret */) CL_API_SUFFIX__VERSION_2_0;
-
-// extern CL_API_ENTRY cl_int CL_API_CALL
-// clGetPipeInfo(cl_mem           /* pipe */,
-//               cl_pipe_info     /* param_name */,
-//               size_t           /* param_value_size */,
-//               void *           /* param_value */,
-//               size_t *         /* param_value_size_ret */) CL_API_SUFFIX__VERSION_2_0;
-
-/* SVM Allocation APIs */
-// extern CL_API_ENTRY void * CL_API_CALL
-// clSVMAlloc(cl_context       /* context */,
-//            cl_svm_mem_flags /* flags */,
-//            size_t           /* size */,
-//            cl_uint          /* alignment */) CL_API_SUFFIX__VERSION_2_0;
-
-// extern CL_API_ENTRY void CL_API_CALL
-// clSVMFree(cl_context        /* context */,
-//           void *            /* svm_pointer */) CL_API_SUFFIX__VERSION_2_0;
-#endif
 
 namespace MemObj {
 void init(Handle<Object> exports)

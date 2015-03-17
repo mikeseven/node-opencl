@@ -1185,27 +1185,26 @@ describe("CommandQueue", function() {
   });
 
   describe("# enqueueMapBuffer", function() {
-    /** @Fabien
-        Je considere que map renvoie une structure avec {evt: l'event, getPtr(): une fonction qui renvoie le buffer}
-     **/
     it("should return a valid buffer", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var buf = cl.createBuffer(buf, 0, 8, null);
-          var ret = cl.enqueueMapBuffer(cq, buf, true, 0, 0, 8);
-          assert.isObject(ret.getPtr());
+          var buf = cl.createBuffer(ctx, cl.MEM_READ_WRITE, 8, null);
+          var ret = cl.enqueueMapBuffer(cq, buf, true, cl.MAP_READ, 0, 8,[],false);
+          assert.isObject(ret.buffer);
+          assert.equal(8,ret.buffer.length);
+          assert.isNumber(ret.buffer[0]);
         });
       });
     });
     
 
-    it("should throw as we are trying to read from a not already allocated pointer", function () {
+    it("should not be able to read from a not already allocated pointer", function () {
       U.withContext(function (ctx, device, _) {
         U.withCQ(ctx, device, function (cq) {
-          var buf = cl.createBuffer(buf, 0, 8, null);
-          var ret = cl.enqueueMapBuffer(cq, buf, false, 0, 0, 8, [], true);
-
-          U.bind(ret, getPtr).should.throw(/*...*/);
+          var buf = cl.createBuffer(ctx, 0, 8, null);
+          var ret = cl.enqueueMapBuffer(cq, buf, false, cl.MAP_READ, 0, 8, [], true);
+          assert.isUndefined(ret.buffer[0]);
+          assert.equal(8,ret.buffer.length);
         });
       });
     });
@@ -1213,11 +1212,13 @@ describe("CommandQueue", function() {
     it("should not throw as we are using the pointer from an event", function (done) {
       U.withAsyncContext(function (ctx, device, _, ctxDone) {
         U.withAsyncCQ(ctx, device, function (cq, cqDone) {
-          var buf = cl.createBuffer(buf, 0, 8, null);
+          var buf = cl.createBuffer(ctx, 0, 8, null);
           var ret = cl.enqueueMapBuffer(cq, buf, false, 0, 0, 8, [], true);
 
-          cl.setEventCallback(ret.evt, cl.COMPLETE, function(){
-            assert.isObject(ret.getPtr());
+          cl.setEventCallback(ret.event, cl.COMPLETE, function(){
+            assert.isObject(ret.buffer);
+            assert.equal(8,ret.buffer.length);
+            assert.isNumber(ret.buffer[0]);
             ctxDone();
             cqDone();
             done();
@@ -1236,27 +1237,27 @@ describe("CommandQueue", function() {
       "type": cl.MEM_OBJECT_IMAGE2D,
       "width": 10,
       "height": 10,
-      "depth": 8,
+      "depth": 1,
       "image_array_size": 1
     };
     
     it("should return a valid buffer", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(context, 0, imageFormat, imageDesc, null);
-          var ret = cl.enqueueMapImage(cq, image, true, 0, [0,0,0], [2,2,2], null, null);
-          assert.isObject(ret.getPtr());
+          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var ret = cl.enqueueMapImage(cq, image, true, cl.MAP_READ, [0,0,0], [2,2,1]);
+          assert.isNumber(ret.buffer[0]);
         });
       });
     });
     
 
-    it("should throw as we are trying to read from a not already allocated pointer", function () {
+    it("should not be able to read from a not already allocated pointer", function () {
       U.withContext(function (ctx, device, _) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(context, 0, imageFormat, imageDesc, null);          
-          var ret = cl.enqueueMapImage(cq, image, false, 0, [0,0,0], [2,2,2], null, null, [], true);
-          U.bind(ret, getPtr).should.throw(/*...*/);
+          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);          
+          var ret = cl.enqueueMapImage(cq, image, false, cl.MAP_READ, [0,0,0], [2,2,1], [], true);
+          assert.isUndefined(ret.buffer[0]);
         });
       });
     });
@@ -1264,11 +1265,12 @@ describe("CommandQueue", function() {
     it("should not throw as we are using the pointer from an event", function (done) {
       U.withAsyncContext(function (ctx, device, _, ctxDone) {
         U.withAsyncCQ(ctx, device, function (cq, cqDone) {
-          var image = cl.createImage(context, 0, imageFormat, imageDesc, null);                    
-          var ret = cl.enqueueMapImage(cq, image, false, 0, [0,0,0], [2,2,2], null, null, [], true);          
+          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);                    
+          var ret = cl.enqueueMapImage(cq, image, false, cl.MAP_READ, [0,0,0], [2,2,1], [], true);          
 
-          cl.setEventCallback(ret.evt, cl.COMPLETE, function(){
-            assert.isObject(ret.getPtr());
+          cl.setEventCallback(ret.event, cl.COMPLETE, function(){
+            assert.isObject(ret.buffer);
+            assert.isNumber(ret.buffer[0]);
             ctxDone();
             cqDone();
             done();
@@ -1283,7 +1285,7 @@ describe("CommandQueue", function() {
     it("should throw as we are unmapping a non mapped memobject", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var buf = cl.createBuffer(buf, 0, 8, null);
+          var buf = cl.createBuffer(ctx, 0, 8, null);
           U.bind(cl.enqueueUnmapMemObject, cq, buf, new Buffer(8)).should.throw(/*...*/);
         });
       });
@@ -1292,9 +1294,10 @@ describe("CommandQueue", function() {
     it("should return success", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var buf = cl.createBuffer(buf, 0, 8, null);
-          var ret = cl.enqueueMapBuffer(cq, buf, true, 0, 0, 8);
-          cl.enqueueUnmapMemObject(cq, buf, ret.getPtr());
+          var buf = cl.createBuffer(ctx, 0, 8, null);
+          var ret = cl.enqueueMapBuffer(cq, buf, true, cl.MAP_READ, 0, 8,[],false);
+          cl.enqueueUnmapMemObject(cq, buf, ret.buffer);
+          assert.isUndefined(ret.buffer[0]);
         });
       });
     });

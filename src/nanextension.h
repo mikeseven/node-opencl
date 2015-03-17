@@ -3,6 +3,7 @@
 
 #include "node.h"
 #include "uv.h"
+#include "nan.h"
 
 //// async Fire and Forget call ////
 
@@ -69,6 +70,33 @@ inline static void AsyncClose_(uv_handle_t* handle) {
  private:
   uv_async_t async;
   bool alreadyFired;
+};
+
+class NoCLMapCB:public NanAsyncLaunch {
+ public:
+   NoCLMapCB(const v8::Local<v8::Object> &buffer,size_t size,void* mPtr):NanAsyncLaunch(nullptr),size(size),mPtr(mPtr){
+       NanScope();
+       v8::Local<v8::Object> obj = NanNew<v8::Object>();
+       NanAssignPersistent(persistentHandle, obj);
+       v8::Local<v8::Object>  handle = NanNew(persistentHandle);
+       handle->Set(kIndex, buffer);
+   }
+
+   void CallBackIsDone(){
+       this->FireAndForget();
+   }
+
+   void Execute() {
+     NanScope();
+     v8::Local<v8::Object> handle = NanNew(persistentHandle);
+     v8::Local<v8::Object> buffer= (handle->Get(kIndex)).As<v8::Object>();
+     buffer->SetIndexedPropertiesToExternalArrayData(this->mPtr, v8::kExternalByteArray, this->size);
+   }
+
+ private:
+   size_t size;
+   void* mPtr;
+
 };
 
 #endif // NANEXTENSION
