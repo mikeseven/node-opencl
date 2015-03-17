@@ -10,6 +10,7 @@
 #include "sampler.h"
 #include "pipe.h"
 #include "types.h"
+#include "svm.h"
 
 #define JS_CL_CONSTANT(name) exports->Set(JS_STR( #name ), JS_INT(CL_ ## name))
 #define JS_CL_ERROR(name) exports->Set(JS_STR( #name ), NanError(opencl::getExceptionMessage(CL_ ## name).c_str(), CL_ ## name) )
@@ -96,6 +97,7 @@ void init(Handle<Object> exports)
   opencl::Program::init(exports);
   opencl::Sampler::init(exports);
   opencl::Pipe::init(exports);
+  opencl::SVM::init(exports);
   opencl::Types::init(exports);
 
 

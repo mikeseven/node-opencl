@@ -42,7 +42,7 @@ NAN_METHOD(Equals) {
     NO_CL_COMPARE_OBJ(NoCLCommandQueue,7)
     NO_CL_COMPARE_OBJ(NoCLEvent,8)
     NO_CL_COMPARE_OBJ(NoCLProgramBinary,9)
-    NO_CL_COMPARE_OBJ(NoCLMappedPtr,10)
+    //NO_CL_COMPARE_OBJ(NoCLMappedPtr,10)
   default:
     NanReturnValue(NanNew<Boolean>(false));
   }
