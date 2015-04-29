@@ -43,20 +43,27 @@
           'libraries': ['-framework OpenCL'],
         }],
         ['OS=="linux"', {
+          'variables' : {
+            # AMD APP SDK
+            'OPENCL_SDK' : '/opt/AMDAPPSDK-3.0-0-Beta',
+            'OPENCL_SDK_INCLUDE' : '<(OPENCL_SDK)/include',
+            'OPENCL_SDK_LIB' : '<(OPENCL_SDK)/lib/x86_64',
+          },
           'include_dirs' : [
-            "<!(echo $OPENCL_HEADER)",
-           ],
-          'cflags': ['-std=c++11' ' -Wall'],
-          'libraries': ['-lOpenCL']}],
+            "<(OPENCL_SDK_INCLUDE)",
+          ],
+          'libraries': ['-lGL', '-lOpenCL','-L<(OPENCL_SDK_LIB) -lOpenCL'],
+          'cflags': ['-std=c++11' ' -Wall']
+        }],
         ['OS=="win"', {
           'variables' :
             {
-            # AMD APP SDK
+              # AMD APP SDK
               'AMD_OPENCL_SDK' : '<!(echo %AMDAPPSDKROOT%)',
               'AMD_OPENCL_SDK_INCLUDE' : '<(AMD_OPENCL_SDK)\\include',
               'AMD_OPENCL_SDK_LIB' : '<(AMD_OPENCL_SDK)\\lib\\x86_64',
 
-            # Intel OpenCL SDK
+              # Intel OpenCL SDK
               'INTEL_OPENCL_SDK' : '<!(echo %INTELOCLSDKROOT%)',
               'INTEL_OPENCL_SDK_INCLUDE' : '<(INTEL_OPENCL_SDK)\\include',
               'INTEL_OPENCL_SDK_LIB' : '<(INTEL_OPENCL_SDK)\\lib\\x64',
