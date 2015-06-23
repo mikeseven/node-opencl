@@ -256,13 +256,11 @@ NAN_METHOD(SetKernelArg) {
   unique_ptr<char[]> type_name(new char[nchars]);
   CHECK_ERR(::clGetKernelArgInfo(k->getRaw(), arg_idx, CL_KERNEL_ARG_TYPE_NAME, nchars, type_name.get(), NULL));
 
+
   // now map the JS parameter `args[2]` to the expected kernel parameter type `typename`
 
-  // Arg 2
-  size_t ptr_size = 0;
-  void * ptr_data = NULL;
-  bool dont_delete = false;
-  char * name = type_name.get();
+  const char * name = type_name.get();
+  cl_int err = 0;
 
   // first check for pointers (require either local size or cl_mem)
   if ('*' == name[(strlen(name) - 1)]){
@@ -271,12 +269,11 @@ NAN_METHOD(SetKernelArg) {
       case CL_KERNEL_ARG_ADDRESS_LOCAL:
         {
             // expect a size type
-            if (!args[2]->IsNumber()){
-              THROW_ERR(CL_INVALID_ARG_VALUE);
-            }
+            if (!args[2]->IsNumber())
+                THROW_ERR(CL_INVALID_ARG_VALUE);
             // local buffers are intialized with their size (data = NULL)
-            ptr_data = NULL;
-            ptr_size = args[2]->ToInteger()->Value();
+            size_t local_size = args[2]->ToInteger()->Value();
+            err = ::clSetKernelArg(k->getRaw(), arg_idx, local_size, NULL);
         } break;
       case CL_KERNEL_ARG_ADDRESS_GLOBAL:
       case CL_KERNEL_ARG_ADDRESS_CONSTANT:
@@ -284,17 +281,18 @@ NAN_METHOD(SetKernelArg) {
           // global and constant memory parameters have to be initialized with
           // a cl_mem buffer reference
           NOCL_UNWRAP(mem , NoCLMem, args[2]);
-          ptr_data = mem->getRaw();
-          ptr_size = sizeof(cl_mem);
-          dont_delete = true;
+          err = ::clSetKernelArg(k->getRaw(), arg_idx, sizeof(cl_mem), &mem->getRaw());
         } break;
     }
   } else if (type_converter.hasType(name)) {
     // convert primitive types using the conversion
     // function map (indexed by OpenCL type name)
-    cl_int err;
-    std::tie(ptr_size, ptr_data, err) = type_converter.convert(name, args[2]);
+    void* data;
+    size_t size;
+    std::tie(size, data, err) = type_converter.convert(name, args[2]);
     CHECK_ERR(err);
+    err = ::clSetKernelArg(k->getRaw(), arg_idx, size, data);
+    free(data);
   }
 
   // TODO: check for image_t types
@@ -303,19 +301,12 @@ NAN_METHOD(SetKernelArg) {
   // Otherwise it should be a native type
   else if (strcmp(name, "sampler_t") == 0) {
     NOCL_UNWRAP(sw , NoCLSampler, args[2]);
-    ptr_data = sw->getRaw();
-    ptr_size = sizeof(cl_sampler);
-    dont_delete = true;
+    err = ::clSetKernelArg(k->getRaw(), arg_idx, sizeof(cl_sampler), &sw->getRaw());
+  } else {
+    return NanThrowError("FIXME: Unsupported OpenCL argument type");
   }
 
-  cl_int err = ::clSetKernelArg(k->getRaw(), arg_idx, ptr_size, &ptr_data);
-
-  // cleanup
-  if (!dont_delete) {
-    free(ptr_data);
-  }
   CHECK_ERR(err);
-
   NanReturnValue(JS_INT(err));
 }
 

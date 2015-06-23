@@ -90,8 +90,8 @@ public:
     return (this->getRaw() == b.getRaw());
   }
 
-  const T getRaw() const {
-    return (T) this->raw;
+  const T& getRaw() const {
+    return this->raw;
   }
 
   // implicit cast
