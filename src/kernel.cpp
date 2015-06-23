@@ -1,6 +1,11 @@
 #include "kernel.h"
 #include "types.h"
 
+#include <unordered_map>
+#include <functional>
+#include <utility>
+#include <tuple>
+
 namespace opencl {
 
 // /* Kernel Object APIs */
@@ -82,12 +87,148 @@ NAN_METHOD(ReleaseKernel) {
   NanReturnValue(JS_INT(CL_SUCCESS));
 }
 
+// caches OpenCL type name to conversion function mapping in a hash table
+// (unordered_map) for fast retrieval. This is much faster than the previous
+// approach of checking each possible type with strcmp in a huge if-else
+class PrimitiveTypeMapCache {
+private:
+  /// Type of the conversion function
+  typedef std::function<std::tuple<size_t, void*, cl_int>(const Local<Value>&)> func_t;
+  // map of conversion functions
+  std::unordered_map<std::string, func_t> m_converters;
+public:
+  PrimitiveTypeMapCache() {
+    // if we create the TypeMap as a static function member, the constructor
+    // is guarantueed to be called by only one thread (see C++11 standard sec 6.7)
+    // while all other threads wait for completion. Thus no manual synchronization
+    // is needed for the initialization.
+
+    // create all type mappers
+
+    /* convert primitive types */
+
+    #define CONVERT_NUMBER(NAME, TYPE, PRED, CONV)                              \
+     {                                                                          \
+      func_t f = [](const Local<Value>& val)                                    \
+        -> std::tuple<size_t, void*, cl_int> {                                  \
+        if (!val->PRED()){                                                      \
+         return std::tuple<size_t, void*,cl_int>(0, NULL, CL_INVALID_ARG_VALUE);\
+        }                                                                       \
+        void* ptr_data = new TYPE;                                              \
+        size_t ptr_size = sizeof(TYPE);                                         \
+        *((TYPE *)ptr_data) = val->CONV();                                      \
+        return std::tuple<size_t, void*,cl_int>(ptr_size, ptr_data, 0);         \
+      };                                                                        \
+      m_converters[NAME] = f;                                                   \
+     }
+
+    CONVERT_NUMBER("char", cl_char, IsInt32, ToInt32()->Value);
+    CONVERT_NUMBER("uchar", cl_uchar, IsInt32, ToUint32()->Value);
+    CONVERT_NUMBER("short", cl_short, IsInt32, ToInt32()->Value);
+    CONVERT_NUMBER("ushort", cl_ushort, IsInt32, ToUint32()->Value);
+    CONVERT_NUMBER("int", cl_int , IsInt32, ToInt32()->Value);
+    CONVERT_NUMBER("uint", cl_uint, IsInt32, ToUint32()->Value);
+    CONVERT_NUMBER("long", cl_long, IsNumber, ToInteger()->Value);
+    CONVERT_NUMBER("ulong", cl_ulong, IsNumber, ToInteger()->Value);
+    CONVERT_NUMBER("float", cl_float, IsNumber, NumberValue);
+    CONVERT_NUMBER("double", cl_double, IsNumber, NumberValue);
+    CONVERT_NUMBER("half", cl_half, IsNumber, NumberValue);
+
+    #undef CONVERT_NUMBER
+
+
+    /* convert vector types (e.g. float4, int16, etc) */
+
+    #define CONVERT_VECT(NAME, TYPE, I, PRED, COND)                             \
+      {                                                                         \
+       func_t f = [](const Local<Value>& val)                                   \
+          -> std::tuple<size_t, void*, cl_int> {                                \
+        if (!val->IsArray()) {                                                  \
+          /*THROW_ERR(CL_INVALID_ARG_VALUE);  */                                \
+          return std::tuple<size_t,void*,cl_int>(0, NULL, CL_INVALID_ARG_VALUE);\
+        }                                                                       \
+        Local<Array> arr = Local<Array>::Cast(val);                             \
+        if (arr->Length() != I) {                                               \
+          /*THROW_ERR(CL_INVALID_ARG_SIZE);*/                                   \
+          return std::tuple<size_t,void*,cl_int>(0, NULL, CL_INVALID_ARG_SIZE); \
+        }                                                                       \
+        TYPE * vvc = new TYPE[I];                                               \
+        size_t ptr_size = sizeof(TYPE) * I;                                     \
+        void* ptr_data = vvc;                                                   \
+        for (unsigned int i = 0; i < I; ++ i) {                                 \
+          if (!arr->Get(i)->PRED()) {                                           \
+            /*THROW_ERR(CL_INVALID_ARG_VALUE);*/                                \
+            /*THROW_ERR(CL_INVALID_ARG_VALUE);*/                                \
+          return std::tuple<size_t,void*,cl_int>(0, NULL, CL_INVALID_ARG_VALUE);\
+          }                                                                     \
+          vvc[i] = arr->Get(i)->COND();                                         \
+        }                                                                       \
+        return std::tuple<size_t,void*,cl_int>(ptr_size, ptr_data, 0);          \
+      };                                                                        \
+      m_converters["NAME ## I"] = f;                                            \
+      }
+
+    #define CONVERT_VECTS(NAME, TYPE, PRED, COND) \
+      CONVERT_VECT(NAME, TYPE, 2, PRED, COND);\
+      CONVERT_VECT(NAME, TYPE, 3, PRED, COND);\
+      CONVERT_VECT(NAME, TYPE, 4, PRED, COND);\
+      CONVERT_VECT(NAME, TYPE, 8, PRED, COND);\
+      CONVERT_VECT(MAME, TYPE, 16, PRED, COND);
+
+    CONVERT_VECTS("char", cl_char, IsInt32, ToInt32()->Value);
+    CONVERT_VECTS("uchar", cl_uchar, IsInt32, ToUint32()->Value);
+    CONVERT_VECTS("short", cl_short, IsInt32, ToInt32()->Value);
+    CONVERT_VECTS("ushort", cl_ushort, IsInt32, ToUint32()->Value);
+    CONVERT_VECTS("int", cl_int, IsInt32, ToInt32()->Value);
+    CONVERT_VECTS("uint", cl_uint, IsInt32, ToUint32()->Value);
+    CONVERT_VECTS("long", cl_long, IsNumber, ToInteger()->Value);
+    CONVERT_VECTS("ulong", cl_ulong, IsNumber, ToInteger()->Value);
+    CONVERT_VECTS("float", cl_float, IsNumber, NumberValue);
+    CONVERT_VECTS("double", cl_double, IsNumber, NumberValue);
+    CONVERT_VECTS("half", cl_half, IsNumber, NumberValue);
+
+    #undef CONVERT_VECT
+    #undef CONVERT_VECTS
+
+    // add boolean conversion
+    m_converters["bool"] = [](const Local<Value>& val) {
+        size_t ptr_size = sizeof(cl_bool);
+        void* ptr_data = new cl_bool;
+        *((cl_bool *)ptr_data) = val->BooleanValue() ? 1 : 0;
+        return std::tuple<size_t,void*,cl_int>(ptr_size, ptr_data, 0);
+    };
+  }
+
+  /// Returns wheather the type given is in the map, i.e. if it is a
+  /// primitive type
+  bool hasType(const std::string& name){
+      return m_converters.find(name) != m_converters.end();
+  }
+
+  // Converts the given JS value to the OpenCL type given by the `name`
+  // parameter and returns the result as a pair of the size of the converted
+  // value and the pointer as `void*`. The caller is responsible
+  // for deleting the pointer after use.
+  std::tuple<size_t, void*, cl_int> convert(const std::string& name, const Local<Value>& val) {
+      assert(this->hasType(name));
+      // call conversion function and return size of argument and pointer
+      return std::move(m_converters[name](val));
+  }
+
+};
+
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clSetKernelArg(cl_kernel    /* kernel */,
 //                cl_uint      /* arg_index */,
 //                size_t       /* arg_size */,
 //                const void * /* arg_value */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(SetKernelArg) {
+  // static member of the function gets initialzed by the first thread
+  // which calls this function. This is thread-safe due to the C++11 standard.
+  // All other threads arriving wait till the constructor initialization is
+  // complete before executing the code below.
+  static PrimitiveTypeMapCache type_converter;
+
   NanScope();
   REQ_ARGS(3);
 
@@ -117,18 +258,13 @@ NAN_METHOD(SetKernelArg) {
 
   // now map the JS parameter `args[2]` to the expected kernel parameter type `typename`
 
-
   // Arg 2
   size_t ptr_size = 0;
   void * ptr_data = NULL;
   bool dont_delete = false;
   char * name = type_name.get();
 
-  // TODO: more efficient version for type mapping (e.g. consider
-  // std::map/unordered_map and std::function members (lambdas) for
-  // much quicker matching of types to their conversion function
-
-  // first check for pointers (require either either local size or cl_mem)
+  // first check for pointers (require either local size or cl_mem)
   if ('*' == name[(strlen(name) - 1)]){
     // check if type is local or global
     switch (adrqual) {
@@ -153,99 +289,24 @@ NAN_METHOD(SetKernelArg) {
           dont_delete = true;
         } break;
     }
+  } else if (type_converter.hasType(name)) {
+    // convert primitive types using the conversion
+    // function map (indexed by OpenCL type name)
+    cl_int err;
+    std::tie(ptr_size, ptr_data, err) = type_converter.convert(name, args[2]);
+    CHECK_ERR(err);
   }
 
   // TODO: check for image_t types
   // TODO: support queue_t and clk_event_t, and others?
 
-  // Boolean
-  if (strcmp(name, "bool") == 0) {
-    ptr_size = sizeof(cl_bool);
-    ptr_data = new cl_bool;
-    *((cl_bool *)ptr_data) = args[3]->BooleanValue() ? 1 : 0;
-  }
-
-
-  /* convert primitive types */
-
-  #define CONVERT_NUMBER(NAME, TYPE, PRED, CONV) \
-    if (strcmp(name, NAME) == 0) { \
-      if (!args[2]->PRED()){\
-        THROW_ERR(CL_INVALID_ARG_VALUE) \
-      }\
-      ptr_data = new TYPE;\
-      ptr_size = sizeof(TYPE); \
-      *((TYPE *)ptr_data) = args[2]->CONV();\
-    }
-
-  CONVERT_NUMBER("char", cl_char, IsInt32, ToInt32()->Value);
-  CONVERT_NUMBER("uchar", cl_uchar, IsInt32, ToUint32()->Value);
-  CONVERT_NUMBER("short", cl_short, IsInt32, ToInt32()->Value);
-  CONVERT_NUMBER("ushort", cl_ushort, IsInt32, ToUint32()->Value);
-  CONVERT_NUMBER("int", cl_int , IsInt32, ToInt32()->Value);
-  CONVERT_NUMBER("uint", cl_uint, IsInt32, ToUint32()->Value);
-  CONVERT_NUMBER("long", cl_long, IsNumber, ToInteger()->Value);
-  CONVERT_NUMBER("ulong", cl_ulong, IsNumber, ToInteger()->Value);
-  CONVERT_NUMBER("float", cl_float, IsNumber, NumberValue);
-  CONVERT_NUMBER("double", cl_double, IsNumber, NumberValue);
-  CONVERT_NUMBER("half", cl_half, IsNumber, NumberValue);
-
-  #undef CONVERT_NUMBER
-
-
-  /* convert vector types (e.g. float4, int16, etc) */
-
-  #define CONVERT_VECT(NAME, TYPE, I, PRED, COND)           \
-    if (strcmp(name, "NAME ## I") == 0) {                  \
-      if (!args[2]->IsArray()) {                            \
-        THROW_ERR(CL_INVALID_ARG_VALUE);                    \
-      }                                                     \
-      Local<Array> arr = Local<Array>::Cast(args[2]);       \
-      if (arr->Length() != I) {                             \
-        THROW_ERR(CL_INVALID_ARG_SIZE);                     \
-      }                                                     \
-      TYPE * vvc = new TYPE[I];                             \
-      ptr_size = sizeof(TYPE) * I;                          \
-      ptr_data = vvc;                                       \
-      for (unsigned int i = 0; i < I; ++ i) {               \
-        if (!arr->Get(i)->PRED()) {                         \
-          THROW_ERR(CL_INVALID_ARG_VALUE);                  \
-        }                                                   \
-        vvc[i] = arr->Get(i)->COND();                       \
-      }                                                     \
-    }
-
-  #define CONVERT_VECTS(NAME, TYPE, PRED, COND) \
-    CONVERT_VECT(NAME, TYPE, 2, PRED, COND);\
-    CONVERT_VECT(NAME, TYPE, 3, PRED, COND);\
-    CONVERT_VECT(NAME, TYPE, 4, PRED, COND);\
-    CONVERT_VECT(NAME, TYPE, 8, PRED, COND);\
-    CONVERT_VECT(MAME, TYPE, 16, PRED, COND);
-
-  CONVERT_VECTS("char", cl_char, IsInt32, ToInt32()->Value);
-  CONVERT_VECTS("uchar", cl_uchar, IsInt32, ToUint32()->Value);
-  CONVERT_VECTS("short", cl_short, IsInt32, ToInt32()->Value);
-  CONVERT_VECTS("ushort", cl_ushort, IsInt32, ToUint32()->Value);
-  CONVERT_VECTS("int", cl_int, IsInt32, ToInt32()->Value);
-  CONVERT_VECTS("uint", cl_uint, IsInt32, ToUint32()->Value);
-  CONVERT_VECTS("long", cl_long, IsInt32, ToInteger()->Value);
-  CONVERT_VECTS("ulong", cl_ulong, IsInt32, ToInteger()->Value);
-  CONVERT_VECTS("float", cl_float, IsNumber, NumberValue);
-  CONVERT_VECTS("double", cl_double, IsNumber, NumberValue);
-  CONVERT_VECTS("half", cl_half, IsNumber, NumberValue);
-
-  #undef CONVERT_VECT
-  #undef CONVERT_VECTS
-
-
   // Otherwise it should be a native type
-  if (strcmp(name, "sampler_t") == 0) {
-    NOCL_UNWRAP(sw , NoCLSampler, args[3]);
+  else if (strcmp(name, "sampler_t") == 0) {
+    NOCL_UNWRAP(sw , NoCLSampler, args[2]);
     ptr_data = sw->getRaw();
     ptr_size = sizeof(cl_sampler);
     dont_delete = true;
   }
-  // TODO: image types
 
   cl_int err = ::clSetKernelArg(k->getRaw(), arg_idx, ptr_size, &ptr_data);
 
