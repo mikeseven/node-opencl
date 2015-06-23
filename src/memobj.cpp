@@ -43,7 +43,7 @@ void CL_CALLBACK notifyFreeClMemObj (cl_mem mem,void* user_data) {
 //                cl_int *     /* errcode_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(CreateBuffer) {
   NanScope();
-  REQ_ARGS(4);
+  REQ_ARGS(3);
 
   // Arg 0
   NOCL_UNWRAP(context, NoCLContext, args[0]);
