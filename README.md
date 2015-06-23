@@ -25,6 +25,11 @@ This project has been succesfully tested on the following platforms  :
 
 # Installation
 
+Dependencies:
+- npm and node-gyp
+- C++11 compatible compiler
+- OpenCL headers and library (e.g. the AMD APP SDK)
+
 Except specific platform installation guides below, you only need to install the package through
 
 ```npm install```
