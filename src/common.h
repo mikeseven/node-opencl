@@ -81,7 +81,7 @@ namespace {
 namespace opencl {
 
 #define ARG_EXISTS(nth) \
-  args.Length() >= nth + 1 && !args[nth]->IsNull() && !args[nth]->IsUndefined()
+  (args.Length() >= nth + 1 && !args[nth]->IsNull() && !args[nth]->IsUndefined())
 
 
 void getPtrAndLen(const Local<Value> value, void* &ptr, int &len);
