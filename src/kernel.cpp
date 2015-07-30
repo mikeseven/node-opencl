@@ -211,7 +211,6 @@ public:
   // for deleting the pointer after use.
   std::tuple<size_t, void*, cl_int> convert(const std::string& name, const Local<Value>& val) {
       assert(this->hasType(name));
-      std::cout << "running convertter for type " << name << std::endl;
       // call conversion function and return size of argument and pointer
       return std::move(m_converters[name](val));
   }
