@@ -223,14 +223,20 @@ public:
 //                size_t       /* arg_size */,
 //                const void * /* arg_value */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(SetKernelArg) {
-  // static member of the function gets initialzed by the first thread
-  // which calls this function. This is thread-safe due to the C++11 standard.
+  // static member of the function gets initialized by the first thread
+  // which calls this function. This is thread-safe according to the C++11 standard.
   // All other threads arriving wait till the constructor initialization is
   // complete before executing the code below.
   static PrimitiveTypeMapCache type_converter;
 
   NanScope();
+#ifdef CL_VERSION_1_2
   REQ_ARGS(3);
+#else
+  // if kernel introspection is not supported, require the type to be
+  // passed as the 4th paramter, otherwise this parameter is optional
+  REQ_ARGS(4);
+#endif
 
   // Arg 0
   NOCL_UNWRAP(k, NoCLKernel, args[0]);
@@ -242,80 +248,84 @@ NAN_METHOD(SetKernelArg) {
   // using OpenCL, and then try to convert arg[2] to the type the kernel
   // expects
 
+  // check if we have kernel introspection available
+  std::string type_name;
+  bool local_arg = false;
+#ifdef CL_VERSION_1_2
   // get address qualifier of kernel (local, global, constant, private), one of:
   // - CL_KERNEL_ARG_ADDRESS_GLOBAL
   // - CL_KERNEL_ARG_ADDRESS_LOCAL
   // - CL_KERNEL_ARG_ADDRESS_CONSTANT
   // - CL_KERNEL_ARG_ADDRESS_PRIVATE
-  cl_kernel_arg_address_qualifier adrqual;
-  CHECK_ERR(::clGetKernelArgInfo(k->getRaw(), arg_idx, CL_KERNEL_ARG_ADDRESS_QUALIFIER, sizeof(cl_kernel_arg_address_qualifier), &adrqual, NULL));
+  if(!ARG_EXISTS(3)) {
+    cl_kernel_arg_address_qualifier adrqual;
+    CHECK_ERR(::clGetKernelArgInfo(k->getRaw(), arg_idx, CL_KERNEL_ARG_ADDRESS_QUALIFIER, sizeof(cl_kernel_arg_address_qualifier), &adrqual, NULL));
 
-  // get typename (for conversion of the JS parameter)
-  size_t nchars=0;
-  CHECK_ERR(::clGetKernelArgInfo(k->getRaw(), arg_idx, CL_KERNEL_ARG_TYPE_NAME, 0, NULL, &nchars));
-  unique_ptr<char[]> type_name(new char[nchars]);
-  CHECK_ERR(::clGetKernelArgInfo(k->getRaw(), arg_idx, CL_KERNEL_ARG_TYPE_NAME, nchars, type_name.get(), NULL));
-
-  // now map the JS parameter `args[2]` to the expected kernel parameter type `typename`
-
-  // Arg 2
-  size_t ptr_size = 0;
-  void * ptr_data = NULL;
-  bool dont_delete = false;
-  char * name = type_name.get();
-
-  // first check for pointers (require either local size or cl_mem)
-  if ('*' == name[(strlen(name) - 1)]){
-    // check if type is local or global
-    switch (adrqual) {
-      case CL_KERNEL_ARG_ADDRESS_LOCAL:
-        {
-            // expect a size type
-            if (!args[2]->IsNumber()){
-              THROW_ERR(CL_INVALID_ARG_VALUE);
-            }
-            // local buffers are intialized with their size (data = NULL)
-            ptr_data = NULL;
-            ptr_size = args[2]->ToInteger()->Value();
-        } break;
-      case CL_KERNEL_ARG_ADDRESS_GLOBAL:
-      case CL_KERNEL_ARG_ADDRESS_CONSTANT:
-        {
-          // global and constant memory parameters have to be initialized with
-          // a cl_mem buffer reference
-          NOCL_UNWRAP(mem , NoCLMem, args[2]);
-          ptr_data = mem->getRaw();
-          ptr_size = sizeof(cl_mem);
-          dont_delete = true;
-        } break;
+    // get typename (for conversion of the JS parameter)
+    size_t nchars=0;
+    CHECK_ERR(::clGetKernelArgInfo(k->getRaw(), arg_idx, CL_KERNEL_ARG_TYPE_NAME, 0, NULL, &nchars));
+    char* tname = new char[nchars];
+    CHECK_ERR(::clGetKernelArgInfo(k->getRaw(), arg_idx, CL_KERNEL_ARG_TYPE_NAME, nchars, tname, NULL));
+    type_name = std::string(tname);
+    delete [] tname;
+    if (adrqual == CL_KERNEL_ARG_ADDRESS_LOCAL)
+      local_arg = true;
+  } else
+#endif
+  { // behaviour when type is given (mandatory for OpenCL version < 1.2)
+    // read argument 3 as the name of the data type
+    if (args[3]->IsString()) {
+      Local<String> s = args[3]->ToString();
+      String::Utf8Value tname(s);
+      const char* tname_c = *tname;
+      size_t len = tname.length();
+      type_name.resize(len);
+      std::copy(tname_c, tname_c + len, type_name.begin());
+      if (type_name == "local" || type_name == "__local")
+        local_arg = true;
+    } else {
+      return NanThrowError("Typename has to be given as string");
     }
-  } else if (type_converter.hasType(name)) {
+  }
+
+
+  cl_int err = 0;
+
+  if (local_arg) {
+    // expect a size type
+    if (!args[2]->IsNumber())
+      THROW_ERR(CL_INVALID_ARG_VALUE);
+    // local buffers are intialized with their size (data = NULL)
+    size_t local_size = args[2]->ToInteger()->Value();
+    err = ::clSetKernelArg(k->getRaw(), arg_idx, local_size, NULL);
+  } else if ('*' == type_name[type_name.length() - 1]){
+    // type must be a buffer (CLMem object)
+    NOCL_UNWRAP(mem , NoCLMem, args[2]);
+    err = ::clSetKernelArg(k->getRaw(), arg_idx, sizeof(cl_mem), &mem->getRaw());
+  } else if (type_converter.hasType(type_name)) {
     // convert primitive types using the conversion
     // function map (indexed by OpenCL type name)
-    cl_int err;
-    std::tie(ptr_size, ptr_data, err) = type_converter.convert(name, args[2]);
+    void* data;
+    size_t size;
+    std::tie(size, data, err) = type_converter.convert(type_name, args[2]);
     CHECK_ERR(err);
+    err = ::clSetKernelArg(k->getRaw(), arg_idx, size, data);
+    free(data);
   }
 
   // TODO: check for image_t types
   // TODO: support queue_t and clk_event_t, and others?
 
   // Otherwise it should be a native type
-  else if (strcmp(name, "sampler_t") == 0) {
+  else if (type_name == "sampler_t") {
     NOCL_UNWRAP(sw , NoCLSampler, args[2]);
-    ptr_data = sw->getRaw();
-    ptr_size = sizeof(cl_sampler);
-    dont_delete = true;
+    err = ::clSetKernelArg(k->getRaw(), arg_idx, sizeof(cl_sampler), &sw->getRaw());
+  } else {
+    std::string errstr = std::string("Unsupported OpenCL argument type: ") + type_name;
+    return NanThrowError(errstr.c_str());
   }
 
-  cl_int err = ::clSetKernelArg(k->getRaw(), arg_idx, ptr_size, &ptr_data);
-
-  // cleanup
-  if (!dont_delete) {
-    free(ptr_data);
-  }
   CHECK_ERR(err);
-
   NanReturnValue(JS_INT(err));
 }
 

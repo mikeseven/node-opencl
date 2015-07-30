@@ -106,7 +106,10 @@ describe("Kernel", function () {
           var k = cl.createKernel(prg, "square");
           var mem = cl.createBuffer(ctx, 0, 8, null);
 
-          assert(cl.setKernelArg(k, 0, mem) == cl.SUCCESS);
+          if (cl.VERSION_1_2) {
+            assert(cl.setKernelArg(k, 0, mem) == cl.SUCCESS);
+          }
+          assert(cl.setKernelArg(k, 0, mem, "float*") == cl.SUCCESS);
 
           cl.releaseKernel(k);
         });
@@ -118,8 +121,12 @@ describe("Kernel", function () {
         U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
 
-          U.bind(cl.setKernelArg, k, 0, 5)
-            .should.throw(cl.INVALID_MEM_OBJECT.message);
+          if (cl.VERSION_1_2) {
+            U.bind(cl.setKernelArg, k, 0, 5)
+              .should.throw(cl.INVALID_MEM_OBJECT.message);
+          }
+          U.bind(cl.setKernelArg, k, 0, 5, "float*")
+          .should.throw(cl.INVALID_MEM_OBJECT.message);
 
           cl.releaseKernel(k);
         });
@@ -131,8 +138,12 @@ describe("Kernel", function () {
         U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
 
-          U.bind(cl.setKernelArg, k, 0, [5, 10, 15])
-            .should.throw(cl.INVALID_MEM_OBJECT.message);
+          if (cl.VERSION_1_2) {
+            U.bind(cl.setKernelArg, k, 0, [5, 10, 15])
+              .should.throw(cl.INVALID_MEM_OBJECT.message);
+          }
+          U.bind(cl.setKernelArg, k, 0, [5, 10, 15], "float*")
+          .should.throw(cl.INVALID_MEM_OBJECT.message);
 
           cl.releaseKernel(k);
         });
@@ -144,7 +155,10 @@ describe("Kernel", function () {
         U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
 
-          assert(cl.setKernelArg(k, 2, 5) == cl.SUCCESS);
+          if (cl.VERSION_1_2) {
+            assert(cl.setKernelArg(k, 2, 5) == cl.SUCCESS);
+          }
+          assert(cl.setKernelArg(k, 2, 5, "uint") == cl.SUCCESS);
 
           cl.releaseKernel(k);
         });
@@ -156,7 +170,11 @@ describe("Kernel", function () {
         U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
 
-          U.bind(cl.setKernelArg, k, 2, "a")
+          if (cl.VERSION_1_2) {
+            U.bind(cl.setKernelArg, k, 2, "a")
+              .should.throw(cl.INVALID_ARG_VALUE.message);
+          }
+          U.bind(cl.setKernelArg, k, 2, "a", "char")
             .should.throw(cl.INVALID_ARG_VALUE.message);
 
           cl.releaseKernel(k);
@@ -169,7 +187,11 @@ describe("Kernel", function () {
         U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
 
-          U.bind(cl.setKernelArg, k, 2, [5, 10, 15])
+          if (cl.VERSION_1_2) {
+            U.bind(cl.setKernelArg, k, 2, [5, 10, 15])
+              .should.throw(cl.INVALID_ARG_VALUE.message);
+          }
+          U.bind(cl.setKernelArg, k, 2, [5, 10, 15], "int")
             .should.throw(cl.INVALID_ARG_VALUE.message);
 
           cl.releaseKernel(k);
@@ -184,8 +206,12 @@ describe("Kernel", function () {
           var k = cl.createKernel(prg, "square");
           var mem = cl.createBuffer(ctx, 0, 8, null);
 
-          U.bind(cl.setKernelArg, k, 2, mem)
-            .should.throw(cl.INVALID_ARG_VALUE.message);
+          if (cl.VERSION_1_2) {
+            U.bind(cl.setKernelArg, k, 2, mem)
+              .should.throw(cl.INVALID_ARG_VALUE.message);
+          }
+          U.bind(cl.setKernelArg, k, 2, mem, "int")
+          .should.throw(cl.INVALID_ARG_VALUE.message);
 
           cl.releaseKernel(k);
         });
@@ -199,7 +225,11 @@ describe("Kernel", function () {
         U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
 
-          U.bind(cl.setKernelArg, k, 3, 5)
+          if (cl.VERSION_1_2) {
+            U.bind(cl.setKernelArg, k, 3, 5)
+              .should.throw(cl.INVALID_ARG_INDEX.message);
+          }
+          U.bind(cl.setKernelArg, k, 3, 5, "int")
             .should.throw(cl.INVALID_ARG_INDEX.message);
 
           cl.releaseKernel(k);
