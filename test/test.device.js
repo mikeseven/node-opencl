@@ -76,6 +76,9 @@ describe("Device", function() {
       testString(device, "DEVICE_VERSION");
       testString(device, "DEVICE_OPENCL_C_VERSION");
       testString(device, "DEVICE_EXTENSIONS");
+      testString(device, "DEVICE_BUILT_IN_KERNELS");
+      testString(device, "DEVICE_SPIR_VERSIONS");
+      testString(device, "DRIVER_VERSION");
       var ext=cl.getDeviceInfo(device,cl.DEVICE_EXTENSIONS);
       var hasFP16=ext.toLowerCase().match(/cl_khr_fp16/g);
       var hasFP64=ext.toLowerCase().match(/cl_khr_fp64/g);
@@ -95,7 +98,11 @@ describe("Device", function() {
       testBoolean(device, "DEVICE_ERROR_CORRECTION_SUPPORT");
       testBoolean(device, "DEVICE_HOST_UNIFIED_MEMORY");
       testBoolean(device, "DEVICE_IMAGE_SUPPORT");
+      testBoolean(device, "DEVICE_LINKER_AVAILABLE");
+      testBoolean(device, "DEVICE_PREFERRED_INTEROP_USER_SYNC");
 
+
+      testInteger(device, "DEVICE_IMAGE_PITCH_ALIGNMENT");
       testInteger(device, "DEVICE_ADDRESS_BITS");
       testInteger(device, "DEVICE_GLOBAL_MEM_CACHELINE_SIZE");
       testInteger(device, "DEVICE_MAX_CLOCK_FREQUENCY");
@@ -122,6 +129,9 @@ describe("Device", function() {
       testInteger(device, "DEVICE_PREFERRED_VECTOR_WIDTH_DOUBLE");
       testInteger(device, "DEVICE_PREFERRED_VECTOR_WIDTH_HALF");
       testInteger(device, "DEVICE_VENDOR_ID");
+      testInteger(device, "DEVICE_MAX_GLOBAL_VARIABLE_SIZE");
+      testInteger(device, "DEVICE_MAX_ON_DEVICE_EVENTS");
+      testInteger(device, "DEVICE_MAX_ON_DEVICE_QUEUES");
 
       if(cl.CL_VERSION_1_2) {
         testInteger(device, "DEVICE_REFERENCE_COUNT");
@@ -134,14 +144,22 @@ describe("Device", function() {
       test64Array(device, "DEVICE_MAX_CONSTANT_BUFFER_SIZE");
       test64Array(device, "DEVICE_MAX_MEM_ALLOC_SIZE");
 
+      testInteger(device, "DEVICE_GLOBAL_VARIABLE_PREFERRED_TOTAL_SIZE");
+      testInteger(device, "DEVICE_PRINTF_BUFFER_SIZE");
       testInteger(device, "DEVICE_IMAGE2D_MAX_HEIGHT");
       testInteger(device, "DEVICE_IMAGE2D_MAX_WIDTH");
       testInteger(device, "DEVICE_IMAGE3D_MAX_DEPTH");
       testInteger(device, "DEVICE_IMAGE3D_MAX_HEIGHT");
       testInteger(device, "DEVICE_IMAGE3D_MAX_WIDTH");
+      testInteger(device, "DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT");
       testInteger(device, "DEVICE_MAX_PARAMETER_SIZE");
       testInteger(device, "DEVICE_MAX_WORK_GROUP_SIZE");
       testInteger(device, "DEVICE_PROFILING_TIMER_RESOLUTION");
+      testInteger(device, "DEVICE_PREFERRED_GLOBAL_ATOMIC_ALIGNMENT");
+      testInteger(device, "DEVICE_PREFERRED_LOCAL_ATOMIC_ALIGNMENT");
+      testInteger(device, "DEVICE_PREFERRED_PLATFORM_ATOMIC_ALIGNMENT");
+      testInteger(device, "DEVICE_QUEUE_ON_DEVICE_MAX_SIZE");
+      testInteger(device, "DEVICE_QUEUE_ON_DEVICE_PREFERRED_SIZE");
 
       if (U.checkVersion("2.x")) {
         testInteger(device, "DEVICE_PIPE_MAX_PACKET_SIZE");
