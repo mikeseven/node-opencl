@@ -65,6 +65,56 @@ describe("Context", function () {
       cl.releaseContext(ctx);
     });
 
+    it("should create a context with the host processor type", function () {
+      var properties = [
+        cl.CONTEXT_PLATFORM, platform
+      ];
+      var ctx = cl.createContextFromType(properties, cl.DEVICE_TYPE_CPU, null, null);
+      assert.isNotNull(ctx);
+      assert.isDefined(ctx);
+      cl.releaseContext(ctx);
+    });
+
+    it("should create a context with the host GPU type", function () {
+      var properties = [
+        cl.CONTEXT_PLATFORM, platform
+      ];
+      var ctx = cl.createContextFromType(properties, cl.DEVICE_TYPE_GPU, null, null);
+      assert.isNotNull(ctx);
+      assert.isDefined(ctx);
+      cl.releaseContext(ctx);
+    });
+
+    it("should create a context with the accelerator type", function () {
+      var properties = [
+        cl.CONTEXT_PLATFORM, platform
+      ];
+      var ctx = cl.createContextFromType(properties, cl.DEVICE_TYPE_ACCELERATOR, null, null);
+      assert.isNotNull(ctx);
+      assert.isDefined(ctx);
+      cl.releaseContext(ctx);
+    });
+
+    it("should create a context with the custom type", function () {
+      var properties = [
+        cl.CONTEXT_PLATFORM, platform
+      ];
+      var ctx = cl.createContextFromType(properties, cl.DEVICE_TYPE_CUSTOM, null, null);
+      assert.isNotNull(ctx);
+      assert.isDefined(ctx);
+      cl.releaseContext(ctx);
+    });
+
+    it("should create a context with the default type", function () {
+      var properties = [
+        cl.CONTEXT_PLATFORM, platform
+      ];
+      var ctx = cl.createContextFromType(properties, cl.DEVICE_TYPE_DEFAULT, null, null);
+      assert.isNotNull(ctx);
+      assert.isDefined(ctx);
+      cl.releaseContext(ctx);
+    });
+
   });
 
   describe("#getContextInfo", function () {
