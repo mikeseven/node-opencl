@@ -1260,6 +1260,16 @@ describe("CommandQueue", function() {
         });
       });
     });
+
+    it("should return a valid buffer", function () {
+      U.withContext(function (ctx, device) {
+        U.withCQ(ctx, device, function (cq) {
+          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var ret = cl.enqueueMapImage(cq, image, true, cl.MAP_WRITE_INVALIDATE_REGION, [0,0,0], [2,2,1]);
+          assert.isNumber(ret.buffer[0]);
+        });
+      });
+    });
     
 
     it("should not be able to read from a not already allocated pointer", function () {

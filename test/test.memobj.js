@@ -121,6 +121,86 @@ describe("MemObj", function() {
       });
     })
 
+    it("should create a subBuffer", function() {
+      U.withContext(function (context, device, platform) {
+        var buffer = cl.createBuffer(context, 0, 8, null);
+        var subBuffer = f(buffer, cl.MEM_WRITE_ONLY, cl.BUFFER_CREATE_TYPE_REGION, {"origin": 0, "size": 2});
+
+        cl.releaseMemObject(subBuffer);
+        cl.releaseMemObject(buffer);
+      });
+    })
+
+    it("should create a subBuffer", function() {
+      U.withContext(function (context, device, platform) {
+        var buffer = cl.createBuffer(context, 0, 8, null);
+        var subBuffer = f(buffer, cl.MEM_READ_ONLY, cl.BUFFER_CREATE_TYPE_REGION, {"origin": 0, "size": 2});
+
+        cl.releaseMemObject(subBuffer);
+        cl.releaseMemObject(buffer);
+      });
+    })
+
+    it("should create a subBuffer", function() {
+      U.withContext(function (context, device, platform) {
+        var buffer = cl.createBuffer(context, 0, 8, null);
+        var subBuffer = f(buffer, cl.MEM_USE_HOST_PTR, cl.BUFFER_CREATE_TYPE_REGION, {"origin": 0, "size": 2});
+
+        cl.releaseMemObject(subBuffer);
+        cl.releaseMemObject(buffer);
+      });
+    })
+
+    it("should create a subBuffer", function() {
+      U.withContext(function (context, device, platform) {
+        var buffer = cl.createBuffer(context, 0, 8, null);
+        var subBuffer = f(buffer, cl.MEM_ALLOC_HOST_PTR, cl.BUFFER_CREATE_TYPE_REGION, {"origin": 0, "size": 2});
+
+        cl.releaseMemObject(subBuffer);
+        cl.releaseMemObject(buffer);
+      });
+    })
+
+    it("should create a subBuffer", function() {
+      U.withContext(function (context, device, platform) {
+        var buffer = cl.createBuffer(context, 0, 8, null);
+        var subBuffer = f(buffer, cl.MEM_COPY_HOST_PTR, cl.BUFFER_CREATE_TYPE_REGION, {"origin": 0, "size": 2});
+
+        cl.releaseMemObject(subBuffer);
+        cl.releaseMemObject(buffer);
+      });
+    })
+
+    it("should create a subBuffer", function() {
+      U.withContext(function (context, device, platform) {
+        var buffer = cl.createBuffer(context, 0, 8, null);
+        var subBuffer = f(buffer, cl.MEM_HOST_WRITE_ONLY, cl.BUFFER_CREATE_TYPE_REGION, {"origin": 0, "size": 2});
+
+        cl.releaseMemObject(subBuffer);
+        cl.releaseMemObject(buffer);
+      });
+    })
+
+    it("should create a subBuffer", function() {
+      U.withContext(function (context, device, platform) {
+        var buffer = cl.createBuffer(context, 0, 8, null);
+        var subBuffer = f(buffer, cl.MEM_HOST_READ_ONLY, cl.BUFFER_CREATE_TYPE_REGION, {"origin": 0, "size": 2});
+
+        cl.releaseMemObject(subBuffer);
+        cl.releaseMemObject(buffer);
+      });
+    })
+
+    it("should create a subBuffer", function() {
+      U.withContext(function (context, device, platform) {
+        var buffer = cl.createBuffer(context, 0, 8, null);
+        var subBuffer = f(buffer, cl.MEM_HOST_NO_ACCESS, cl.BUFFER_CREATE_TYPE_REGION, {"origin": 0, "size": 2});
+
+        cl.releaseMemObject(subBuffer);
+        cl.releaseMemObject(buffer);
+      });
+    })
+
   });
   versions(["1.2","2.0"]).describe("#createImage", function() {
 
@@ -143,6 +223,78 @@ describe("MemObj", function() {
       });
     });
 
+    it("should create an image", function() {
+
+      U.withContext(function (context, device, platform) {
+
+        var image = cl.createImage(context, cl.MEM_WRITE_ONLY, imageFormat, imageDesc, null);
+        cl.releaseMemObject(image);
+      });
+    });
+
+    it("should create an image", function() {
+
+      U.withContext(function (context, device, platform) {
+
+        var image = cl.createImage(context, cl.MEM_READ_ONLY, imageFormat, imageDesc, null);
+        cl.releaseMemObject(image);
+      });
+    });
+
+    it("should create an image", function() {
+
+      U.withContext(function (context, device, platform) {
+
+        var image = cl.createImage(context, cl.MEM_USE_HOST_PTR, imageFormat, imageDesc, null);
+        cl.releaseMemObject(image);
+      });
+    });
+
+    it("should create an image", function() {
+
+      U.withContext(function (context, device, platform) {
+
+        var image = cl.createImage(context, cl.MEM_ALLOC_HOST_PTR, imageFormat, imageDesc, null);
+        cl.releaseMemObject(image);
+      });
+    });
+
+    it("should create an image", function() {
+
+      U.withContext(function (context, device, platform) {
+
+        var image = cl.createImage(context, cl.MEM_COPY_HOST_PTR, imageFormat, imageDesc, null);
+        cl.releaseMemObject(image);
+      });
+    });
+
+    it("should create an image", function() {
+
+      U.withContext(function (context, device, platform) {
+
+        var image = cl.createImage(context, cl.MEM_HOST_WRITE_ONLY, imageFormat, imageDesc, null);
+        cl.releaseMemObject(image);
+      });
+    });
+
+    it("should create an image", function() {
+
+      U.withContext(function (context, device, platform) {
+
+        var image = cl.createImage(context, cl.MEM_HOST_READ_ONLY, imageFormat, imageDesc, null);
+        cl.releaseMemObject(image);
+      });
+    });
+
+    it("should create an image", function() {
+
+      U.withContext(function (context, device, platform) {
+
+        var image = cl.createImage(context, cl.MEM_HOST_NO_ACCESS, imageFormat, imageDesc, null);
+        cl.releaseMemObject(image);
+      });
+    });
+
     it("should throw cl.INVALID_CONTEXT if context is invalid", function() {
       U.withContext(function (context, device, platform) {
 
@@ -155,6 +307,21 @@ describe("MemObj", function() {
         f.bind(f, context, -1, imageFormat, imageDesc, null).should.throw(cl.INVALID_VALUE.message);
       });
     });
+
+    it("should throw cl.INVALID_IMAGE_DESCRIPTOR if image_desc is not valid or null", function () {
+      U.withContext(function (context, device, platform) {
+        f.bind(f, context, 0, imageFormat, -1, null).should.throw(cl.INVALID_IMAGE_DESCRIPTOR.message);
+      });
+    });
+
+    it("should throw cl.INVALID_IMAGE_FORMAT_DESCRIPTOR if image_format is not valid or null", function () {
+      U.withContext(function (context, device, platform) {
+        f.bind(f, context, 0, -1, imageDesc, null).should.throw(cl.INVALID_IMAGE_FORMAT_DESCRIPTOR.message);
+      });
+    });
+
+
+
 
   });
   describe("#retainMemObject", function() {

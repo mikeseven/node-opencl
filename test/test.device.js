@@ -202,50 +202,76 @@ describe("Device", function() {
 
     versions(["1.2", "2.0"]).describe("#createSubDevices() for "+device_vendor+" "+device_name,function() {
 
-      skip().vendor("Intel").it("should return an array of sub-devices", function() {
 
-        var subdevices;
-        try {
-          cl.createSubDevices(device, [cl.DEVICE_PARTITION_BY_COUNTS, 3, 1, cl.DEVICE_PARTITION_BY_COUNTS_LIST_END, 0], 2);
-          assert.isArray(subDevices);
-          assert.isAbove(subDevices.length, 0);
-        } catch (error) {
-          if (error.message === cl.DEVICE_PARTITION_FAILED.message) {
-            assert.isTrue(true);
+      var num = cl.getDeviceInfo(device, cl.DEVICE_PARTITION_MAX_ SUB_DEVICES);
+      var name = cl.getDeviceInfo(device,cl.DEVICE_VENDOR);
+
+      if (num > 0)
+      {
+        it("should return an array of sub-devices", function() {
+
+          var subdevices;
+          try {
+            cl.createSubDevices(device, [cl.DEVICE_PARTITION_BY_COUNTS, 3, 1, cl.DEVICE_PARTITION_BY_COUNTS_LIST_END, 0], 2);
+            assert.isArray(subDevices);
+            assert.isAbove(subDevices.length, 0);
+          } catch (error) {
+            if (error.message === cl.DEVICE_PARTITION_FAILED.message) {
+              assert.isTrue(true);
+            }
           }
-        }
 
-      })
+        })
+      }
+      else 
+      {
+        console.log("The following vendor is not supported" + name);
+      }
 
-      skip().vendor("Intel").it("should return an array of sub-devices", function() {
+      if (num>0)
+      {
+        it("should return an array of sub-devices", function() {
 
-        var subdevices;
-        try {
-          cl.createSubDevices(device, [cl.DEVICE_PARTITION_EQUALLY, 8, 0], 2);
-          assert.isArray(subDevices);
-          assert.isAbove(subDevices.length, 0);
-        } catch (error) {
-          if (error.message === cl.DEVICE_PARTITION_FAILED.message) {
-            assert.isTrue(true);
+          var subdevices;
+          try {
+            cl.createSubDevices(device, [cl.DEVICE_PARTITION_EQUALLY, 8, 0], 2);
+            assert.isArray(subDevices);
+            assert.isAbove(subDevices.length, 0);
+          } catch (error) {
+            if (error.message === cl.DEVICE_PARTITION_FAILED.message) {
+              assert.isTrue(true);
+            }
           }
-        }
 
-      })
+        })
+      }
+      else
+      {
+        console.log("The following vendor is not supported" + name);
+      }
 
-      skip().vendor("Intel").it("should return an array of sub-devices", function() {
+      if (num > 0)
+      {
 
-        var subdevices;
-        try {
-          cl.createSubDevices(device, [cl.DEVICE_PARTITION_BY_AFFINITY_DOMAIN, cl.DEVICE_AFFINITY_DOMAIN_NEXT_PARTITIONABLE, 0], 2);
-          assert.isArray(subDevices);
-          assert.isAbove(subDevices.length, 0);
-        } catch (error) {
-          if (error.message === cl.DEVICE_PARTITION_FAILED.message) {
-            assert.isTrue(true);
+        skip().vendor("name").it("should return an array of sub-devices", function() {
+
+          var subdevices;
+          try {
+            cl.createSubDevices(device, [cl.DEVICE_PARTITION_BY_AFFINITY_DOMAIN, cl.DEVICE_AFFINITY_DOMAIN_NEXT_PARTITIONABLE, 0], 2);
+            assert.isArray(subDevices);
+            assert.isAbove(subDevices.length, 0);
+          } catch (error) {
+            if (error.message === cl.DEVICE_PARTITION_FAILED.message) {
+              assert.isTrue(true);
+            }
           }
-        }
 
-      })
+        })
+      }
+      else 
+      {
+        console.log("The following vendor is not supported" + name);
+      }
 
     });
     versions(["1.2","2.0"]).describe("#retainDevice() for "+device_vendor+" "+device_name,function() {
