@@ -63,6 +63,17 @@ describe("MemObj", function() {
       });
     });
 
+
+    it("should alloc host memory when passed a TypedArray", function () {
+      U.withContext(function (context, device, platform) {
+
+        var array = new ArrayBuffer(32);
+        var i32Array = new Int32Array(array);
+        var buffer = f(context, cl.MEM_ALLOC_HOST_PTR, 8, i32Array);
+        cl.releaseMemObject(buffer);
+      });
+    });
+
     it("should throw cl.INVALID_MEM_OBJECT when passed neither a Buffer nor a TypedArray", function () {
       U.withContext(function (context, device, platform) {
         f.bind(f, context, cl.MEM_COPY_HOST_PTR, 8, String("this won't do !")).should.throw(cl.INVALID_MEM_OBJECT.message);
@@ -203,6 +214,70 @@ describe("MemObj", function() {
     it("should get supported image formats", function () {
       U.withContext(function (context, device, platform) {
         var formats = f(context, cl.MEM_READ_WRITE, cl.MEM_OBJECT_IMAGE2D);
+        assert.isArray(formats);
+        assert.isAbove(formats.length, 0);
+      });
+    });
+
+    it("should get supported image formats", function () {
+      U.withContext(function (context, device, platform) {
+        var formats = f(context, cl.MEM_WRITE_ONLY, cl.MEM_OBJECT_IMAGE2D);
+        assert.isArray(formats);
+        assert.isAbove(formats.length, 0);
+      });
+    });
+
+    it("should get supported image formats", function () {
+      U.withContext(function (context, device, platform) {
+        var formats = f(context, cl.MEM_READ_ONLY, cl.MEM_OBJECT_IMAGE2D);
+        assert.isArray(formats);
+        assert.isAbove(formats.length, 0);
+      });
+    });
+
+    it("should get supported image formats", function () {
+      U.withContext(function (context, device, platform) {
+        var formats = f(context, cl.MEM_USE_HOST_PTR, cl.MEM_OBJECT_IMAGE2D);
+        assert.isArray(formats);
+        assert.isAbove(formats.length, 0);
+      });
+    });
+
+    it("should get supported image formats", function () {
+      U.withContext(function (context, device, platform) {
+        var formats = f(context, cl.MEM_ALLOC_HOST_PTR, cl.MEM_OBJECT_IMAGE2D);
+        assert.isArray(formats);
+        assert.isAbove(formats.length, 0);
+      });
+    });
+
+    it("should get supported image formats", function () {
+      U.withContext(function (context, device, platform) {
+        var formats = f(context, cl.MEM_COPY_HOST_PTR, cl.MEM_OBJECT_IMAGE2D);
+        assert.isArray(formats);
+        assert.isAbove(formats.length, 0);
+      });
+    });
+
+    it("should get supported image formats", function () {
+      U.withContext(function (context, device, platform) {
+        var formats = f(context, cl.MEM_HOST_WRITE_ONLY, cl.MEM_OBJECT_IMAGE2D);
+        assert.isArray(formats);
+        assert.isAbove(formats.length, 0);
+      });
+    });
+
+    it("should get supported image formats", function () {
+      U.withContext(function (context, device, platform) {
+        var formats = f(context, cl.MEM_HOST_READ_ONLY, cl.MEM_OBJECT_IMAGE2D);
+        assert.isArray(formats);
+        assert.isAbove(formats.length, 0);
+      });
+    });
+
+    it("should get supported image formats", function () {
+      U.withContext(function (context, device, platform) {
+        var formats = f(context, cl.MEM_HOST_NO_ACCESS, cl.MEM_OBJECT_IMAGE2D);
         assert.isArray(formats);
         assert.isAbove(formats.length, 0);
       });
@@ -437,6 +512,12 @@ describe("MemObj", function() {
     it("should throw cl.INVALID_MEM_OBJECT if memory object is invalid", function () {
       U.withContext(function (context, device, platform) {
         f.bind(f, null, cl.IMAGE_BUFFER).should.throw(cl.INVALID_MEM_OBJECT.message);
+      });
+    });
+
+    it("should throw cl.INVALID_VALUE if param name is not valid ", function () {
+      U.withContext(function (context, device, platform) {
+        f.bind(f, 0, cl.IMAGE_BUFFER).should.throw(cl.INVALID_VALUE.message);
       });
     });
   });
