@@ -298,7 +298,7 @@ NAN_METHOD(SetKernelArg) {
     // local buffers are intialized with their size (data = NULL)
     size_t local_size = args[2]->ToInteger()->Value();
     err = ::clSetKernelArg(k->getRaw(), arg_idx, local_size, NULL);
-  } else if ('*' == type_name[type_name.length() - 1]){
+  } else if ('*' == type_name[type_name.length() - 1] || type_name == "cl_mem"){
     // type must be a buffer (CLMem object)
     NOCL_UNWRAP(mem , NoCLMem, args[2]);
     err = ::clSetKernelArg(k->getRaw(), arg_idx, sizeof(cl_mem), &mem->getRaw());
