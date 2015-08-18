@@ -273,6 +273,14 @@ describe("Device", function() {
         console.log("The following vendor is not supported" + name);
       }
 
+      it("should throw cl.INVALID_DEVICE with device = null",function() {
+        cl.createSubDevices(null, [cl.DEVICE_PARTITION_EQUALLY, 8, 0], 2).should.throw(cl.INVALID_DEVICE.message);
+      });
+      
+      it("should throw cl.INVALID_VALUE with properties = null",function() {
+        cl.createSubDevices(device, null, 2).should.throw(cl.INVALID_VALUE.message);
+      });
+
     });
     versions(["1.2","2.0"]).describe("#retainDevice() for "+device_vendor+" "+device_name,function() {
 
