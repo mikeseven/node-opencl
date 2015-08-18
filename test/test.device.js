@@ -253,7 +253,7 @@ describe("Device", function() {
       if (num > 0)
       {
 
-        skip().vendor("name").it("should return an array of sub-devices", function() {
+        it("should return an array of sub-devices", function() {
 
           var subdevices;
           try {
