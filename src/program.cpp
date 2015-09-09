@@ -160,7 +160,7 @@ NAN_METHOD(CreateProgramWithBuiltInKernels) {
   cl_int err = CL_SUCCESS;
   cl_program prg = ::clCreateProgramWithBuiltInKernels(
     context->getRaw(),
-    cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
+    (cl_uint) cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
     names.front(),
     &err);
 
@@ -234,7 +234,7 @@ NAN_METHOD(BuildProgram) {
    NoCLProgramCLCallback* cb = new NoCLProgramCLCallback(callback,userData);
 
    err = ::clBuildProgram(p->getRaw(),
-          devices.size(), NOCL_TO_CL_ARRAY(devices, NoCLDeviceId),
+          (cl_uint) devices.size(), NOCL_TO_CL_ARRAY(devices, NoCLDeviceId),
           options != NULL ? **options : nullptr,
           notifyPCB, cb);
   }
@@ -242,7 +242,7 @@ NAN_METHOD(BuildProgram) {
 
   else
     err = ::clBuildProgram(p->getRaw(),
-          devices.size(), NOCL_TO_CL_ARRAY(devices, NoCLDeviceId),
+          (cl_uint) devices.size(), NOCL_TO_CL_ARRAY(devices, NoCLDeviceId),
           options != NULL ? **options : nullptr,
           nullptr, nullptr);
 
@@ -327,9 +327,9 @@ NAN_METHOD(CompileProgram) {
 
    err = ::clCompileProgram(
                p->getRaw(),
-               cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
+               (cl_uint) cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
                options != NULL ? **options : nullptr,
-               program_headers.size(), NOCL_TO_CL_ARRAY(program_headers, NoCLProgram),
+               (cl_uint) program_headers.size(), NOCL_TO_CL_ARRAY(program_headers, NoCLProgram),
                &names.front(),
                notifyPCB, cb);
   }
@@ -338,9 +338,9 @@ NAN_METHOD(CompileProgram) {
   else
     err = ::clCompileProgram(
                 p->getRaw(),
-                cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
+                (cl_uint) cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
                 options != NULL ? **options : nullptr,
-                program_headers.size(), NOCL_TO_CL_ARRAY(program_headers, NoCLProgram),
+                (cl_uint) program_headers.size(), NOCL_TO_CL_ARRAY(program_headers, NoCLProgram),
                 &names.front(),
                 nullptr, nullptr);
 
@@ -411,9 +411,9 @@ NAN_METHOD(LinkProgram) {
    NoCLProgramCLCallback* cb = new NoCLProgramCLCallback(callback,userData);
    prg = ::clLinkProgram(
      ctx->getRaw(),
-     cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
+     (cl_uint) cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
      options != NULL ? **options : nullptr,
-     cl_programs.size(), NOCL_TO_CL_ARRAY(cl_programs, NoCLProgram),
+     (cl_uint) cl_programs.size(), NOCL_TO_CL_ARRAY(cl_programs, NoCLProgram),
      notifyPCB, cb,
      &ret);
   }
@@ -421,9 +421,9 @@ NAN_METHOD(LinkProgram) {
   else
     prg = ::clLinkProgram(
     ctx->getRaw(),
-    cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
+    (cl_uint) cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
     options != NULL ? **options : nullptr,
-    cl_programs.size(), NOCL_TO_CL_ARRAY(cl_programs, NoCLProgram),
+    (cl_uint) cl_programs.size(), NOCL_TO_CL_ARRAY(cl_programs, NoCLProgram),
     NULL, NULL,
     &ret);
 

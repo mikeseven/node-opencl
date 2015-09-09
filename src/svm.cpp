@@ -179,10 +179,10 @@ NAN_METHOD(enqueueSVMFree) {
    NanCallback *callback = new NanCallback(callbackHandle);
    Local<Object> userData = args[3].As<Object>();
    NoCLSVMFreeCallback* cb = new NoCLSVMFreeCallback(callback,userData);
-   err = clEnqueueSVMFree(cq->getRaw(),vec.size(),vec.data(),
+   err = clEnqueueSVMFree(cq->getRaw(),(cl_uint) vec.size(),vec.data(),
                          notifySVMFree,
                          cb,
-                         cl_events.size(),
+                         (cl_uint) cl_events.size(),
                          NOCL_TO_CL_ARRAY(
                          cl_events, NoCLEvent),
                          eventPtr);
@@ -194,10 +194,10 @@ NAN_METHOD(enqueueSVMFree) {
     }
   }
 
-   err = clEnqueueSVMFree(cq->getRaw(),vec.size(),vec.data(),
+   err = clEnqueueSVMFree(cq->getRaw(),(cl_uint) vec.size(),vec.data(),
                          NULL,
                          NULL,
-                         cl_events.size(),
+                         (cl_uint) cl_events.size(),
                          NOCL_TO_CL_ARRAY(
                          cl_events, NoCLEvent),
                          eventPtr);
@@ -246,7 +246,7 @@ NAN_METHOD(enqueueSVMMemcpy) {
 
   err = clEnqueueSVMMemcpy(cq->getRaw(),blocking_copy,
                            dst,src,size,
-                           cl_events.size(),
+                           (cl_uint) cl_events.size(),
                            NOCL_TO_CL_ARRAY(
                            cl_events, NoCLEvent),
                            eventPtr);
@@ -297,7 +297,7 @@ NAN_METHOD(enqueueSVMMemFill) {
       eventPtr = &event;
 
   err =  clEnqueueSVMMemFill(cq->getRaw(),ptr,pattern,static_cast<size_t>(len),size,
-                             cl_events.size(),
+                             (cl_uint) cl_events.size(),
                              NOCL_TO_CL_ARRAY(
                              cl_events, NoCLEvent),
                              eventPtr);
@@ -342,7 +342,7 @@ NAN_METHOD(enqueueSVMMap) {
       eventPtr = &event;
 
   err = clEnqueueSVMMap(cq->getRaw(),blocking_map,map_flags,
-                        ptr,size,cl_events.size(),
+                        ptr,size, (cl_uint)cl_events.size(),
                         NOCL_TO_CL_ARRAY(
                         cl_events, NoCLEvent),
                         eventPtr);
@@ -382,7 +382,7 @@ NAN_METHOD(enqueueSVMUnmap) {
   if(ARG_EXISTS(3) && args[3]->BooleanValue())
       eventPtr = &event;
 
-  err = clEnqueueSVMUnmap(cq->getRaw(),ptr,cl_events.size(),
+  err = clEnqueueSVMUnmap(cq->getRaw(),ptr, (cl_uint)cl_events.size(),
                        NOCL_TO_CL_ARRAY(
                        cl_events, NoCLEvent),
                        eventPtr);

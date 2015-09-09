@@ -116,7 +116,7 @@ public:
         }                                                                       \
         void* ptr_data = new TYPE;                                              \
         size_t ptr_size = sizeof(TYPE);                                         \
-        *((TYPE *)ptr_data) = val->CONV();                                      \
+        *((TYPE *)ptr_data) = (TYPE) val->CONV();                                      \
         return std::tuple<size_t, void*,cl_int>(ptr_size, ptr_data, 0);         \
       };                                                                        \
       m_converters[NAME] = f;                                                   \
@@ -161,7 +161,7 @@ public:
             /*THROW_ERR(CL_INVALID_ARG_VALUE);*/                                \
           return std::tuple<size_t,void*,cl_int>(0, NULL, CL_INVALID_ARG_VALUE);\
           }                                                                     \
-          vvc[i] = arr->Get(i)->COND();                                         \
+          vvc[i] = (TYPE) arr->Get(i)->COND();                                  \
         }                                                                       \
         return std::tuple<size_t,void*,cl_int>(ptr_size, ptr_data, 0);          \
       };                                                                        \
@@ -372,7 +372,8 @@ NAN_METHOD(GetKernelInfo) {
     }
   }
 
-  return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  return NanThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE).c_str(), CL_INVALID_VALUE));
+  //return NanThrowError(JS_INT(CL_INVALID_VALUE));
 }
 
 #ifdef CL_VERSION_1_2
@@ -417,7 +418,8 @@ NAN_METHOD(GetKernelArgInfo) {
     }
   }
 
-  return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  return NanThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE).c_str(), CL_INVALID_VALUE));
+  //return NanThrowError(JS_INT(CL_INVALID_VALUE));
 }
 #endif
 

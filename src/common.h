@@ -2,8 +2,7 @@
 #define OPENCL_COMMON_H_
 
 // Node includes
-#include <node.h>
-#include "nan.h"
+#include <nan.h>
 #include <string>
 #include <memory>
 #include <vector>
@@ -13,6 +12,7 @@
 
 using namespace std;
 using namespace v8;
+using namespace Nan;
 
 
 #if defined (__APPLE__) || defined(MACOSX)
@@ -49,32 +49,33 @@ namespace {
 
 #define CHECK_ERR(ret)  { cl_int _err=(ret); \
   if ((_err) != CL_SUCCESS) { \
-    return NanThrowError(opencl::getExceptionMessage(_err).c_str(), _err); \
+    return NanThrowError(JS_STR(opencl::getExceptionMessage(_err).c_str(), _err)); \
   } \
 }
 
 #define THROW_ERR(code) { cl_int _err=(code); \
-  return NanThrowError(opencl::getExceptionMessage(_err).c_str(), _err); \
+  return NanThrowError(JS_STR(opencl::getExceptionMessage(_err).c_str(), _err)); \
 }
 
 #define REQ_ARGS(N)                                                     \
   if (args.Length() < (N)) {                                            \
     NanThrowTypeError("Expected " #N " arguments");                     \
-    NanReturnUndefined(); \
+    NanReturnUndefined();                                               \
   }
 
 #define REQ_STR_ARG(I, VAR)                                             \
-  if (args.Length() <= (I) || !args[I]->IsString())  {                   \
+  if (args.Length() <= (I) || !args[I]->IsString())  {                  \
     NanThrowTypeError("Argument " #I " must be a string");              \
-        NanReturnUndefined(); }\
+    NanReturnUndefined();                                               \
+  }                                                                     \
   String::Utf8Value VAR(args[I]->ToString());
 
 #define REQ_ARRAY_ARG(I, VAR) \
   if (!args[I]->IsArray()) { \
     NanThrowTypeError("Argument " #I " must be an array");              \
-    NanReturnUndefined(); \
-      } \
-    Local<Array> VAR = Local<Array>::Cast(args[I])
+    NanReturnUndefined();                                               \
+  }                                                                     \
+  Local<Array> VAR = Local<Array>::Cast(args[I])
 
 } // namespace
 

@@ -55,7 +55,7 @@
     "bindings": "^1.2.1",
     "chai": "^2.0.0",
     "get-pixels": "^3.1.1",
-    "nan": "^1.6.2",
+    "nan": "^1.9.0",
     "png-js": "^0.1.1"
   },
   "devDependencies": {
@@ -63,8 +63,8 @@
     "chalk": "^0.5.1",
     "mocha": "*"
   },
-  "engines" : {
-    "node" : ">=0.10"
+  "engines": {
+    "node": ">=0.10"
   },
-  "engine-strict" : true
+  "engine-strict": true
 }
