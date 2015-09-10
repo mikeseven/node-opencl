@@ -36,7 +36,7 @@
             ['CXX', '/usr/bin/clang++'],
           ],
           "xcode_settings": {
-             'OTHER_CPLUSPLUSFLAGS' : ['-std=c++11','-stdlib=libc++', ' -Wall'],
+             'OTHER_CPLUSPLUSFLAGS' : ['-std=c++1y','-stdlib=libc++', ' -Wall'],
              'OTHER_LDFLAGS': ['-stdlib=libc++'],
               'MACOSX_DEPLOYMENT_TARGET': '10.9'
           },

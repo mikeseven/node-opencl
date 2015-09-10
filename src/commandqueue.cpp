@@ -3,6 +3,7 @@
 #include <map>
 #include "nanextension.h"
 #include <algorithm>
+#include <memory>
 
 namespace opencl {
 
@@ -227,7 +228,7 @@ NAN_METHOD(EnqueueReadBuffer) {
     getPtrAndLen(args[5],ptr,len);
 
   std::vector<NoCLEvent> cl_events;
-  
+
   if (ARG_EXISTS(6)) {
     Local<Array> js_events = Local<Array>::Cast(args[6]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
