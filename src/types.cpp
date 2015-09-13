@@ -6,22 +6,22 @@ namespace opencl {
 template <typename T, unsigned int elid, int err,int cl_release(T),int cl_acquire(T)> std::map<T,int>NoCLRefCountObject<T,elid,err,cl_release,cl_acquire>::myMap;
 
 NAN_METHOD(Equals) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(1);
 
-  v8::Handle<v8::External> data = v8::Handle<v8::External>::Cast(args.Data());
+  v8::Handle<v8::External> data = v8::Handle<v8::External>::Cast(info.Data());
 
   NoCLObjectGen * self = static_cast<NoCLObjectGen *>(data->Value());
 
-  if (!args[0]->IsObject()) {
-    NanReturnValue(NanNew<Boolean>(false));
+  if (!info[0]->IsObject()) {
+    info.GetReturnValue().Set(Nan::New<Boolean>(false));
   }
 
-  Local<Object> otherObj = args[0]->ToObject();
-  NoCLObjectGen * other = static_cast<NoCLObjectGen *>(NanGetInternalFieldPointer(otherObj, 0));
+  Local<Object> otherObj = info[0]->ToObject();
+  NoCLObjectGen * other = static_cast<NoCLObjectGen *>(Nan::GetInternalFieldPointer(otherObj, 0));
 
   if(self->GetType() != other->GetType()) {
-    NanReturnValue(NanNew<Boolean>(false));
+    info.GetReturnValue().Set(Nan::New<Boolean>(false));
   }
 
   switch (self->GetType()) {
@@ -30,7 +30,7 @@ NAN_METHOD(Equals) {
   case NB: {\
     NAME * aself = static_cast<NAME *>(self);\
     NAME * aother = static_cast<NAME *>(other);\
-    NanReturnValue(NanNew<Boolean>((*aother)==(*aself))); }
+    info.GetReturnValue().Set(Nan::New<Boolean>((*aother)==(*aself))); }
 
     NO_CL_COMPARE_OBJ(NoCLPlatformId,0)
     NO_CL_COMPARE_OBJ(NoCLDeviceId,1)
@@ -44,7 +44,7 @@ NAN_METHOD(Equals) {
     NO_CL_COMPARE_OBJ(NoCLProgramBinary,9)
     //NO_CL_COMPARE_OBJ(NoCLMappedPtr,10)
   default:
-    NanReturnValue(NanNew<Boolean>(false));
+    info.GetReturnValue().Set(Nan::New<Boolean>(false));
   }
 
 
@@ -65,9 +65,9 @@ NAN_METHOD(releaseAll){
 int myCpt = 0;
 
 namespace Types {
-void init(Handle<Object> exports)
+NAN_MODULE_INIT(init)
 {
-  NODE_SET_METHOD(exports, "releaseAll", releaseAll);
+  Nan::SetMethod(target, "releaseAll", releaseAll);
 }
 
 }

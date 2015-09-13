@@ -7,7 +7,7 @@
 namespace opencl {
 
 namespace Context {
-void init(Handle<Object> exports);
+NAN_MODULE_INIT(init);
 } // namespace Context
 
 } // namespace opencl

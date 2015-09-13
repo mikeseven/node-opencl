@@ -12,20 +12,20 @@ namespace opencl {
 //                 cl_filter_mode      /* filter_mode */,
 //                 cl_int *            /* errcode_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(CreateSampler) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(4);
 
   // Arg 0
-  NOCL_UNWRAP(context, NoCLContext, args[0]);
+  NOCL_UNWRAP(context, NoCLContext, info[0]);
 
   // Arg 1
-  cl_bool normalized_coords = args[1]->BooleanValue() ? CL_TRUE : CL_FALSE;
+  cl_bool normalized_coords = info[1]->BooleanValue() ? CL_TRUE : CL_FALSE;
 
   // Arg 2
-  cl_addressing_mode addressing_mode = args[2]->Uint32Value();
+  cl_addressing_mode addressing_mode = info[2]->Uint32Value();
 
   // Arg 3
-  cl_filter_mode filter_mode = args[3]->Uint32Value();
+  cl_filter_mode filter_mode = info[3]->Uint32Value();
 
   cl_int ret=CL_SUCCESS;
   cl_sampler sw = ::clCreateSampler(
@@ -35,7 +35,7 @@ NAN_METHOD(CreateSampler) {
               filter_mode,
               &ret);
   CHECK_ERR(ret);
-  NanReturnValue(NOCL_WRAP(NoCLSampler, sw));
+  info.GetReturnValue().Set(NOCL_WRAP(NoCLSampler, sw));
 }
 
 #else
@@ -44,15 +44,15 @@ NAN_METHOD(CreateSampler) {
 // clCreateSamplerWithProperties(cl_context                     /* context */,
 //                               const cl_sampler_properties *  /* normalized_coords */,
 //                               cl_int *                       /* errcode_ret */) CL_API_SUFFIX__VERSION_2_0;
-//                               
+//
 NAN_METHOD(CreateSamplerWithProperties) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(2);
 
   // Arg 0
-  NOCL_UNWRAP(context, NoCLContext, args[0]);
+  NOCL_UNWRAP(context, NoCLContext, info[0]);
 
-  Local<Array> properties = Local<Array>::Cast(args[1]);
+  Local<Array> properties = Local<Array>::Cast(info[1]);
   vector<cl_sampler_properties> cl_properties;
 
   for (uint32_t i=0; i < properties->Length(); i+=2) {
@@ -94,7 +94,7 @@ NAN_METHOD(CreateSamplerWithProperties) {
               &err);
   CHECK_ERR(err);
 
-  NanReturnValue(NOCL_WRAP(NoCLSampler, sw));
+  info.GetReturnValue().Set(NOCL_WRAP(NoCLSampler, sw));
 
 
 }
@@ -103,28 +103,28 @@ NAN_METHOD(CreateSamplerWithProperties) {
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clRetainSampler(cl_sampler /* sampler */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(RetainSampler) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(1);
 
-  NOCL_UNWRAP(sampler, NoCLSampler, args[0]);
+  NOCL_UNWRAP(sampler, NoCLSampler, info[0]);
 
   cl_int err=sampler->acquire();
   CHECK_ERR(err)
 
-  NanReturnValue(JS_INT(err));
+  info.GetReturnValue().Set(JS_INT(err));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clReleaseSampler(cl_sampler /* sampler */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(ReleaseSampler) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(1);
 
-  NOCL_UNWRAP(sampler, NoCLSampler, args[0]);
+  NOCL_UNWRAP(sampler, NoCLSampler, info[0]);
   cl_int err=sampler->release();
 
   CHECK_ERR(err)
-  NanReturnValue(JS_INT(err));
+  info.GetReturnValue().Set(JS_INT(err));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -134,19 +134,19 @@ NAN_METHOD(ReleaseSampler) {
 //                  void *             /* param_value */,
 //                  size_t *           /* param_value_size_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(GetSamplerInfo) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(2);
 
-  NOCL_UNWRAP(sampler, NoCLSampler, args[0]);
+  NOCL_UNWRAP(sampler, NoCLSampler, info[0]);
 
-  cl_sampler_info param_name = args[1]->Uint32Value();
+  cl_sampler_info param_name = info[1]->Uint32Value();
 
   switch(param_name) {
     case CL_SAMPLER_REFERENCE_COUNT:
     {
       cl_uint val;
       CHECK_ERR(::clGetSamplerInfo(sampler->getRaw(),param_name,sizeof(cl_uint), &val, NULL))
-      NanReturnValue(JS_INT(val));
+      info.GetReturnValue().Set(JS_INT(val));
     }
     case CL_SAMPLER_CONTEXT:
     {
@@ -159,34 +159,34 @@ NAN_METHOD(GetSamplerInfo) {
     {
       cl_bool val;
       CHECK_ERR(::clGetSamplerInfo(sampler->getRaw(),param_name,sizeof(cl_bool), &val, NULL))
-      NanReturnValue(JS_BOOL(val));
+      info.GetReturnValue().Set(val==CL_TRUE ? Nan::True() : Nan::False());
     }
     case CL_SAMPLER_ADDRESSING_MODE:
     {
       cl_addressing_mode val;
       CHECK_ERR(::clGetSamplerInfo(sampler->getRaw(),param_name,sizeof(cl_addressing_mode), &val, NULL))
-      NanReturnValue(JS_INT(val));
+      info.GetReturnValue().Set(JS_INT(val));
     }
     case CL_SAMPLER_FILTER_MODE:
     {
       cl_filter_mode val;
       CHECK_ERR(::clGetSamplerInfo(sampler->getRaw(),param_name,sizeof(cl_filter_mode), &val, NULL))
-      NanReturnValue(JS_INT(val));
+      info.GetReturnValue().Set(JS_INT(val));
     }
   }
   THROW_ERR(CL_INVALID_VALUE);
 }
 
 namespace Sampler {
-void init(Handle<Object> exports)
+NAN_MODULE_INIT(init)
 {
-  NODE_SET_METHOD(exports, "retainSampler", RetainSampler);
-  NODE_SET_METHOD(exports, "releaseSampler", ReleaseSampler);
-  NODE_SET_METHOD(exports, "getSamplerInfo", GetSamplerInfo);
+  Nan::SetMethod(target, "retainSampler", RetainSampler);
+  Nan::SetMethod(target, "releaseSampler", ReleaseSampler);
+  Nan::SetMethod(target, "getSamplerInfo", GetSamplerInfo);
 #ifndef CL_VERSION_2_0
-  NODE_SET_METHOD(exports, "createSampler", CreateSampler);
+  Nan::SetMethod(target, "createSampler", CreateSampler);
 #else
-  NODE_SET_METHOD(exports, "createSamplerWithProperties", CreateSamplerWithProperties);
+  Nan::SetMethod(target, "createSamplerWithProperties", CreateSamplerWithProperties);
 #endif
 }
 } // namespace Sampler

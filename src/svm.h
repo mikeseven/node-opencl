@@ -6,7 +6,7 @@
 namespace opencl {
 
 namespace SVM {
-void init(Handle<Object> exports);
+NAN_MODULE_INIT(init);
 } // namespace Pipe
 
 } // namespace opencl

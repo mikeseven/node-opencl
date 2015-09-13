@@ -10,23 +10,23 @@ namespace opencl {
 #ifdef CL_VERSION_2_0
 
 NAN_METHOD(CreatePipe) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(5);
 
   // Arg 1
-  NOCL_UNWRAP(context, NoCLContext, args[0]);
+  NOCL_UNWRAP(context, NoCLContext, info[0]);
 
   // Arg 2
-  cl_mem_flags flags = args[1]->Uint32Value();
+  cl_mem_flags flags = info[1]->Uint32Value();
 
   // Arg 2
-  cl_uint size = args[2]->Uint32Value();
+  cl_uint size = info[2]->Uint32Value();
 
   // Arg 3
-  cl_uint qty = args[3]->Uint32Value();
+  cl_uint qty = info[3]->Uint32Value();
 
   // Arg 4
-  if (!args[4]->IsNull()) {
+  if (!info[4]->IsNull()) {
     THROW_ERR(CL_INVALID_VALUE)
   }
 
@@ -43,41 +43,40 @@ NAN_METHOD(CreatePipe) {
 
   CHECK_ERR(err);
 
-  NanReturnValue(NOCL_WRAP(NoCLMem, pipe));
+  info.GetReturnValue().Set(NOCL_WRAP(NoCLMem, pipe));
 }
 
 
 NAN_METHOD(GetPipeInfo) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(2);
 
   // Arg 0
-  NOCL_UNWRAP(mem, NoCLMem, args[0]);
+  NOCL_UNWRAP(mem, NoCLMem, info[0]);
 
   // Arg 1
-  cl_pipe_info param_name = args[1]->Uint32Value();
+  cl_pipe_info param_name = info[1]->Uint32Value();
 
   switch(param_name) {
     case CL_PIPE_MAX_PACKETS:
     case CL_PIPE_PACKET_SIZE: {
       cl_uint val;
       CHECK_ERR(::clGetPipeInfo(mem->getRaw(),param_name,sizeof(cl_uint), &val, NULL))
-      NanReturnValue(JS_INT(val));
+      info.GetReturnValue().Set(JS_INT(val));
     }
   }
 
-  return NanThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE).c_str(), CL_INVALID_VALUE));
-  //return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  return Nan::ThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE)));
 }
 
 #endif
 
 namespace Pipe {
-void init(Handle<Object> exports)
+NAN_MODULE_INIT(init)
 {
 #ifdef CL_VERSION_2_0
-  NODE_SET_METHOD(exports, "createPipe", CreatePipe);
-  NODE_SET_METHOD(exports, "getPipeInfo", GetPipeInfo);
+  Nan::SetMethod(target, "createPipe", CreatePipe);
+  Nan::SetMethod(target, "getPipeInfo", GetPipeInfo);
 #endif
 }
 } // namespace Pipe

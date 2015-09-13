@@ -44,22 +44,22 @@ T * NoCLUnwrap(Local<Value> val) {
 
   Local<Object> obj = val->ToObject();
 
-  if (NanGetInternalFieldPointer(obj, 0) == NULL) {
+  if (Nan::GetInternalFieldPointer(obj, 0) == NULL) {
     return NULL;
   }
 
-  if (NanGetInternalFieldPointer(obj, 1) == NULL) {
+  if (Nan::GetInternalFieldPointer(obj, 1) == NULL) {
     return NULL;
   }
 
-  unsigned int identifier = * (unsigned int *) NanGetInternalFieldPointer(obj, 1);
+  unsigned int identifier = * (unsigned int *) Nan::GetInternalFieldPointer(obj, 1);
 
   if (identifier != T::GetId()) {
     return NULL;
   }
 
 
-  T * output = (T *) NanGetInternalFieldPointer(obj, 0);
+  T * output = (T *) Nan::GetInternalFieldPointer(obj, 0);
   return output;
 }
 
@@ -68,8 +68,8 @@ Local<ObjectTemplate> & GetNodeOpenCLObjectGenericTemplate();
 #define NOCL_UNWRAP(VAR, TYPE, EXPR) \
   TYPE * VAR = NoCLUnwrap<TYPE>(EXPR);\
   if (VAR == NULL) { \
-    NanThrowError(JS_STR(opencl::getExceptionMessage(TYPE::getErrorCode()).c_str(), TYPE::getErrorCode())); \
-    NanReturnUndefined(); \
+    Nan::ThrowError(JS_STR(opencl::getExceptionMessage(TYPE::getErrorCode()))); \
+    return; \
   }
 
 
@@ -243,8 +243,8 @@ class NoCLRefCountObject : public NoCLObject<T,elid,err> {
 
 #define NOCL_TO_ARRAY(TO, FROM, TYPE) \
   if (!TYPE::fromJSArray<TYPE>(TO, FROM)) { \
-    NanThrowError(JS_STR(opencl::getExceptionMessage(TYPE::getErrorCode()).c_str(), TYPE::getErrorCode())); \
-    NanReturnUndefined();\
+    Nan::ThrowError(JS_STR(opencl::getExceptionMessage(TYPE::getErrorCode()))); \
+    return;\
   }
 
 #define NOCL_TO_CL_ARRAY(FROM, TYPE) \
@@ -336,21 +336,21 @@ NAN_METHOD(releaseAll);
 // But we should not create a template each time we create an object
 template <typename T>
 Local<Object> NoCLWrapCLObject(T * elm) {
-  Local<ObjectTemplate> tpl = NanNew<ObjectTemplate>();
+  Local<ObjectTemplate> tpl = Nan::New<ObjectTemplate>();
 
-  tpl->Set(NanNew<v8::String>("equals"),
-    NanNew<FunctionTemplate>(Equals, NanNew<v8::External>(elm)));
+  tpl->Set(Nan::New<v8::String>("equals").ToLocalChecked(),
+    Nan::New<FunctionTemplate>(Equals, Nan::New<v8::External>(elm)));
 
   tpl->SetInternalFieldCount(2);
   Local<Object> obj = tpl->NewInstance();
 
-  NanSetInternalFieldPointer(obj, 0, elm);
-  NanSetInternalFieldPointer(obj, 1, new unsigned int(T::GetId()));
+  Nan::SetInternalFieldPointer(obj, 0, elm);
+  Nan::SetInternalFieldPointer(obj, 1, new unsigned int(T::GetId()));
   return obj;
 }
 
 namespace Types {
-  void init(Handle<Object> exports);
+NAN_MODULE_INIT(init);
 }
 
 #define NOCL_WRAP(T, V) \

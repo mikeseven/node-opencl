@@ -8,19 +8,19 @@
       ],
       'sources': [
         'src/addon.cpp',
+        'src/types.cpp',
         'src/common.cpp',
+        'src/commandqueue.cpp',
         'src/context.cpp',
         'src/device.cpp',
         'src/event.cpp',
-        'src/platform.cpp',
-        'src/types.cpp',
-        'src/program.cpp',
         'src/kernel.cpp',
-        'src/memobj.cpp',
-        'src/sampler.cpp',
-        'src/commandqueue.cpp',
-        'src/pipe.cpp',
         'src/manager.cpp',
+        'src/memobj.cpp',
+        'src/pipe.cpp',
+        'src/platform.cpp',
+        'src/program.cpp',
+        'src/sampler.cpp',
         'src/svm.cpp'
       ],
       'include_dirs' : [
@@ -31,14 +31,14 @@
           'include_dirs' : [
             "<!(echo $OPENCL_HEADER)",
            ],
-          'make_global_settings': [
-            ['CC', '/usr/bin/clang'],
-            ['CXX', '/usr/bin/clang++'],
-          ],
+          # 'make_global_settings': [
+          #   ['CC', '/usr/bin/clang'],
+          #   ['CXX', '/usr/bin/clang++'],
+          # ],
           "xcode_settings": {
-             'OTHER_CPLUSPLUSFLAGS' : ['-std=c++1y','-stdlib=libc++', ' -Wall'],
-             'OTHER_LDFLAGS': ['-stdlib=libc++'],
-              'MACOSX_DEPLOYMENT_TARGET': '10.9'
+            'OTHER_CPLUSPLUSFLAGS' : ['-std=c++11','-stdlib=libc++', ' -Wall'],
+            'OTHER_LDFLAGS': ['-stdlib=libc++'],
+            'MACOSX_DEPLOYMENT_TARGET': '10.10'
           },
           'libraries': ['-framework OpenCL'],
         }],

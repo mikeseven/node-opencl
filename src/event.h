@@ -7,7 +7,7 @@
 namespace opencl {
 
 namespace Event {
-void init(Handle<Object> exports);
+NAN_MODULE_INIT(init);
 } // namespace Event
 
 } // namespace opencl

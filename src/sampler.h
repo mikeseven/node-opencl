@@ -6,7 +6,7 @@
 namespace opencl {
 
 namespace Sampler {
-void init(Handle<Object> exports);
+NAN_MODULE_INIT(init);
 } // namespace Sampler
 
 } // namespace opencl

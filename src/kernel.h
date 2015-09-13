@@ -6,7 +6,7 @@
 namespace opencl {
 
 namespace Kernel {
-void init(Handle<Object> exports);
+NAN_MODULE_INIT(init);
 } // namespace Kernel
 
 } // namespace opencl

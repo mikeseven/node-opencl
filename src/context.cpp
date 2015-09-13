@@ -14,7 +14,7 @@ namespace opencl {
 //                 void *                  /* user_data */,
 //                 cl_int *                /* errcode_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(CreateContext) {
-  NanEscapableScope();
+  Nan::EscapableHandleScope scope;
   REQ_ARGS(4)
   Local<Array> properties;
   Local<Array> devices;
@@ -51,12 +51,12 @@ NAN_METHOD(CreateContext) {
 
   // Arg 3 -- Callback
   if(ARG_EXISTS(2)) {
-    callback = Local<Function>::Cast(args[2]);
+    callback = Local<Function>::Cast(info[2]);
   }
 
   // Arg 4 -- Error callback
   if(ARG_EXISTS(3)) {
-    err_cb = Local<Function>::Cast(args[3]);
+    err_cb = Local<Function>::Cast(info[3]);
   }
 
 
@@ -68,7 +68,7 @@ NAN_METHOD(CreateContext) {
   CHECK_ERR(err);
   Local<Object> obj = NoCLWrapCLObject<NoCLContext>(new NoCLContext(ctx));
 
-  NanReturnValue(obj);
+  info.GetReturnValue().Set(obj);
 }
 
 // extern CL_API_ENTRY cl_context CL_API_CALL
@@ -78,7 +78,7 @@ NAN_METHOD(CreateContext) {
 //                         void *                  /* user_data */,
 //                         cl_int *                /* errcode_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(CreateContextFromType) {
-  NanEscapableScope();
+  Nan::EscapableHandleScope scope;
   REQ_ARGS(4)
 
   Local<Array> properties;
@@ -86,7 +86,7 @@ NAN_METHOD(CreateContextFromType) {
   Local<Function> callback;
   Local<Function> err_cb;
 
-  if(!args[0]->IsNull() && !args[0]->IsUndefined()) {
+  if(!info[0]->IsNull() && !info[0]->IsUndefined()) {
     REQ_ARRAY_ARG(0, properties);
     for (uint32_t i=0; i < properties->Length(); i++) {
       cl_uint prop_id = properties->Get(i)->Uint32Value();
@@ -100,13 +100,13 @@ NAN_METHOD(CreateContextFromType) {
     cl_properties.push_back(0);
   }
 
-  cl_device_type device_type=args[1]->Uint32Value();
+  cl_device_type device_type=info[1]->Uint32Value();
 
-  if(!args[2]->IsNull() && !args[2]->IsUndefined()) {
-      callback = Local<Function>::Cast(args[2]);
+  if(!info[2]->IsNull() && !info[2]->IsUndefined()) {
+      callback = Local<Function>::Cast(info[2]);
   }
-  if(!args[3]->IsNull() && !args[3]->IsUndefined()) {
-      err_cb = Local<Function>::Cast(args[3]);
+  if(!info[3]->IsNull() && !info[3]->IsUndefined()) {
+      err_cb = Local<Function>::Cast(info[3]);
   }
 
   int err=CL_SUCCESS;
@@ -116,32 +116,32 @@ NAN_METHOD(CreateContextFromType) {
                         &err);
   CHECK_ERR(err);
 
-  NanReturnValue(NoCLWrapCLObject<NoCLContext>(new NoCLContext(ctx)));
+  info.GetReturnValue().Set(NoCLWrapCLObject<NoCLContext>(new NoCLContext(ctx)));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clRetainContext(cl_context /* context */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(RetainContext) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(1);
 
-  NOCL_UNWRAP(context, NoCLContext, args[0]);
+  NOCL_UNWRAP(context, NoCLContext, info[0]);
 
   cl_int err=context->acquire();
   CHECK_ERR(err);
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clReleaseContext(cl_context /* context */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(ReleaseContext) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(1);
 
-  NOCL_UNWRAP(context, NoCLContext, args[0]);
+  NOCL_UNWRAP(context, NoCLContext, info[0]);
   cl_int err=context->release();
   CHECK_ERR(err);
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -151,17 +151,17 @@ NAN_METHOD(ReleaseContext) {
 //                  void *             /* param_value */,
 //                  size_t *           /* param_value_size_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(GetContextInfo) {
-  NanScope();
+  Nan::HandleScope scope;
 
-  NOCL_UNWRAP(context, NoCLContext, args[0]);
-  cl_context_info param_name = args[1]->Uint32Value();
+  NOCL_UNWRAP(context, NoCLContext, info[0]);
+  cl_context_info param_name = info[1]->Uint32Value();
 
   switch (param_name) {
   case CL_CONTEXT_REFERENCE_COUNT:
   case CL_CONTEXT_NUM_DEVICES: {
     cl_uint param_value=0;
     CHECK_ERR(::clGetContextInfo(context->getRaw(),param_name,sizeof(cl_uint), &param_value, NULL));
-    NanReturnValue(JS_INT(param_value));
+    info.GetReturnValue().Set(JS_INT(param_value));
   }
   case CL_CONTEXT_DEVICES: {
     size_t n=0;
@@ -171,11 +171,11 @@ NAN_METHOD(GetContextInfo) {
     unique_ptr<cl_device_id[]> devices(new cl_device_id[n]);
     CHECK_ERR(::clGetContextInfo(context->getRaw(),param_name,sizeof(cl_device_id)*n, devices.get(), NULL));
 
-    Local<Array> arr = NanNew<Array>((int)n);
+    Local<Array> arr = Nan::New<Array>((int)n);
     for(uint32_t i=0;i<n;i++) {
       arr->Set(i, NOCL_WRAP(NoCLDeviceId, devices[i]));
     }
-    NanReturnValue(arr);
+    info.GetReturnValue().Set(arr);
   }
   case CL_CONTEXT_PROPERTIES: {
     size_t n=0;
@@ -183,19 +183,19 @@ NAN_METHOD(GetContextInfo) {
     unique_ptr<cl_context_properties[]> ctx(new cl_context_properties[n]);
     CHECK_ERR(::clGetContextInfo(context->getRaw(),param_name,sizeof(cl_context_properties)*n, ctx.get(), NULL));
 
-    Local<Array> arr = NanNew<Array>((int)n);
+    Local<Array> arr = Nan::New<Array>((int)n);
     for(uint32_t i=0;i<n;i++) {
       arr->Set(i,JS_INT((int32_t)ctx[i]));
     }
 
-    NanReturnValue(arr);
+    info.GetReturnValue().Set(arr);
   }
   default: {
     THROW_ERR(CL_INVALID_VALUE);
   }
   }
 
-  NanReturnUndefined();
+  return;
 }
 
 // // Deprecated OpenCL 1.1 APIs
@@ -224,13 +224,13 @@ NAN_METHOD(GetContextInfo) {
 // extern CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED cl_int CL_API_CALL
 // clUnloadCompiler(void) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
 namespace Context {
-void init(Handle<Object> exports)
+NAN_MODULE_INIT(init)
 {
-  NODE_SET_METHOD(exports, "createContext", CreateContext);
-  NODE_SET_METHOD(exports, "createContextFromType", CreateContextFromType);
-  NODE_SET_METHOD(exports, "retainContext", RetainContext);
-  NODE_SET_METHOD(exports, "releaseContext", ReleaseContext);
-  NODE_SET_METHOD(exports, "getContextInfo", GetContextInfo);
+  Nan::SetMethod(target, "createContext", CreateContext);
+  Nan::SetMethod(target, "createContextFromType", CreateContextFromType);
+  Nan::SetMethod(target, "retainContext", RetainContext);
+  Nan::SetMethod(target, "releaseContext", ReleaseContext);
+  Nan::SetMethod(target, "getContextInfo", GetContextInfo);
 }
 } // namespace Context
 

@@ -135,7 +135,7 @@ describe("Context", function () {
     testForType("CONTEXT_REFERENCE_COUNT", assert.isNumber.bind(assert));
     testForType("CONTEXT_DEVICES", assert.isArray.bind(assert));
     testForType("CONTEXT_PROPERTIES", assert.isArray.bind(assert));
-    testforType("CONTEXT_NUM_DEVICES", assert.isNumber.bind(assert));
+    testForType("CONTEXT_NUM_DEVICES", assert.isNumber.bind(assert));
 
     var ctx = cl.createContextFromType(properties, cl.DEVICE_TYPE_ALL, null, null);
 

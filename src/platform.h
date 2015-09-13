@@ -6,7 +6,7 @@
 namespace opencl {
 
 namespace Platform {
-void init(Handle<Object> exports);
+NAN_MODULE_INIT(init);
 } // namespace Platform
 
 } // namespace opencl

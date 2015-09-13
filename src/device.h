@@ -6,7 +6,7 @@
 namespace opencl {
 
 namespace Device {
-void init(Handle<Object> exports);
+NAN_MODULE_INIT(init);
 } // namespace Device
 
 } // namespace opencl

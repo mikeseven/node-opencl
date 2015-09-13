@@ -41,48 +41,48 @@ using namespace Nan;
 #endif
 
 namespace {
-#define JS_STR(...) NanNew<v8::String>(__VA_ARGS__)
-#define JS_INT(val) NanNew<v8::Integer>(static_cast<unsigned int>(val))
-#define JS_NUM(val) NanNew<v8::Number>(val)
-#define JS_BOOL(val) NanNew<v8::Boolean>(val)
-#define JS_RETHROW(tc) NanNew<v8::Local<v8::Value> >(tc.Exception());
+#define JS_STR(...) Nan::New<v8::String>(__VA_ARGS__).ToLocalChecked()
+#define JS_INT(val) Nan::New<v8::Integer>(static_cast<unsigned int>(val))
+#define JS_NUM(val) Nan::New<v8::Number>(val)
+//#define JS_BOOL(val) Nan::New<v8::Boolean>(val)
+#define JS_RETHROW(tc) Nan::New<v8::Local<v8::Value> >(tc.Exception());
 
 #define CHECK_ERR(ret)  { cl_int _err=(ret); \
   if ((_err) != CL_SUCCESS) { \
-    return NanThrowError(JS_STR(opencl::getExceptionMessage(_err).c_str(), _err)); \
+    return Nan::ThrowError(JS_STR(opencl::getExceptionMessage(_err))); \
   } \
 }
 
 #define THROW_ERR(code) { cl_int _err=(code); \
-  return NanThrowError(JS_STR(opencl::getExceptionMessage(_err).c_str(), _err)); \
+  return Nan::ThrowError(JS_STR(opencl::getExceptionMessage(_err))); \
 }
 
 #define REQ_ARGS(N)                                                     \
-  if (args.Length() < (N)) {                                            \
-    NanThrowTypeError("Expected " #N " arguments");                     \
-    NanReturnUndefined();                                               \
+  if (info.Length() < (N)) {                                            \
+    Nan::ThrowTypeError("Expected " #N " arguments");                     \
+    return;                                               \
   }
 
 #define REQ_STR_ARG(I, VAR)                                             \
-  if (args.Length() <= (I) || !args[I]->IsString())  {                  \
-    NanThrowTypeError("Argument " #I " must be a string");              \
-    NanReturnUndefined();                                               \
+  if (info.Length() <= (I) || !info[I]->IsString())  {                  \
+    Nan::ThrowTypeError("Argument " #I " must be a string");              \
+    return;                                               \
   }                                                                     \
-  String::Utf8Value VAR(args[I]->ToString());
+  String::Utf8Value VAR(info[I]->ToString());
 
 #define REQ_ARRAY_ARG(I, VAR) \
-  if (!args[I]->IsArray()) { \
-    NanThrowTypeError("Argument " #I " must be an array");              \
-    NanReturnUndefined();                                               \
+  if (!info[I]->IsArray()) { \
+    Nan::ThrowTypeError("Argument " #I " must be an array");              \
+    return;                                               \
   }                                                                     \
-  Local<Array> VAR = Local<Array>::Cast(args[I])
+  Local<Array> VAR = Local<Array>::Cast(info[I])
 
 } // namespace
 
 namespace opencl {
 
 #define ARG_EXISTS(nth) \
-  (args.Length() >= nth + 1 && !args[nth]->IsNull() && !args[nth]->IsUndefined())
+  (info.Length() >= nth + 1 && !info[nth]->IsNull() && !info[nth]->IsUndefined())
 
 
 void getPtrAndLen(const Local<Value> value, void* &ptr, int &len);
@@ -102,7 +102,7 @@ void getPtrAndLen(const Local<Value> value, void* &ptr, int &len);
 //    vals.push_back(Unwrap<CL_TYPE>(arr->Get(i)));
 //}
 
-const std::string getExceptionMessage(const cl_int code);
+const char* getExceptionMessage(const cl_int code);
 
 } // namespace opencl
 

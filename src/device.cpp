@@ -11,14 +11,14 @@ namespace opencl {
 //                cl_device_id *   /* devices */,
 //                cl_uint *        /* num_devices */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(GetDeviceIDs) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(1);
 
-  NOCL_UNWRAP(platform_id, NoCLPlatformId, args[0]);
+  NOCL_UNWRAP(platform_id, NoCLPlatformId, info[0]);
 
   cl_device_type type = CL_DEVICE_TYPE_ALL;
-  if(!args[1]->IsUndefined() && !args[1]->IsNull())
-    type=args[1]->Uint32Value();
+  if(!info[1]->IsUndefined() && !info[1]->IsNull())
+    type=info[1]->Uint32Value();
 
   cl_uint n = 0;
   CHECK_ERR(::clGetDeviceIDs(platform_id->getRaw(), type, 0, NULL, &n));
@@ -26,12 +26,12 @@ NAN_METHOD(GetDeviceIDs) {
   unique_ptr<cl_device_id[]> devices(new cl_device_id[n]);
   CHECK_ERR(::clGetDeviceIDs(platform_id->getRaw(), type, n, devices.get(), NULL));
 
-  Local<Array> deviceArray = NanNew<Array>(n);
+  Local<Array> deviceArray = Nan::New<Array>(n);
   for (uint32_t i=0; i<n; i++) {
     deviceArray->Set(i, NOCL_WRAP(NoCLDeviceId, devices[i]));
   }
 
-  NanReturnValue(deviceArray);
+  info.GetReturnValue().Set(deviceArray);
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -42,13 +42,13 @@ NAN_METHOD(GetDeviceIDs) {
 //                 size_t *        /* param_value_size_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(GetDeviceInfo) {
   // TODO: CHECK ALL VALUES ARE LISTED (I think at least CL_DEVICE_PARENT is missing)
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(2);
 
-  NOCL_UNWRAP(deviceId, NoCLDeviceId, args[0]);
+  NOCL_UNWRAP(deviceId, NoCLDeviceId, info[0]);
 
   cl_device_id device_id = deviceId->getRaw();
-  cl_device_info param_name = args[1]->Uint32Value();
+  cl_device_info param_name = info[1]->Uint32Value();
 
   switch (param_name) {
   case CL_DEVICE_NAME:
@@ -63,7 +63,7 @@ NAN_METHOD(GetDeviceInfo) {
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(char)*1024, param_value, &param_value_size_ret));
 
     // NOTE: Adjust length because API returns NULL terminated string
-    NanReturnValue(JS_STR(param_value,(int)param_value_size_ret - 1));
+    info.GetReturnValue().Set(JS_STR(param_value,(int)param_value_size_ret - 1));
   }
   break;
   case CL_DEVICE_PLATFORM: {
@@ -72,39 +72,39 @@ NAN_METHOD(GetDeviceInfo) {
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_platform_id), &param_value, NULL));
 
     if(param_value) {
-      NanReturnValue(NOCL_WRAP(NoCLPlatformId, param_value));
+      info.GetReturnValue().Set(NOCL_WRAP(NoCLPlatformId, param_value));
     }
-    NanReturnUndefined();
+    return;
   }
   break;
   case CL_DEVICE_TYPE: {
     cl_device_type param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_device_type), &param_value, NULL));
-    NanReturnValue(JS_INT(param_value));
+    info.GetReturnValue().Set(JS_INT(param_value));
   }
   break;
   case CL_DEVICE_LOCAL_MEM_TYPE: {
     cl_device_local_mem_type param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_device_local_mem_type), &param_value, NULL));
-    NanReturnValue(JS_INT(param_value));
+    info.GetReturnValue().Set(JS_INT(param_value));
   }
   break;
   case CL_DEVICE_GLOBAL_MEM_CACHE_TYPE: {
     cl_device_mem_cache_type param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_device_mem_cache_type), &param_value, NULL));
-    NanReturnValue(JS_INT(param_value));
+    info.GetReturnValue().Set(JS_INT(param_value));
   }
   break;
   case CL_DEVICE_EXECUTION_CAPABILITIES: {
     cl_device_exec_capabilities param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_device_exec_capabilities), &param_value, NULL));
-    NanReturnValue(JS_INT((int)param_value));
+    info.GetReturnValue().Set(JS_INT((int)param_value));
   }
   break;
   case CL_DEVICE_QUEUE_PROPERTIES: {
     cl_command_queue_properties param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_command_queue_properties), &param_value, NULL));
-    NanReturnValue(JS_INT((int)param_value));
+    info.GetReturnValue().Set(JS_INT((int)param_value));
   }
   break;
   case CL_DEVICE_HALF_FP_CONFIG:
@@ -113,7 +113,7 @@ NAN_METHOD(GetDeviceInfo) {
     cl_device_fp_config param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_device_fp_config), &param_value, NULL));
 
-    NanReturnValue(JS_INT((int)param_value));
+    info.GetReturnValue().Set(JS_INT((int)param_value));
   }
   break;
   case CL_DEVICE_MAX_WORK_ITEM_SIZES: {
@@ -125,11 +125,11 @@ NAN_METHOD(GetDeviceInfo) {
     unique_ptr<size_t[]> param_value(new size_t[max_work_item_dimensions]);
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, max_work_item_dimensions*sizeof(size_t), param_value.get(), NULL));
 
-    Local<Array> arr = NanNew<Array>(max_work_item_dimensions);
+    Local<Array> arr = Nan::New<Array>(max_work_item_dimensions);
     for(cl_uint i=0;i<max_work_item_dimensions;i++)
       arr->Set(i,JS_INT(uint32_t(param_value[i])));
 
-    NanReturnValue(arr);
+    info.GetReturnValue().Set(arr);
   }
   break;
   // cl_bool params
@@ -143,7 +143,7 @@ NAN_METHOD(GetDeviceInfo) {
     cl_bool param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_bool), &param_value, NULL));
     // keeping as Integer vs Boolean so comparisons with cl.TRUE/cl.FALSE work
-    NanReturnValue(JS_BOOL((int)param_value));
+    info.GetReturnValue().Set((param_value==CL_TRUE) ? Nan::True() : Nan::False());
   }
   break;
   // cl_uint params
@@ -188,7 +188,7 @@ NAN_METHOD(GetDeviceInfo) {
   {
     cl_uint param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_uint), &param_value, NULL));
-    NanReturnValue(JS_INT((int)param_value));
+    info.GetReturnValue().Set(JS_INT((int)param_value));
   }
   break;
   // cl_ulong params
@@ -205,10 +205,10 @@ NAN_METHOD(GetDeviceInfo) {
     *
     * As JS does not support 64 bits integer, we return a 2 integers array with
     *  INT = arr[0] * 1024^2 (megabytes) + arr[1]  (bytes - megabytes) */
-    Local<Array> arr = NanNew<Array>(2);
+    Local<Array> arr = Nan::New<Array>(2);
     arr->Set(0, JS_INT((uint32_t)param_value / (1024 * 1024)));
     arr->Set(1, JS_INT((uint32_t)param_value - param_value / (1024 * 1024)));
-    NanReturnValue(arr);
+    info.GetReturnValue().Set(arr);
 
   }
   break;
@@ -232,14 +232,14 @@ NAN_METHOD(GetDeviceInfo) {
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(size_t), &param_value, NULL));
 
     // assume for these params it will fit in an int
-    NanReturnValue(NanNew<Integer>((int)param_value));
+    info.GetReturnValue().Set(Nan::New<Integer>((int)param_value));
   }
   break;
   default: {
     THROW_ERR(CL_INVALID_VALUE);
   }
   }
-  NanReturnUndefined();
+  return;
 }
 
 #ifdef CL_VERSION_1_2
@@ -251,11 +251,11 @@ NAN_METHOD(GetDeviceInfo) {
 //                    cl_uint *                            /* num_devices_ret */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(CreateSubDevices) {
 
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(2)
 
   // Arg 1
-  NOCL_UNWRAP(device, NoCLDeviceId, args[0]);
+  NOCL_UNWRAP(device, NoCLDeviceId, info[0]);
   cl_device_id deviceId = device->getRaw();
 
   // Arg 2
@@ -274,22 +274,22 @@ NAN_METHOD(CreateSubDevices) {
   ret = ::clCreateSubDevices(deviceId, &cl_properties.front(), capacity, subDevices.get(), NULL);
   CHECK_ERR(ret);
 
-  Local<Array> subDevicesArray = NanNew<Array>(capacity);
+  Local<Array> subDevicesArray = Nan::New<Array>(capacity);
   for (uint32_t i=0; i<capacity; i++) {
     subDevicesArray->Set(i, NOCL_WRAP(NoCLDeviceId, subDevices[i]));
   }
 
-  NanReturnValue(subDevicesArray);
+  info.GetReturnValue().Set(subDevicesArray);
 
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clRetainDevice(cl_device_id /* device */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(RetainDevice) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(1);
 
-  NOCL_UNWRAP(device, NoCLDeviceId, args[0]);
+  NOCL_UNWRAP(device, NoCLDeviceId, info[0]);
 
   cl_device_id deviceId = device->getRaw();
   cl_device_id parentId = NULL;
@@ -303,16 +303,16 @@ NAN_METHOD(RetainDevice) {
   cl_int ret = ::clRetainDevice(deviceId);
 
   CHECK_ERR(ret);
-  NanReturnValue(JS_INT(ret));
+  info.GetReturnValue().Set(JS_INT(ret));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clReleaseDevice(cl_device_id /* device */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(ReleaseDevice) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(1);
 
-  NOCL_UNWRAP(device, NoCLDeviceId, args[0]);
+  NOCL_UNWRAP(device, NoCLDeviceId, info[0]);
 
   cl_device_id deviceId = device->getRaw();
   cl_device_id parentId = NULL;
@@ -325,19 +325,19 @@ NAN_METHOD(ReleaseDevice) {
 
   cl_int ret = ::clReleaseDevice(deviceId);
   CHECK_ERR(ret);
-  NanReturnValue(JS_INT(ret));
+  info.GetReturnValue().Set(JS_INT(ret));
 }
 #endif
 
 namespace Device {
-void init(Handle<Object> exports)
+NAN_MODULE_INIT(init)
 {
-  NODE_SET_METHOD(exports, "getDeviceIDs", GetDeviceIDs);
-  NODE_SET_METHOD(exports, "getDeviceInfo", GetDeviceInfo);
+  Nan::SetMethod(target, "getDeviceIDs", GetDeviceIDs);
+  Nan::SetMethod(target, "getDeviceInfo", GetDeviceInfo);
 #ifdef CL_VERSION_1_2
-  NODE_SET_METHOD(exports, "createSubDevices", CreateSubDevices);
-  NODE_SET_METHOD(exports, "retainDevice", RetainDevice);
-  NODE_SET_METHOD(exports, "releaseDevice", ReleaseDevice);
+  Nan::SetMethod(target, "createSubDevices", CreateSubDevices);
+  Nan::SetMethod(target, "retainDevice", RetainDevice);
+  Nan::SetMethod(target, "releaseDevice", ReleaseDevice);
 #endif
 }
 } // namespace Device

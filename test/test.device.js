@@ -203,7 +203,7 @@ describe("Device", function() {
     versions(["1.2", "2.0"]).describe("#createSubDevices() for "+device_vendor+" "+device_name,function() {
 
 
-      var num = cl.getDeviceInfo(device, cl.DEVICE_PARTITION_MAX_ SUB_DEVICES);
+      var num = cl.getDeviceInfo(device, cl.DEVICE_PARTITION_MAX_SUB_DEVICES);
       var name = cl.getDeviceInfo(device,cl.DEVICE_VENDOR);
 
       if (num > 0)
@@ -223,7 +223,7 @@ describe("Device", function() {
 
         })
       }
-      else 
+      else
       {
         console.log("The following vendor is not supported" + name);
       }
@@ -268,7 +268,7 @@ describe("Device", function() {
 
         })
       }
-      else 
+      else
       {
         console.log("The following vendor is not supported" + name);
       }
@@ -276,7 +276,7 @@ describe("Device", function() {
       it("should throw cl.INVALID_DEVICE with device = null",function() {
         cl.createSubDevices(null, [cl.DEVICE_PARTITION_EQUALLY, 8, 0], 2).should.throw(cl.INVALID_DEVICE.message);
       });
-      
+
       it("should throw cl.INVALID_VALUE with properties = null",function() {
         cl.createSubDevices(device, null, 2).should.throw(cl.INVALID_VALUE.message);
       });

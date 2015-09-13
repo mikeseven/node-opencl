@@ -14,17 +14,17 @@ namespace opencl {
 //                const char *    /* kernel_name */,
 //                cl_int *        /* errcode_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(CreateKernel) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(2);
 
-  NOCL_UNWRAP(program, NoCLProgram, args[0]);
+  NOCL_UNWRAP(program, NoCLProgram, info[0]);
   REQ_STR_ARG(1, name)
 
   cl_int ret=CL_SUCCESS;
   cl_kernel k = ::clCreateKernel(program->getRaw(), (const char*) *name, &ret);
   CHECK_ERR(ret);
 
-  NanReturnValue(NOCL_WRAP(NoCLKernel, k));
+  info.GetReturnValue().Set(NOCL_WRAP(NoCLKernel, k));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -33,12 +33,12 @@ NAN_METHOD(CreateKernel) {
 //                          cl_kernel *    /* kernels */,
 //                          cl_uint *      /* num_kernels_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(CreateKernelsInProgram) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(1);
 
 
   // Arg 1 - Program
-  NOCL_UNWRAP(program, NoCLProgram, args[0]);
+  NOCL_UNWRAP(program, NoCLProgram, info[0]);
 
 
   cl_uint numkernels;
@@ -52,7 +52,7 @@ NAN_METHOD(CreateKernelsInProgram) {
   cl_kernel * kernels = new cl_kernel[numkernels];
   CHECK_ERR(::clCreateKernelsInProgram(program->getRaw(), numkernels, kernels, NULL));
 
-  Local<Array> karr = NanNew<Array>();
+  Local<Array> karr = Nan::New<Array>();
 
   for(cl_uint i = 0; i < numkernels;i++) {
     karr->Set(i,NOCL_WRAP(NoCLKernel, kernels[i]));
@@ -60,31 +60,31 @@ NAN_METHOD(CreateKernelsInProgram) {
 
   delete kernels;
 
-  NanReturnValue(karr);
+  info.GetReturnValue().Set(karr);
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clRetainKernel(cl_kernel    /* kernel */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(RetainKernel) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(1);
 
-  NOCL_UNWRAP(k, NoCLKernel, args[0]);
+  NOCL_UNWRAP(k, NoCLKernel, info[0]);
   cl_int err=k->acquire();
   CHECK_ERR(err);
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clReleaseKernel(cl_kernel   /* kernel */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(ReleaseKernel) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(1);
 
-  NOCL_UNWRAP(k, NoCLKernel, args[0]);
+  NOCL_UNWRAP(k, NoCLKernel, info[0]);
   cl_int err=k->release();
   CHECK_ERR(err);
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
 }
 
 // caches OpenCL type name to conversion function mapping in a hash table
@@ -229,7 +229,7 @@ NAN_METHOD(SetKernelArg) {
   // complete before executing the code below.
   static PrimitiveTypeMapCache type_converter;
 
-  NanScope();
+  Nan::HandleScope scope;
 #ifdef CL_VERSION_1_2
   REQ_ARGS(3);
 #else
@@ -239,10 +239,10 @@ NAN_METHOD(SetKernelArg) {
 #endif
 
   // Arg 0
-  NOCL_UNWRAP(k, NoCLKernel, args[0]);
+  NOCL_UNWRAP(k, NoCLKernel, info[0]);
 
   // Arg 1
-  unsigned int arg_idx = args[1]->Uint32Value();
+  unsigned int arg_idx = info[1]->Uint32Value();
 
   // get type and qualifier of kernel parameter with this index
   // using OpenCL, and then try to convert arg[2] to the type the kernel
@@ -274,8 +274,8 @@ NAN_METHOD(SetKernelArg) {
 #endif
   { // behaviour when type is given (mandatory for OpenCL version < 1.2)
     // read argument 3 as the name of the data type
-    if (args[3]->IsString()) {
-      Local<String> s = args[3]->ToString();
+    if (info[3]->IsString()) {
+      Local<String> s = info[3]->ToString();
       String::Utf8Value tname(s);
       const char* tname_c = *tname;
       size_t len = tname.length();
@@ -284,7 +284,7 @@ NAN_METHOD(SetKernelArg) {
       if (type_name == "local" || type_name == "__local")
         local_arg = true;
     } else {
-      return NanThrowError("Typename has to be given as string");
+      return Nan::ThrowError("Typename has to be given as string");
     }
   }
 
@@ -293,21 +293,21 @@ NAN_METHOD(SetKernelArg) {
 
   if (local_arg) {
     // expect a size type
-    if (!args[2]->IsNumber())
+    if (!info[2]->IsNumber())
       THROW_ERR(CL_INVALID_ARG_VALUE);
     // local buffers are intialized with their size (data = NULL)
-    size_t local_size = args[2]->ToInteger()->Value();
+    size_t local_size = info[2]->ToInteger()->Value();
     err = ::clSetKernelArg(k->getRaw(), arg_idx, local_size, NULL);
   } else if ('*' == type_name[type_name.length() - 1] || type_name == "cl_mem"){
     // type must be a buffer (CLMem object)
-    NOCL_UNWRAP(mem , NoCLMem, args[2]);
+    NOCL_UNWRAP(mem , NoCLMem, info[2]);
     err = ::clSetKernelArg(k->getRaw(), arg_idx, sizeof(cl_mem), &mem->getRaw());
   } else if (type_converter.hasType(type_name)) {
     // convert primitive types using the conversion
     // function map (indexed by OpenCL type name)
     void* data;
     size_t size;
-    std::tie(size, data, err) = type_converter.convert(type_name, args[2]);
+    std::tie(size, data, err) = type_converter.convert(type_name, info[2]);
     CHECK_ERR(err);
     err = ::clSetKernelArg(k->getRaw(), arg_idx, size, data);
     free(data);
@@ -318,15 +318,15 @@ NAN_METHOD(SetKernelArg) {
 
   // Otherwise it should be a native type
   else if (type_name == "sampler_t") {
-    NOCL_UNWRAP(sw , NoCLSampler, args[2]);
+    NOCL_UNWRAP(sw , NoCLSampler, info[2]);
     err = ::clSetKernelArg(k->getRaw(), arg_idx, sizeof(cl_sampler), &sw->getRaw());
   } else {
     std::string errstr = std::string("Unsupported OpenCL argument type: ") + type_name;
-    return NanThrowError(errstr.c_str());
+    return Nan::ThrowError(errstr.c_str());
   }
 
   CHECK_ERR(err);
-  NanReturnValue(JS_INT(err));
+  info.GetReturnValue().Set(JS_INT(err));
 }
 
 
@@ -337,11 +337,11 @@ NAN_METHOD(SetKernelArg) {
 //                 void *          /* param_value */,
 //                 size_t *        /* param_value_size_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(GetKernelInfo) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(2);
 
-  NOCL_UNWRAP(k, NoCLKernel, args[0]);
-  cl_kernel_info param_name = args[1]->Uint32Value();
+  NOCL_UNWRAP(k, NoCLKernel, info[0]);
+  cl_kernel_info param_name = info[1]->Uint32Value();
 
   switch(param_name) {
 #ifdef CL_VERSION_1_2
@@ -352,28 +352,27 @@ NAN_METHOD(GetKernelInfo) {
       CHECK_ERR(::clGetKernelInfo(k->getRaw(),param_name,0,NULL,&nchars));
       unique_ptr<char[]> name(new char[nchars]);
       CHECK_ERR(::clGetKernelInfo(k->getRaw(),param_name,nchars,name.get(),NULL));
-      NanReturnValue(JS_STR(name.get()));
+      info.GetReturnValue().Set(JS_STR(name.get()));
     }
     case CL_KERNEL_NUM_ARGS:
     case CL_KERNEL_REFERENCE_COUNT: {
       cl_uint num=0;
       CHECK_ERR(::clGetKernelInfo(k->getRaw(),param_name,sizeof(cl_uint),&num, NULL));
-      NanReturnValue(JS_INT(num));
+      info.GetReturnValue().Set(JS_INT(num));
     }
     case CL_KERNEL_CONTEXT: {
       cl_context ctx=0;
       CHECK_ERR(::clGetKernelInfo(k->getRaw(),param_name,sizeof(cl_context),&ctx, NULL));
-      NanReturnValue(NOCL_WRAP(NoCLContext, ctx));
+      info.GetReturnValue().Set(NOCL_WRAP(NoCLContext, ctx));
     }
     case CL_KERNEL_PROGRAM: {
       cl_program p=0;
       CHECK_ERR(::clGetKernelInfo(k->getRaw(),param_name,sizeof(cl_program),&p, NULL));
-      NanReturnValue(NOCL_WRAP(NoCLProgram, p));
+      info.GetReturnValue().Set(NOCL_WRAP(NoCLProgram, p));
     }
   }
 
-  return NanThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE).c_str(), CL_INVALID_VALUE));
-  //return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  return Nan::ThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE)));
 }
 
 #ifdef CL_VERSION_1_2
@@ -385,28 +384,28 @@ NAN_METHOD(GetKernelInfo) {
 //                    void *          /* param_value */,
 //                    size_t *        /* param_value_size_ret */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(GetKernelArgInfo) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(3);
 
-  NOCL_UNWRAP(k, NoCLKernel, args[0]);
-  cl_uint arg_idx = args[1]->Uint32Value();
-  cl_kernel_arg_info param_name = args[2]->Uint32Value();
+  NOCL_UNWRAP(k, NoCLKernel, info[0]);
+  cl_uint arg_idx = info[1]->Uint32Value();
+  cl_kernel_arg_info param_name = info[2]->Uint32Value();
 
   switch(param_name) {
     case CL_KERNEL_ARG_ADDRESS_QUALIFIER: {
       cl_kernel_arg_address_qualifier num=0;
       CHECK_ERR(::clGetKernelArgInfo(k->getRaw(),arg_idx,param_name,sizeof(cl_kernel_arg_address_qualifier),&num, NULL));
-      NanReturnValue(JS_INT(num));
+      info.GetReturnValue().Set(JS_INT(num));
     }
     case CL_KERNEL_ARG_ACCESS_QUALIFIER: {
       cl_kernel_arg_access_qualifier num=0;
       CHECK_ERR(::clGetKernelArgInfo(k->getRaw(),arg_idx,param_name,sizeof(cl_kernel_arg_access_qualifier),&num, NULL));
-      NanReturnValue(JS_INT(num));
+      info.GetReturnValue().Set(JS_INT(num));
     }
     case CL_KERNEL_ARG_TYPE_QUALIFIER: {
       cl_kernel_arg_type_qualifier num=0;
       CHECK_ERR(::clGetKernelArgInfo(k->getRaw(),arg_idx,param_name,sizeof(cl_kernel_arg_type_qualifier),&num, NULL));
-      NanReturnValue(JS_INT(num));
+      info.GetReturnValue().Set(JS_INT(num));
     }
     case CL_KERNEL_ARG_TYPE_NAME:
     case CL_KERNEL_ARG_NAME: {
@@ -414,12 +413,11 @@ NAN_METHOD(GetKernelArgInfo) {
       CHECK_ERR(::clGetKernelArgInfo(k->getRaw(),arg_idx,param_name,0,NULL,&nchars));
       unique_ptr<char[]> name(new char[nchars]);
       CHECK_ERR(::clGetKernelArgInfo(k->getRaw(),arg_idx,param_name,nchars,name.get(),NULL));
-      NanReturnValue(JS_STR(name.get()));
+      info.GetReturnValue().Set(JS_STR(name.get()));
     }
   }
 
-  return NanThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE).c_str(), CL_INVALID_VALUE));
-  //return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  return Nan::ThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE)));
 }
 #endif
 
@@ -431,13 +429,13 @@ NAN_METHOD(GetKernelArgInfo) {
 //                          void *                     /* param_value */,
 //                          size_t *                   /* param_value_size_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(GetKernelWorkGroupInfo) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(3);
 
-  NOCL_UNWRAP(k, NoCLKernel, args[0]);
-  NOCL_UNWRAP(d, NoCLDeviceId, args[1]);
+  NOCL_UNWRAP(k, NoCLKernel, info[0]);
+  NOCL_UNWRAP(d, NoCLDeviceId, info[1]);
 
-  cl_kernel_work_group_info param_name = args[2]->Uint32Value();
+  cl_kernel_work_group_info param_name = info[2]->Uint32Value();
 
   switch(param_name) {
 #ifdef CL_VERSION_1_2
@@ -446,23 +444,23 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
     case CL_KERNEL_COMPILE_WORK_GROUP_SIZE: {
       size_t sz[3] = {0,0,0};
       CHECK_ERR(::clGetKernelWorkGroupInfo(k->getRaw(),d->getRaw(),param_name,3*sizeof(size_t),sz, NULL));
-      Local<Array> szarr = NanNew<Array>();
+      Local<Array> szarr = Nan::New<Array>();
       szarr->Set(0,JS_INT(sz[0]));
       szarr->Set(1,JS_INT(sz[1]));
       szarr->Set(2,JS_INT(sz[2]));
-      NanReturnValue(szarr);
+      info.GetReturnValue().Set(szarr);
     }
     case CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE:
     case CL_KERNEL_WORK_GROUP_SIZE: {
       size_t sz=0;
       CHECK_ERR(::clGetKernelWorkGroupInfo(k->getRaw(),d->getRaw(),param_name,sizeof(size_t),&sz, NULL));
-      NanReturnValue(JS_INT(sz));
+      info.GetReturnValue().Set(JS_INT(sz));
     }
     case CL_KERNEL_LOCAL_MEM_SIZE:
     case CL_KERNEL_PRIVATE_MEM_SIZE: {
       cl_ulong sz=0;
       CHECK_ERR(::clGetKernelWorkGroupInfo(k->getRaw(),d->getRaw(),param_name,sizeof(cl_ulong),&sz, NULL));
-      NanReturnValue(JS_INT(sz));
+      info.GetReturnValue().Set(JS_INT(sz));
     }
   }
 
@@ -483,18 +481,18 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
 #endif
 
 namespace Kernel {
-void init(Handle<Object> exports)
+NAN_MODULE_INIT(init)
 {
-  NODE_SET_METHOD(exports, "createKernel", CreateKernel);
-  NODE_SET_METHOD(exports, "createKernelsInProgram", CreateKernelsInProgram);
-  NODE_SET_METHOD(exports, "retainKernel", RetainKernel);
-  NODE_SET_METHOD(exports, "releaseKernel", ReleaseKernel);
-  NODE_SET_METHOD(exports, "setKernelArg", SetKernelArg);
-  NODE_SET_METHOD(exports, "getKernelInfo", GetKernelInfo);
+  Nan::SetMethod(target, "createKernel", CreateKernel);
+  Nan::SetMethod(target, "createKernelsInProgram", CreateKernelsInProgram);
+  Nan::SetMethod(target, "retainKernel", RetainKernel);
+  Nan::SetMethod(target, "releaseKernel", ReleaseKernel);
+  Nan::SetMethod(target, "setKernelArg", SetKernelArg);
+  Nan::SetMethod(target, "getKernelInfo", GetKernelInfo);
 #ifdef CL_VERSION_1_2
-  NODE_SET_METHOD(exports, "getKernelArgInfo", GetKernelArgInfo);
+  Nan::SetMethod(target, "getKernelArgInfo", GetKernelArgInfo);
 #endif
-  NODE_SET_METHOD(exports, "getKernelWorkGroupInfo", GetKernelWorkGroupInfo);
+  Nan::SetMethod(target, "getKernelWorkGroupInfo", GetKernelWorkGroupInfo);
 }
 } //namespace Kernel
 

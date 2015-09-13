@@ -12,13 +12,13 @@
 #include "types.h"
 #include "svm.h"
 
-#define JS_CL_CONSTANT(name) exports->Set(JS_STR( #name ), JS_INT(CL_ ## name))
-#define JS_CL_ERROR(name) exports->Set(JS_STR( #name ), NanError(JS_STR(opencl::getExceptionMessage(CL_ ## name).c_str(), CL_ ## name)) )
+#define JS_CL_CONSTANT(name) target->Set(JS_STR( #name ), JS_INT(CL_ ## name))
+#define JS_CL_ERROR(name) target->Set(JS_STR( #name ), Nan::Error(JS_STR(opencl::getExceptionMessage(CL_ ## name))) )
 
 
-#define NODE_DEFINE_CONSTANT_VALUE(exports, name, value)  \
-  (exports)->Set(NanNew<v8::String>(name),                \
-                NanNew<v8::Integer>((unsigned int)value))
+#define NODE_DEFINE_CONSTANT_VALUE(target, name, value)       \
+  (target)->Set(Nan::New<v8::String>(name).ToLocalChecked(),  \
+                Nan::New<v8::Integer>((unsigned int)value))
 
 #ifdef _WIN32
 /*-
@@ -78,41 +78,43 @@ char *strcasestr(const char *s, char *find) {
 
 extern "C" {
 
-void init(Handle<Object> exports)
+NAN_MODULE_INIT(init)
 {
 #ifdef CL_VERSION_1_2
-  exports->Set(JS_STR("CL_VERSION_1_2" ), JS_BOOL(true));
+  target->Set(JS_STR("CL_VERSION_1_2" ), Nan::True());
 #else
-  exports->Set(JS_STR("CL_VERSION_1_2" ), JS_BOOL(false));
+  target->Set(JS_STR("CL_VERSION_1_2" ), Nan::False());
+#endif
+#ifdef CL_VERSION_2_0
+  target->Set(JS_STR("CL_VERSION_2_0" ), Nan::True());
+#else
+  target->Set(JS_STR("CL_VERSION_2_0" ), Nan::False());
 #endif
 
-  // OpenCL 1.x methods
-  opencl::CommandQueue::init(exports);
-  opencl::Context::init(exports);
-  opencl::Device::init(exports);
-  opencl::Event::init(exports);
-  opencl::Kernel::init(exports);
-  opencl::MemObj::init(exports);
-  opencl::Platform::init(exports);
-  opencl::Program::init(exports);
-  opencl::Sampler::init(exports);
-  opencl::Pipe::init(exports);
-  opencl::SVM::init(exports);
-  opencl::Types::init(exports);
-
-
-
+  // OpenCL methods
+  opencl::CommandQueue::init(target);
+  opencl::Context::init(target);
+  opencl::Device::init(target);
+  opencl::Event::init(target);
+  opencl::Kernel::init(target);
+  opencl::MemObj::init(target);
+  opencl::Platform::init(target);
+  opencl::Program::init(target);
+  opencl::Sampler::init(target);
+  opencl::Pipe::init(target);
+  opencl::SVM::init(target);
+  opencl::Types::init(target);
 
   /**
    * Platform-dependent byte sizes
    */
-  NODE_DEFINE_CONSTANT_VALUE(exports, "size_CHAR", sizeof(char));
-  NODE_DEFINE_CONSTANT_VALUE(exports, "size_SHORT", sizeof(short));
-  NODE_DEFINE_CONSTANT_VALUE(exports, "size_INT", sizeof(int));
-  NODE_DEFINE_CONSTANT_VALUE(exports, "size_LONG", sizeof(long));
-  NODE_DEFINE_CONSTANT_VALUE(exports, "size_FLOAT", sizeof(float));
-  NODE_DEFINE_CONSTANT_VALUE(exports, "size_DOUBLE", sizeof(double));
-  NODE_DEFINE_CONSTANT_VALUE(exports, "size_HALF", sizeof(float) >> 1);
+  NODE_DEFINE_CONSTANT_VALUE(target, "size_CHAR", sizeof(char));
+  NODE_DEFINE_CONSTANT_VALUE(target, "size_SHORT", sizeof(short));
+  NODE_DEFINE_CONSTANT_VALUE(target, "size_INT", sizeof(int));
+  NODE_DEFINE_CONSTANT_VALUE(target, "size_LONG", sizeof(long));
+  NODE_DEFINE_CONSTANT_VALUE(target, "size_FLOAT", sizeof(float));
+  NODE_DEFINE_CONSTANT_VALUE(target, "size_DOUBLE", sizeof(double));
+  NODE_DEFINE_CONSTANT_VALUE(target, "size_HALF", sizeof(float) >> 1);
 
   // OpenCL 1.x constants
 

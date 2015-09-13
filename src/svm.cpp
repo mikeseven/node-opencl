@@ -13,20 +13,20 @@ namespace opencl {
 
 class NoCLSVMFreeCallback:public NanAsyncLaunch {
  public:
-   NoCLSVMFreeCallback(NanCallback* callback,const v8::Local<v8::Object> &userData):NanAsyncLaunch(callback){
-       NanScope();
-       v8::Local<v8::Object> obj = NanNew<v8::Object>();
-       NanAssignPersistent(persistentHandle, obj);
-       v8::Local<v8::Object>  handle = NanNew(persistentHandle);
+   NoCLSVMFreeCallback(Nan::Callback* callback,const v8::Local<v8::Object> &userData):NanAsyncLaunch(callback){
+       Nan::HandleScope scope;
+       v8::Local<v8::Object> obj = Nan::New<v8::Object>();
+       persistentHandle.Reset(obj);
+       v8::Local<v8::Object>  handle = Nan::New(persistentHandle);
        handle->Set(kIndex, userData);
    }
 
    void Execute() {
-     NanScope();
-     v8::Local<v8::Object> handle = NanNew(persistentHandle);
+     Nan::HandleScope scope;
+     v8::Local<v8::Object> handle = Nan::New(persistentHandle);
      v8::Local<v8::Object> userData= (handle->Get(kIndex)).As<v8::Object>();
      Handle<Value> argv[] = {
-         NanNew(userData)
+         Nan::New(userData)
      };
      callback->Call(1,argv);
    }
@@ -63,20 +63,20 @@ void freeSVMPtr(char* ptr,void* hint) {
 }
 
 NAN_METHOD(SVMAlloc) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(4);
 
   // Arg 1
-  NOCL_UNWRAP(context, NoCLContext, args[0]);
+  NOCL_UNWRAP(context, NoCLContext, info[0]);
 
   // Arg 2
-  cl_svm_mem_flags flags = args[1]->Uint32Value();
+  cl_svm_mem_flags flags = info[1]->Uint32Value();
 
   // Arg 2
-  cl_uint size = args[2]->Uint32Value();
+  cl_uint size = info[2]->Uint32Value();
 
   // Arg 3
-  cl_uint alignment = args[3]->Uint32Value();
+  cl_uint alignment = info[3]->Uint32Value();
 
   void* mPtr = ::clSVMAlloc (
     context->getRaw(),
@@ -100,23 +100,23 @@ NAN_METHOD(SVMAlloc) {
     svmStatusMap[mPtr] = SVMStatus();
   }
 
-  Local<Object> buf = NanNewBufferHandle(ptr,size,freeSVMPtr,ctx);
+  Local<Object> buf = Nan::NewBuffer(ptr,size,freeSVMPtr,ctx).ToLocalChecked();
 
-  NanReturnValue(buf);
+  info.GetReturnValue().Set(buf);
 
 }
 
 
 NAN_METHOD(SVMFree) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(2);
 
   // Arg 0
-  NOCL_UNWRAP(context, NoCLContext, args[0]);
+  NOCL_UNWRAP(context, NoCLContext, info[0]);
 
   void *ptr=nullptr;
   int len=0;
-  getPtrAndLen(args[1], ptr, len);
+  getPtrAndLen(info[1], ptr, len);
   if(ptr == NULL || svmStatusMap.count(ptr)==0
           ||svmStatusMap[ptr].deleted )
     THROW_ERR(CL_INVALID_ARG_VALUE);
@@ -124,18 +124,18 @@ NAN_METHOD(SVMFree) {
   svmStatusMap[ptr].deleted = true;
   clSVMFree(context->getRaw(),ptr);
 
-  Local<Object> obj = args[1].As<Object>();
+  Local<Object> obj = info[1].As<Object>();
   obj->SetIndexedPropertiesToExternalArrayData(NULL, obj->GetIndexedPropertiesExternalArrayDataType(), 0);
 
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
 }
 
 NAN_METHOD(enqueueSVMFree) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(2);
   cl_int err;
-  NOCL_UNWRAP(cq, NoCLCommandQueue, args[0]);
-  Local<Array> arr= Local<Array>::Cast(args[1]);
+  NOCL_UNWRAP(cq, NoCLCommandQueue, info[0]);
+  Local<Array> arr= Local<Array>::Cast(info[1]);
   cl_uint length = arr->Length();
   map<void*,Local<Object> > svmPtr;
   int len;
@@ -165,19 +165,19 @@ NAN_METHOD(enqueueSVMFree) {
 
   std::vector<NoCLEvent> cl_events;
   if(ARG_EXISTS(4)) {
-    Local<Array> js_events = Local<Array>::Cast(args[4]);
+    Local<Array> js_events = Local<Array>::Cast(info[4]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
   cl_event* eventPtr = nullptr;
   cl_event event;
 
-  if(ARG_EXISTS(5) && args[5]->BooleanValue())
+  if(ARG_EXISTS(5) && info[5]->BooleanValue())
       eventPtr = &event;
 
   if (ARG_EXISTS(2)) {
-   Local<Function> callbackHandle = args[2].As<Function>();
-   NanCallback *callback = new NanCallback(callbackHandle);
-   Local<Object> userData = args[3].As<Object>();
+   Local<Function> callbackHandle = info[2].As<Function>();
+   Nan::Callback *callback = new Nan::Callback(callbackHandle);
+   Local<Object> userData = info[3].As<Object>();
    NoCLSVMFreeCallback* cb = new NoCLSVMFreeCallback(callback,userData);
    err = clEnqueueSVMFree(cq->getRaw(),(cl_uint) vec.size(),vec.data(),
                          notifySVMFree,
@@ -188,9 +188,9 @@ NAN_METHOD(enqueueSVMFree) {
                          eventPtr);
     CHECK_ERR(err);
     if (eventPtr != nullptr) {
-      NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+      info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
     } else {
-      NanReturnValue(JS_INT(CL_SUCCESS));
+      info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
     }
   }
 
@@ -204,44 +204,44 @@ NAN_METHOD(enqueueSVMFree) {
 
   CHECK_ERR(err);
   if (eventPtr != nullptr) {
-    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
-    NanReturnValue(JS_INT(CL_SUCCESS));
+    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
 }
 
 
 
 NAN_METHOD(enqueueSVMMemcpy) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(5);
   cl_int err;
 
-  NOCL_UNWRAP(cq, NoCLCommandQueue, args[0]);
-  cl_bool blocking_copy = args[1]->BooleanValue() ? CL_TRUE : CL_FALSE;
+  NOCL_UNWRAP(cq, NoCLCommandQueue, info[0]);
+  cl_bool blocking_copy = info[1]->BooleanValue() ? CL_TRUE : CL_FALSE;
 
   void* dst;
   int len=0;
-  getPtrAndLen(args[2], dst, len);
+  getPtrAndLen(info[2], dst, len);
 
   void* src;
   int len2;
-  getPtrAndLen(args[3], src, len2);
+  getPtrAndLen(info[3], src, len2);
 
-  size_t size = args[4]->Uint32Value();
+  size_t size = info[4]->Uint32Value();
 
   if(size>static_cast<size_t>(len) || size>static_cast<size_t>(len2))
     THROW_ERR(CL_INVALID_VALUE);
 
   std::vector<NoCLEvent> cl_events;
   if(ARG_EXISTS(5)) {
-    Local<Array> js_events = Local<Array>::Cast(args[5]);
+    Local<Array> js_events = Local<Array>::Cast(info[5]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
   cl_event* eventPtr = nullptr;
   cl_event event;
 
-  if(ARG_EXISTS(6) && args[6]->BooleanValue())
+  if(ARG_EXISTS(6) && info[6]->BooleanValue())
       eventPtr = &event;
 
   err = clEnqueueSVMMemcpy(cq->getRaw(),blocking_copy,
@@ -253,23 +253,23 @@ NAN_METHOD(enqueueSVMMemcpy) {
 
   CHECK_ERR(err);
   if (eventPtr != nullptr) {
-    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
-    NanReturnValue(JS_INT(CL_SUCCESS));
+    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
 }
 
 NAN_METHOD(enqueueSVMMemFill) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(4);
   cl_int err;
 
   // Arg 0
-  NOCL_UNWRAP(cq, NoCLCommandQueue, args[0]);
+  NOCL_UNWRAP(cq, NoCLCommandQueue, info[0]);
 
   void* ptr;
   int length=0;
-  getPtrAndLen(args[1], ptr, length);
+  getPtrAndLen(info[1], ptr, length);
 
   if(ptr == NULL || svmStatusMap.count(ptr)==0
           ||svmStatusMap[ptr].deleted )
@@ -277,8 +277,8 @@ NAN_METHOD(enqueueSVMMemFill) {
 
   void* pattern;
   int len;
-  getPtrAndLen(args[2], pattern, len);
-  size_t size = args[3]->Uint32Value();
+  getPtrAndLen(info[2], pattern, len);
+  size_t size = info[3]->Uint32Value();
 
   if(size>static_cast<size_t>(len) ||
      size >static_cast<size_t>(length) ||
@@ -287,13 +287,13 @@ NAN_METHOD(enqueueSVMMemFill) {
 
   std::vector<NoCLEvent> cl_events;
   if(ARG_EXISTS(4)) {
-    Local<Array> js_events = Local<Array>::Cast(args[4]);
+    Local<Array> js_events = Local<Array>::Cast(info[4]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
   cl_event* eventPtr = nullptr;
   cl_event event;
 
-  if(ARG_EXISTS(5) && args[5]->BooleanValue())
+  if(ARG_EXISTS(5) && info[5]->BooleanValue())
       eventPtr = &event;
 
   err =  clEnqueueSVMMemFill(cq->getRaw(),ptr,pattern,static_cast<size_t>(len),size,
@@ -303,42 +303,42 @@ NAN_METHOD(enqueueSVMMemFill) {
                              eventPtr);
   CHECK_ERR(err);
   if (eventPtr != nullptr) {
-    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
-    NanReturnValue(JS_INT(CL_SUCCESS));
+    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
 }
 
 NAN_METHOD(enqueueSVMMap) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(5);
   cl_int err;
 
   // Arg 0
-  NOCL_UNWRAP(cq, NoCLCommandQueue, args[0]);
+  NOCL_UNWRAP(cq, NoCLCommandQueue, info[0]);
 
-  cl_bool blocking_map = args[1]->BooleanValue() ? CL_TRUE : CL_FALSE;
-  cl_map_flags map_flags = args[2]->Uint32Value();
+  cl_bool blocking_map = info[1]->BooleanValue() ? CL_TRUE : CL_FALSE;
+  cl_map_flags map_flags = info[2]->Uint32Value();
 
   void* ptr;
   int len=0;
-  getPtrAndLen(args[3], ptr, len);
+  getPtrAndLen(info[3], ptr, len);
 
   if(ptr == NULL || svmStatusMap.count(ptr)==0
           ||svmStatusMap[ptr].deleted )
     THROW_ERR(CL_INVALID_VALUE);
 
-  size_t size = args[4]->Uint32Value();
+  size_t size = info[4]->Uint32Value();
 
   std::vector<NoCLEvent> cl_events;
   if(ARG_EXISTS(5)) {
-    Local<Array> js_events = Local<Array>::Cast(args[5]);
+    Local<Array> js_events = Local<Array>::Cast(info[5]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
   cl_event* eventPtr = nullptr;
   cl_event event;
 
-  if(ARG_EXISTS(6) && args[6]->BooleanValue())
+  if(ARG_EXISTS(6) && info[6]->BooleanValue())
       eventPtr = &event;
 
   err = clEnqueueSVMMap(cq->getRaw(),blocking_map,map_flags,
@@ -349,22 +349,22 @@ NAN_METHOD(enqueueSVMMap) {
 
   CHECK_ERR(err);
   if (eventPtr != nullptr) {
-    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
-    NanReturnValue(JS_INT(CL_SUCCESS));
+    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
 }
 
 NAN_METHOD(enqueueSVMUnmap) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(2);
   cl_int err;
 
   // Arg 0
-  NOCL_UNWRAP(cq, NoCLCommandQueue, args[0]);
+  NOCL_UNWRAP(cq, NoCLCommandQueue, info[0]);
   void* ptr;
   int len=0;
-  getPtrAndLen(args[1], ptr, len);
+  getPtrAndLen(info[1], ptr, len);
 
   if(ptr == NULL || svmStatusMap.count(ptr)==0
           ||svmStatusMap[ptr].deleted )
@@ -373,13 +373,13 @@ NAN_METHOD(enqueueSVMUnmap) {
 
   std::vector<NoCLEvent> cl_events;
   if(ARG_EXISTS(2)) {
-    Local<Array> js_events = Local<Array>::Cast(args[2]);
+    Local<Array> js_events = Local<Array>::Cast(info[2]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
   cl_event* eventPtr = nullptr;
   cl_event event;
 
-  if(ARG_EXISTS(3) && args[3]->BooleanValue())
+  if(ARG_EXISTS(3) && info[3]->BooleanValue())
       eventPtr = &event;
 
   err = clEnqueueSVMUnmap(cq->getRaw(),ptr, (cl_uint)cl_events.size(),
@@ -389,25 +389,25 @@ NAN_METHOD(enqueueSVMUnmap) {
 
   CHECK_ERR(err)
   if (eventPtr != nullptr) {
-    NanReturnValue(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
-    NanReturnValue(JS_INT(CL_SUCCESS));
+    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
 }
 
 NAN_METHOD(setKernelArgSVMPointer) {
-  NanScope();
+  Nan::HandleScope scope;
   REQ_ARGS(3);
   cl_int err;
 
   // Arg 0
-  NOCL_UNWRAP(k, NoCLKernel, args[0]);
+  NOCL_UNWRAP(k, NoCLKernel, info[0]);
 
   // Arg 1
-  unsigned int idx = args[1]->Uint32Value();
+  unsigned int idx = info[1]->Uint32Value();
   void* ptr;
   int len=0;
-  getPtrAndLen(args[2], ptr, len);
+  getPtrAndLen(info[2], ptr, len);
 
   if(ptr == NULL || svmStatusMap.count(ptr)==0
           ||svmStatusMap[ptr].deleted )
@@ -416,24 +416,24 @@ NAN_METHOD(setKernelArgSVMPointer) {
   err = clSetKernelArgSVMPointer(k->getRaw(),idx,ptr);
 
   CHECK_ERR(err)
-  NanReturnValue(JS_INT(CL_SUCCESS));
+  info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
 }
 
 
 #endif
 
 namespace SVM {
-void init(Handle<Object> exports)
+NAN_MODULE_INIT(init)
 {
 #ifdef CL_VERSION_2_0
-  NODE_SET_METHOD(exports, "SVMAlloc", SVMAlloc);
-  NODE_SET_METHOD(exports, "SVMFree", SVMFree);
-  NODE_SET_METHOD(exports, "enqueueSVMFree", enqueueSVMFree);
-  NODE_SET_METHOD(exports, "enqueueSVMMap", enqueueSVMMap);
-  NODE_SET_METHOD(exports, "enqueueSVMMemcpy", enqueueSVMMemcpy);
-  NODE_SET_METHOD(exports, "enqueueSVMMemFill", enqueueSVMMemFill);
-  NODE_SET_METHOD(exports, "enqueueSVMUnmap", enqueueSVMUnmap);
-  NODE_SET_METHOD(exports, "setKernelArgSVMPointer", setKernelArgSVMPointer);
+  Nan::SetMethod(target, "SVMAlloc", SVMAlloc);
+  Nan::SetMethod(target, "SVMFree", SVMFree);
+  Nan::SetMethod(target, "enqueueSVMFree", enqueueSVMFree);
+  Nan::SetMethod(target, "enqueueSVMMap", enqueueSVMMap);
+  Nan::SetMethod(target, "enqueueSVMMemcpy", enqueueSVMMemcpy);
+  Nan::SetMethod(target, "enqueueSVMMemFill", enqueueSVMMemFill);
+  Nan::SetMethod(target, "enqueueSVMUnmap", enqueueSVMUnmap);
+  Nan::SetMethod(target, "setKernelArgSVMPointer", setKernelArgSVMPointer);
 #endif
 }
 } // namespace Pipe

@@ -19,7 +19,7 @@ void NanAsyncAddInQueue(uv_async_t *handle, int status);
   **/
 /* abstract */ class NanAsyncLaunch {
  public:
-  NanAsyncLaunch(NanCallback* callback):callback(callback),alreadyFired(false) {
+  NanAsyncLaunch(Nan::Callback* callback):callback(callback),alreadyFired(false) {
     uv_async_init(uv_default_loop(), &(this->async), NanAsyncLaunch::AddInQueue);
     async.data = this;
   }
@@ -56,16 +56,16 @@ inline static void AsyncClose_(uv_handle_t* handle) {
   }
 
   virtual ~NanAsyncLaunch(){
-    NanScope();
+    Nan::HandleScope scope;
     if (!persistentHandle.IsEmpty())
-      NanDisposePersistent(persistentHandle);
+      persistentHandle.Reset();
     if (callback)
       delete callback;
   }
 
  protected:
-  NanCallback* callback;
-  Persistent<Object> persistentHandle;
+  Nan::Callback* callback;
+  Nan::Persistent<Object> persistentHandle;
   static const uint32_t kIndex = 0;
  private:
   uv_async_t async;
@@ -75,10 +75,10 @@ inline static void AsyncClose_(uv_handle_t* handle) {
 class NoCLMapCB:public NanAsyncLaunch {
  public:
    NoCLMapCB(const v8::Local<v8::Object> &buffer,size_t size,void* mPtr):NanAsyncLaunch(nullptr),size(size),mPtr(mPtr){
-       NanScope();
-       v8::Local<v8::Object> obj = NanNew<v8::Object>();
-       NanAssignPersistent(persistentHandle, obj);
-       v8::Local<v8::Object>  handle = NanNew(persistentHandle);
+       Nan::HandleScope scope;
+       v8::Local<v8::Object> obj = Nan::New<v8::Object>();
+       persistentHandle.Reset(obj);
+       v8::Local<v8::Object>  handle = Nan::New(persistentHandle);
        handle->Set(kIndex, buffer);
    }
 
@@ -87,8 +87,8 @@ class NoCLMapCB:public NanAsyncLaunch {
    }
 
    void Execute() {
-     NanScope();
-     v8::Local<v8::Object> handle = NanNew(persistentHandle);
+     Nan::HandleScope scope;
+     v8::Local<v8::Object> handle = Nan::New(persistentHandle);
      v8::Local<v8::Object> buffer= (handle->Get(kIndex)).As<v8::Object>();
      buffer->SetIndexedPropertiesToExternalArrayData(this->mPtr, v8::kExternalByteArray, (int) this->size);
    }

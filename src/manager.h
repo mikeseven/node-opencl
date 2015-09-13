@@ -19,7 +19,7 @@ using namespace v8;
 //
 ////  void add(Persistent<Object>* p, cl_type id);
 ////  void remove(Persistent<Object>* p);
-////  Persistent<Object>* find(cl_type id);
+////  Nan::Persistent<Object>* find(cl_type id);
 ////  void clear();
 ////  void stats();
 //

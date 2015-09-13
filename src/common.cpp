@@ -51,7 +51,7 @@ void getPtrAndLen(const Local<Value> value, void* &ptr, int &len)
   }
 }
 
-const std::string getExceptionMessage(const cl_int code) {
+const char* getExceptionMessage(const cl_int code) {
   switch (code) {
     case CL_SUCCESS:                            return "Success!";
     case CL_DEVICE_NOT_FOUND:                   return "Device not found.";

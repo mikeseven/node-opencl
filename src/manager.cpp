@@ -34,7 +34,7 @@ namespace opencl {
 //  for(auto it=objects.begin();it!=objects.end();++it) {
 //    auto p= *(it->first);
 //    if(!p.IsEmpty() && !p.IsNearDeath()) {
-//      // TODO WebCLObject *obj=ObjectWrap::Unwrap<WebCLObject>(p);
+//      // TODO WebCLObject *obj=Nan::ObjectWrap::Unwrap<WebCLObject>(p);
 //      // obj->Destructor();
 //    }
 //  }
@@ -48,7 +48,7 @@ namespace opencl {
 //  for(auto it=references.begin(); it!=references.end(); ++it) {
 //    auto p= *(it->first);
 //    if(!p.IsEmpty() && !p.IsNearDeath()) {
-//      // TODO WebCLObject *obj=ObjectWrap::Unwrap<WebCLObject>(p);
+//      // TODO WebCLObject *obj=Nan::ObjectWrap::Unwrap<WebCLObject>(p);
 //      // int count=it->second;
 //      // printf("    %s: %d\n",obj->getCLObjName(),count);
 //    }

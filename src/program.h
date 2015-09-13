@@ -6,7 +6,7 @@
 namespace opencl {
 
 namespace Program {
-void init(Handle<Object> exports);
+NAN_MODULE_INIT(init);
 } // namespace Program
 
 } // namespace opencl
