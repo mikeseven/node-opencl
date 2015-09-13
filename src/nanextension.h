@@ -90,7 +90,7 @@ class NoCLMapCB:public NanAsyncLaunch {
      NanScope();
      v8::Local<v8::Object> handle = NanNew(persistentHandle);
      v8::Local<v8::Object> buffer= (handle->Get(kIndex)).As<v8::Object>();
-     buffer->SetIndexedPropertiesToExternalArrayData(this->mPtr, v8::kExternalByteArray, this->size);
+     buffer->SetIndexedPropertiesToExternalArrayData(this->mPtr, v8::kExternalByteArray, (int) this->size);
    }
 
  private:

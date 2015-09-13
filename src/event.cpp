@@ -16,7 +16,7 @@ NAN_METHOD(WaitForEvents) {
   NOCL_TO_ARRAY(events, js_events, NoCLEvent);
 
   CHECK_ERR(::clWaitForEvents(
-    events.size(), NOCL_TO_CL_ARRAY(events, NoCLEvent)));
+    (cl_uint) events.size(), NOCL_TO_CL_ARRAY(events, NoCLEvent)));
 
   NanReturnValue(JS_INT(CL_SUCCESS));
 }
@@ -69,7 +69,8 @@ NAN_METHOD(GetEventInfo) {
       NanReturnValue(JS_INT(val));
     }
   }
-  return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  return NanThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE).c_str(), CL_INVALID_VALUE));
+  //return NanThrowError(JS_INT(CL_INVALID_VALUE));
 }
 
 // extern CL_API_ENTRY cl_event CL_API_CALL
@@ -169,7 +170,8 @@ NAN_METHOD(GetEventProfilingInfo) {
       NanReturnValue(arr);
     }
   }
-  return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  return NanThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE).c_str(), CL_INVALID_VALUE));
+  //return NanThrowError(JS_INT(CL_INVALID_VALUE));
 }
 
 class NoCLEventCLCallback:public NanAsyncLaunch {

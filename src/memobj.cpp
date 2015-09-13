@@ -397,7 +397,8 @@ NAN_METHOD(GetMemObjectInfo) {
       NanReturnValue(NOCL_WRAP(NoCLMem, val));
     }
   }
-  return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  return NanThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE).c_str(), CL_INVALID_VALUE));
+  //return NanThrowError(JS_INT(CL_INVALID_VALUE));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -455,7 +456,8 @@ NAN_METHOD(GetImageInfo) {
 #endif
   }
 
-  return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  return NanThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE).c_str(), CL_INVALID_VALUE));
+  //return NanThrowError(JS_INT(CL_INVALID_VALUE));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL

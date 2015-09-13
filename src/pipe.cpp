@@ -66,7 +66,8 @@ NAN_METHOD(GetPipeInfo) {
     }
   }
 
-  return NanThrowError(JS_INT(CL_INVALID_VALUE));
+  return NanThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE).c_str(), CL_INVALID_VALUE));
+  //return NanThrowError(JS_INT(CL_INVALID_VALUE));
 }
 
 #endif

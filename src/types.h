@@ -67,7 +67,10 @@ Local<ObjectTemplate> & GetNodeOpenCLObjectGenericTemplate();
 
 #define NOCL_UNWRAP(VAR, TYPE, EXPR) \
   TYPE * VAR = NoCLUnwrap<TYPE>(EXPR);\
-  if (VAR == NULL) { NanThrowError(opencl::getExceptionMessage(TYPE::getErrorCode()).c_str(), TYPE::getErrorCode()); NanReturnUndefined(); }
+  if (VAR == NULL) { \
+    NanThrowError(JS_STR(opencl::getExceptionMessage(TYPE::getErrorCode()).c_str(), TYPE::getErrorCode())); \
+    NanReturnUndefined(); \
+  }
 
 
 class NoCLObjectGen {
@@ -240,7 +243,7 @@ class NoCLRefCountObject : public NoCLObject<T,elid,err> {
 
 #define NOCL_TO_ARRAY(TO, FROM, TYPE) \
   if (!TYPE::fromJSArray<TYPE>(TO, FROM)) { \
-    NanThrowError(opencl::getExceptionMessage(TYPE::getErrorCode()).c_str(), TYPE::getErrorCode()); \
+    NanThrowError(JS_STR(opencl::getExceptionMessage(TYPE::getErrorCode()).c_str(), TYPE::getErrorCode())); \
     NanReturnUndefined();\
   }
 
