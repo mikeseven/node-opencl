@@ -63,14 +63,18 @@ NAN_METHOD(CreateBuffer) {
     if(info[3]->IsObject()) {
       Local<Object> obj=info[3]->ToObject();
       String::Utf8Value name(obj->GetConstructorName());
-      if(strcmp("Buffer",*name))
+      if(strcmp("Buffer",*name)) {
         host_ptr=Buffer::Data(obj);
+        // size_t bufferLength = Buffer::Length(obj);
+        // cout<<"Buffer: size="<<bufferLength<<endl;
+      }
       else if(strcmp("Array",*name)) {
+        // TODO use v8::ArrayBuffer
         // TypedArray
-        if (!obj->HasIndexedPropertiesInExternalArrayData()) {
-          THROW_ERR(CL_INVALID_MEM_OBJECT);
-        }
-        host_ptr=obj->GetIndexedPropertiesExternalArrayData();
+        // if (!obj->HasIndexedPropertiesInExternalArrayData()) {
+        //   THROW_ERR(CL_INVALID_MEM_OBJECT);
+        // }
+        // host_ptr=obj->GetIndexedPropertiesExternalArrayData();
       } else {
         THROW_ERR(CL_INVALID_MEM_OBJECT);
       }
@@ -121,6 +125,7 @@ NAN_METHOD(CreateSubBuffer) {
     CHECK_ERR(ret);
 
     info.GetReturnValue().Set(NOCL_WRAP(NoCLMem, mem));
+    return;
   }
 
   CHECK_ERR(CL_INVALID_VALUE);
@@ -172,9 +177,9 @@ NAN_METHOD(CreateImage) {
   // Arg 4
   if(ARG_EXISTS(4)) {
     if(info[4]->IsArray()) {
-      // JS Array
-      Local<Array> arr=Local<Array>::Cast(info[4]);
-      host_ptr=arr->GetIndexedPropertiesExternalArrayData();
+      // TODO JS Array
+      // Local<Array> arr=Local<Array>::Cast(info[4]);
+      // host_ptr=arr->GetIndexedPropertiesExternalArrayData();
     }
     else if(info[4]->IsObject()) {
       Local<Object> obj=info[4]->ToObject();
@@ -182,11 +187,12 @@ NAN_METHOD(CreateImage) {
       if(!strcmp("Buffer",*name))
         host_ptr=Buffer::Data(obj);
       else {
+        // TODO replace with v8::ArrayBuffer
         // TypedArray
-        if(!obj->HasIndexedPropertiesInExternalArrayData()) {
-          THROW_ERR(CL_INVALID_MEM_OBJECT)
-        }
-        host_ptr=obj->GetIndexedPropertiesExternalArrayData();
+        // if(!obj->HasIndexedPropertiesInExternalArrayData()) {
+        //   THROW_ERR(CL_INVALID_MEM_OBJECT)
+        // }
+        // host_ptr=obj->GetIndexedPropertiesExternalArrayData();
         // printf("external array data type %d\n",obj->GetIndexedPropertiesExternalArrayDataType());
       }
     }
@@ -360,11 +366,13 @@ NAN_METHOD(GetMemObjectInfo) {
       cl_mem_object_type val;
       CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(cl_mem_object_type), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_MEM_FLAGS: {
       cl_mem_flags val;
       CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(cl_mem_flags), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_MEM_SIZE:
     case CL_MEM_OFFSET:
@@ -372,6 +380,7 @@ NAN_METHOD(GetMemObjectInfo) {
       size_t val;
       CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(size_t), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_MEM_MAP_COUNT:
     case CL_MEM_REFERENCE_COUNT:
@@ -379,22 +388,26 @@ NAN_METHOD(GetMemObjectInfo) {
       cl_uint val;
       CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(cl_uint), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_MEM_HOST_PTR: {
       void* val;
       CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(void*), &val, NULL))
 
       //info.GetReturnValue().Set(NOCL_WRAP(NoCLMappedPtr, val));
+      return;
     }
     case CL_MEM_CONTEXT: {
       cl_context val;
       CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(cl_context), &val, NULL))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLContext, val));
+      return;
     }
     case CL_MEM_ASSOCIATED_MEMOBJECT: {
       cl_mem val;
       CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(cl_mem), &val, NULL))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLMem, val));
+      return;
     }
   }
   return Nan::ThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE)));
@@ -424,6 +437,7 @@ NAN_METHOD(GetImageInfo) {
       arr->Set(JS_STR("channel_order"), JS_INT(val.image_channel_order));
       arr->Set(JS_STR("channel_data_type"), JS_INT(val.image_channel_data_type));
       info.GetReturnValue().Set(arr);
+      return;
     }
     case CL_IMAGE_ELEMENT_SIZE:
     case CL_IMAGE_ROW_PITCH:
@@ -438,12 +452,14 @@ NAN_METHOD(GetImageInfo) {
       size_t val;
       CHECK_ERR(::clGetImageInfo(mem->getRaw(),param_name,sizeof(size_t), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
 #ifdef CL_VERSION_1_2
     case CL_IMAGE_BUFFER: {
       cl_mem val;
       CHECK_ERR(::clGetImageInfo(mem->getRaw(),param_name,sizeof(cl_mem), &val, NULL))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLMem, val));
+      return;
     }
     case CL_IMAGE_NUM_MIP_LEVELS:
     case CL_IMAGE_NUM_SAMPLES:
@@ -451,6 +467,7 @@ NAN_METHOD(GetImageInfo) {
       cl_uint val;
       CHECK_ERR(::clGetImageInfo(mem->getRaw(),param_name,sizeof(cl_uint), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
 #endif
   }

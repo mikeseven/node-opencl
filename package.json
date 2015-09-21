@@ -63,5 +63,9 @@
     "mocha": "*"
   },
   "private": true,
-  "gypfile": true
+  "gypfile": true,
+  "engines" : {
+    "node" : ">=0.10.3 <4.0.0",
+    "npm" : "*"
+  }
 }

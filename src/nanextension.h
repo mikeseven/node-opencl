@@ -89,8 +89,12 @@ class NoCLMapCB:public NanAsyncLaunch {
    void Execute() {
      Nan::HandleScope scope;
      v8::Local<v8::Object> handle = Nan::New(persistentHandle);
-     v8::Local<v8::Object> buffer= (handle->Get(kIndex)).As<v8::Object>();
-     buffer->SetIndexedPropertiesToExternalArrayData(this->mPtr, v8::kExternalByteArray, (int) this->size);
+
+     // this retrieves the node::Buffer and sets its content to mPtr
+     // TODO I think we can use node::Buffer or v8::ArrayBuffer directly as node::Buffer does
+     // v8::Local<v8::Object> buffer= (handle->Get(kIndex)).As<v8::Object>();
+     // buffer->SetIndexedPropertiesToExternalArrayData(this->mPtr, v8::kExternalByteArray, (int) this->size);
+
    }
 
  private:

@@ -25,8 +25,8 @@ class NoCLProgramCLCallback:public NanAsyncLaunch {
      v8::Local<v8::Object> handle = Nan::New(persistentHandle);
      v8::Local<v8::Object> userData= (handle->Get(kIndex)).As<v8::Object>();
      Local<Value> argv[] = {
-         Nan::New(NOCL_WRAP(NoCLProgram, program)),
-         Nan::New(userData)
+         //TODO Nan::New(NOCL_WRAP(NoCLProgram, program)),
+         //TODO Nan::New(userData)
      };
      callback->Call(2,argv);
    }
@@ -473,12 +473,14 @@ NAN_METHOD(GetProgramInfo) {
       cl_uint val;
       CHECK_ERR(::clGetProgramInfo(prog->getRaw(),param_name,sizeof(cl_uint), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_PROGRAM_CONTEXT:
     {
       cl_context val;
       CHECK_ERR(::clGetProgramInfo(prog->getRaw(),param_name,sizeof(cl_context), &val, NULL))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLContext, val));
+      return;
     }
     case CL_PROGRAM_DEVICES:
     {
@@ -495,6 +497,7 @@ NAN_METHOD(GetProgramInfo) {
       }
 
       info.GetReturnValue().Set(arr);
+      return;
     }
     case CL_PROGRAM_BINARY_SIZES:
     {
@@ -515,6 +518,7 @@ NAN_METHOD(GetProgramInfo) {
         arr->Set(i,JS_INT(uint32_t(sizes[i])));
 
       info.GetReturnValue().Set(arr);
+      return;
     }
 
     /*
@@ -560,6 +564,7 @@ NAN_METHOD(GetProgramInfo) {
       }
 
       info.GetReturnValue().Set(arr);
+      return;
     }
 #ifdef CL_VERSION_1_2
     case CL_PROGRAM_NUM_KERNELS:
@@ -567,6 +572,7 @@ NAN_METHOD(GetProgramInfo) {
       size_t val;
       CHECK_ERR(::clGetProgramInfo(prog->getRaw(),param_name,sizeof(size_t), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_PROGRAM_KERNEL_NAMES:
 #endif
@@ -577,6 +583,7 @@ NAN_METHOD(GetProgramInfo) {
       unique_ptr<char[]> names(new char[nchars]);
       CHECK_ERR(::clGetProgramInfo(prog->getRaw(), param_name, nchars*sizeof(char), names.get(), NULL));
       info.GetReturnValue().Set(JS_STR(names.get()));
+      return;
     }
   }
   THROW_ERR(CL_INVALID_VALUE);
@@ -603,6 +610,7 @@ NAN_METHOD(GetProgramBuildInfo) {
       cl_build_status val;
       CHECK_ERR(::clGetProgramBuildInfo(prog->getRaw(), device->getRaw(),param_name,sizeof(cl_build_status), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_PROGRAM_BUILD_OPTIONS:
     case CL_PROGRAM_BUILD_LOG:
@@ -612,6 +620,7 @@ NAN_METHOD(GetProgramBuildInfo) {
       unique_ptr<char[]> param_value(new char[param_value_size_ret]);
       CHECK_ERR(::clGetProgramBuildInfo(prog->getRaw(), device->getRaw(), param_name, param_value_size_ret, param_value.get(), NULL));
       info.GetReturnValue().Set(JS_STR(param_value.get(),(int)param_value_size_ret));
+      return;
     }
 #ifdef CL_VERSION_1_2
     case CL_PROGRAM_BINARY_TYPE:
@@ -619,6 +628,7 @@ NAN_METHOD(GetProgramBuildInfo) {
       cl_program_binary_type val;
       CHECK_ERR(::clGetProgramBuildInfo(prog->getRaw(), device->getRaw(), param_name,sizeof(cl_program_binary_type), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
 #endif
   }

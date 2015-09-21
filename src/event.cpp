@@ -43,30 +43,35 @@ NAN_METHOD(GetEventInfo) {
       cl_command_queue val;
       CHECK_ERR(::clGetEventInfo(ev->getRaw(),param_name,sizeof(cl_command_queue), &val, NULL))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLCommandQueue, val));
+      return;
     }
     case CL_EVENT_CONTEXT:
     {
       cl_context val;
       CHECK_ERR(::clGetEventInfo(ev->getRaw(),param_name,sizeof(cl_context), &val, NULL))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLContext, val));
+      return;
     }
     case CL_EVENT_COMMAND_TYPE:
     {
       cl_command_type val;
       CHECK_ERR(::clGetEventInfo(ev->getRaw(),param_name,sizeof(cl_command_type), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_EVENT_COMMAND_EXECUTION_STATUS:
     {
       cl_int val;
       CHECK_ERR(::clGetEventInfo(ev->getRaw(),param_name,sizeof(cl_int), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_EVENT_REFERENCE_COUNT:
     {
       cl_uint val;
       CHECK_ERR(::clGetEventInfo(ev->getRaw(),param_name,sizeof(cl_uint), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
   }
   return Nan::ThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE)));
@@ -167,6 +172,7 @@ NAN_METHOD(GetEventProfilingInfo) {
       arr->Set(0, JS_INT((uint32_t)val / 1000000));
       arr->Set(1, JS_INT((uint32_t)val - val / 1000000));
       info.GetReturnValue().Set(arr);
+      return;
     }
   }
   return Nan::ThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE)));
@@ -195,9 +201,9 @@ class NoCLEventCLCallback:public NanAsyncLaunch {
      v8::Local<v8::Object> noCLEvent = (handle->Get(kIndex)).As<v8::Object>();
      v8::Local<v8::Object> userData= (handle->Get(kIndex+1)).As<v8::Object>();
      Local<Value> argv[] = {
-         Nan::New(noCLEvent),
+         // TODO? Nan::New(noCLEvent),
          JS_INT(mCLCallbackStatus),
-         Nan::New(userData)
+         // TODO? Nan::New(userData)
      };
      callback->Call(3,argv);
    }

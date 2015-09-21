@@ -15,6 +15,7 @@ NAN_METHOD(Equals) {
 
   if (!info[0]->IsObject()) {
     info.GetReturnValue().Set(Nan::New<Boolean>(false));
+    return;
   }
 
   Local<Object> otherObj = info[0]->ToObject();
@@ -22,6 +23,7 @@ NAN_METHOD(Equals) {
 
   if(self->GetType() != other->GetType()) {
     info.GetReturnValue().Set(Nan::New<Boolean>(false));
+    return;
   }
 
   switch (self->GetType()) {
@@ -30,7 +32,8 @@ NAN_METHOD(Equals) {
   case NB: {\
     NAME * aself = static_cast<NAME *>(self);\
     NAME * aother = static_cast<NAME *>(other);\
-    info.GetReturnValue().Set(Nan::New<Boolean>((*aother)==(*aself))); }
+    info.GetReturnValue().Set(Nan::New<Boolean>((*aother)==(*aself))); }\
+    return;
 
     NO_CL_COMPARE_OBJ(NoCLPlatformId,0)
     NO_CL_COMPARE_OBJ(NoCLDeviceId,1)
@@ -45,12 +48,15 @@ NAN_METHOD(Equals) {
     //NO_CL_COMPARE_OBJ(NoCLMappedPtr,10)
   default:
     info.GetReturnValue().Set(Nan::New<Boolean>(false));
+    return;
   }
 
 
 }
 
 NAN_METHOD(releaseAll){
+  cout<<"Releasing all OpenCL objects"<<endl;
+
   // be careful with the order of the releases: could segfault if the order is not good
   // on some drivers
   NoCLEvent::releaseAll();

@@ -142,21 +142,25 @@ NAN_METHOD(GetCommandQueueInfo) {
       cl_context val;
       CHECK_ERR(::clGetCommandQueueInfo(q->getRaw(),param_name,sizeof(cl_context), &val, nullptr))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLContext, val));
+      return;
     }
     case CL_QUEUE_DEVICE: {
       cl_device_id val;
       CHECK_ERR(::clGetCommandQueueInfo(q->getRaw(),param_name,sizeof(cl_device_id), &val, nullptr))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLDeviceId, val));
+      return;
     }
     case CL_QUEUE_REFERENCE_COUNT: {
       cl_uint val;
       CHECK_ERR(::clGetCommandQueueInfo(q->getRaw(),param_name,sizeof(cl_uint), &val, nullptr))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_QUEUE_PROPERTIES: {
       cl_command_queue_properties val;
       CHECK_ERR(::clGetCommandQueueInfo(q->getRaw(),param_name,sizeof(cl_command_queue_properties), &val, nullptr))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
   }
   return Nan::ThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE)));
@@ -1204,7 +1208,7 @@ NAN_METHOD(EnqueueMapBuffer) {
   obj->Set(Nan::New<String>("buffer").ToLocalChecked(), buf);
 
   if(!blocking_map) {
-    buf->SetIndexedPropertiesToExternalArrayData(NULL, buf->GetIndexedPropertiesExternalArrayDataType(), 0);
+    // TODO? buf->SetIndexedPropertiesToExternalArrayData(NULL, buf->GetIndexedPropertiesExternalArrayDataType(), 0);
     NoCLMapCB* cb = new NoCLMapCB(buf,size,mPtr);
     err = clSetEventCallback(event,CL_COMPLETE,notifyMapCB,cb);
     CHECK_ERR(err)
@@ -1305,7 +1309,7 @@ NAN_METHOD(EnqueueMapImage) {
   obj->Set(Nan::New<String>("buffer").ToLocalChecked(), buf);
 
   if(!blocking_map) {
-    buf->SetIndexedPropertiesToExternalArrayData(NULL, buf->GetIndexedPropertiesExternalArrayDataType(), 0);
+    //TODO? buf->SetIndexedPropertiesToExternalArrayData(NULL, buf->GetIndexedPropertiesExternalArrayDataType(), 0);
     NoCLMapCB* cb = new NoCLMapCB(buf,size,mPtr);
     err = clSetEventCallback(event,CL_COMPLETE,notifyMapCB,cb);
     CHECK_ERR(err)
@@ -1374,6 +1378,7 @@ NAN_METHOD(EnqueueUnmapMemObject) {
       (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),&event);
     CHECK_ERR(err)
     info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    return;
   }
 
   err = clEnqueueUnmapMemObject(cq->getRaw(),mem->getRaw(),ptr,
@@ -1381,7 +1386,7 @@ NAN_METHOD(EnqueueUnmapMemObject) {
   CHECK_ERR(err)
 
   Local<Object> obj = info[2].As<Object>();
-  obj->SetIndexedPropertiesToExternalArrayData(NULL, obj->GetIndexedPropertiesExternalArrayDataType(), 0);
+  //TODO obj->SetIndexedPropertiesToExternalArrayData(NULL, obj->GetIndexedPropertiesExternalArrayDataType(), 0);
 
   info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
  }
@@ -1645,6 +1650,7 @@ NAN_METHOD(EnqueueMarkerWithWaitList) {
       (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
         &event));
     info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    return;
   }
 
   CHECK_ERR(::clEnqueueMarkerWithWaitList(
@@ -1652,7 +1658,6 @@ NAN_METHOD(EnqueueMarkerWithWaitList) {
     (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),nullptr));
 
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -1679,6 +1684,7 @@ NAN_METHOD(EnqueueBarrierWithWaitList) {
         (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
           &event));
       info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+      return;
     }
 
     CHECK_ERR(::clEnqueueBarrierWithWaitList(
@@ -1705,6 +1711,7 @@ NAN_METHOD(EnqueueMarker) {
 
     CHECK_ERR(::clEnqueueMarker(q->getRaw(), &event));
     info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    return;
   }
 
   CHECK_ERR(::clEnqueueMarker(q->getRaw(), nullptr));

@@ -6,7 +6,8 @@ namespace opencl {
  * @return number of bytes per elements in a TypedArray
  * @return -1 if wrong type
  */
-int getTypedArrayBytes(ExternalArrayType type)
+ // TODO these types don't exist anymore
+/*int getTypedArrayBytes(ExternalArrayType type)
 {
   switch(type) {
     case kExternalByteArray:
@@ -24,8 +25,9 @@ int getTypedArrayBytes(ExternalArrayType type)
       return 8;
   }
   return -1;
-}
+}*/
 
+// TODO replace TypedArray with node::Buffer or v8::ArrayBuffer (same thing)
 void getPtrAndLen(const Local<Value> value, void* &ptr, int &len)
 {
   ptr=NULL;
@@ -33,20 +35,20 @@ void getPtrAndLen(const Local<Value> value, void* &ptr, int &len)
   if(!value->IsUndefined() && !value->IsNull()) {
     if(value->IsArray()) {
       Local<Array> arr=Local<Array>::Cast(value);
-      ptr = arr->GetIndexedPropertiesExternalArrayData();
-      len = arr->GetIndexedPropertiesExternalArrayDataLength() * getTypedArrayBytes(arr->GetIndexedPropertiesExternalArrayDataType());
+      // ptr = arr->GetIndexedPropertiesExternalArrayData();
+      // len = arr->GetIndexedPropertiesExternalArrayDataLength() * getTypedArrayBytes(arr->GetIndexedPropertiesExternalArrayDataType());
     }
     else if(value->IsObject()) {
       Local<Object> obj=value->ToObject();
       String::Utf8Value name(obj->GetConstructorName());
-      if(!strcmp("Buffer",*name)) {
+      //if(!strcmp("Buffer",*name)) {
         ptr=node::Buffer::Data(obj);
         len=(int) node::Buffer::Length(obj);
-      }
-      else {
-        ptr = obj->GetIndexedPropertiesExternalArrayData();
-        len = obj->GetIndexedPropertiesExternalArrayDataLength() * getTypedArrayBytes(obj->GetIndexedPropertiesExternalArrayDataType());
-      }
+      //}
+      //else {
+        // ptr = obj->GetIndexedPropertiesExternalArrayData();
+        // len = obj->GetIndexedPropertiesExternalArrayDataLength() * getTypedArrayBytes(obj->GetIndexedPropertiesExternalArrayDataType());
+      //}
     }
   }
 }

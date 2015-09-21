@@ -162,6 +162,7 @@ NAN_METHOD(GetContextInfo) {
     cl_uint param_value=0;
     CHECK_ERR(::clGetContextInfo(context->getRaw(),param_name,sizeof(cl_uint), &param_value, NULL));
     info.GetReturnValue().Set(JS_INT(param_value));
+    return;
   }
   case CL_CONTEXT_DEVICES: {
     size_t n=0;
@@ -176,6 +177,7 @@ NAN_METHOD(GetContextInfo) {
       arr->Set(i, NOCL_WRAP(NoCLDeviceId, devices[i]));
     }
     info.GetReturnValue().Set(arr);
+    return;
   }
   case CL_CONTEXT_PROPERTIES: {
     size_t n=0;
@@ -189,9 +191,11 @@ NAN_METHOD(GetContextInfo) {
     }
 
     info.GetReturnValue().Set(arr);
+    return;
   }
   default: {
     THROW_ERR(CL_INVALID_VALUE);
+    return;
   }
   }
 

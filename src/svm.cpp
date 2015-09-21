@@ -103,7 +103,6 @@ NAN_METHOD(SVMAlloc) {
   Local<Object> buf = Nan::NewBuffer(ptr,size,freeSVMPtr,ctx).ToLocalChecked();
 
   info.GetReturnValue().Set(buf);
-
 }
 
 
@@ -124,8 +123,9 @@ NAN_METHOD(SVMFree) {
   svmStatusMap[ptr].deleted = true;
   clSVMFree(context->getRaw(),ptr);
 
-  Local<Object> obj = info[1].As<Object>();
-  obj->SetIndexedPropertiesToExternalArrayData(NULL, obj->GetIndexedPropertiesExternalArrayDataType(), 0);
+  // TODO sets arg[1] to buffer data
+  // Local<Object> obj = info[1].As<Object>();
+  // obj->SetIndexedPropertiesToExternalArrayData(NULL, obj->GetIndexedPropertiesExternalArrayDataType(), 0);
 
   info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
 }
@@ -159,7 +159,9 @@ NAN_METHOD(enqueueSVMFree) {
   for(auto const& it:svmPtr) {
       svmStatusMap[it.first].deleted=true;
       vec.push_back(it.first);
-      it.second->SetIndexedPropertiesToExternalArrayData(it.first, it.second->GetIndexedPropertiesExternalArrayDataType(), 0);
+
+      // TODO
+      // it.second->SetIndexedPropertiesToExternalArrayData(it.first, it.second->GetIndexedPropertiesExternalArrayDataType(), 0);
   }
 
 
@@ -189,8 +191,10 @@ NAN_METHOD(enqueueSVMFree) {
     CHECK_ERR(err);
     if (eventPtr != nullptr) {
       info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+      return;
     } else {
       info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
+      return;
     }
   }
 
