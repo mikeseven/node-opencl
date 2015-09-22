@@ -15,7 +15,6 @@
         'src/device.cpp',
         'src/event.cpp',
         'src/kernel.cpp',
-        'src/manager.cpp',
         'src/memobj.cpp',
         'src/pipe.cpp',
         'src/platform.cpp',

@@ -229,6 +229,9 @@ NAN_METHOD(EnqueueReadBuffer) {
   }
   else
     getPtrAndLen(info[5],ptr,len);
+  if(!ptr || !len) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+  }
 
   std::vector<NoCLEvent> cl_events;
 
@@ -316,6 +319,9 @@ NAN_METHOD(EnqueueReadBufferRect) {
   }
   else
     getPtrAndLen(info[10],ptr,len);
+  if(!ptr || !len) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+  }
 
   std::vector<NoCLEvent> cl_events;
 
@@ -379,6 +385,10 @@ NAN_METHOD(EnqueueWriteBuffer) {
   }
   else
     getPtrAndLen(info[5],ptr,len);
+
+  if(!ptr || !len) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+  }
 
   std::vector<NoCLEvent> cl_events;
 
@@ -464,6 +474,9 @@ NAN_METHOD(EnqueueWriteBufferRect) {
   }
   else
     getPtrAndLen(info[10],ptr,len);
+  if(!ptr || !len) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+  }
 
   std::vector<NoCLEvent> cl_events;
   if (ARG_EXISTS(12)) {
@@ -534,6 +547,9 @@ NAN_METHOD(EnqueueFillBuffer) {
   }
   else {
     getPtrAndLen(info[2], pattern, len);
+  }
+  if(!pattern || !len) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
   size_t offset=info[3]->Uint32Value();
@@ -741,6 +757,9 @@ NAN_METHOD(EnqueueReadImage) {
   else {
     getPtrAndLen(info[7], ptr, len);
   }
+  if(!ptr || !len) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+  }
 
   std::vector<NoCLEvent> cl_events;
   if(ARG_EXISTS(8)) {
@@ -816,6 +835,9 @@ NAN_METHOD(EnqueueWriteImage) {
   }
   else
     getPtrAndLen(info[7],ptr,len);
+  if(!ptr || !len) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+  }
 
   std::vector<NoCLEvent> cl_events;
   if (ARG_EXISTS(8)) {
@@ -871,6 +893,9 @@ NAN_METHOD(EnqueueFillImage) {
   }
   else
     getPtrAndLen(info[2],fill_color,len);
+  if(!fill_color || !len) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+  }
 
   size_t origin[]={0,0,0};
   size_t region[]={1,1,1};
@@ -1387,6 +1412,9 @@ NAN_METHOD(EnqueueUnmapMemObject) {
   }
   else {
     getPtrAndLen(info[2], ptr, len);
+  }
+  if(!ptr || !len) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
   if(mapPointers.count(ptr) && mapPointers[ptr]>0) {

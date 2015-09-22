@@ -3,53 +3,28 @@
 
 namespace opencl {
 
-/*
- * @return number of bytes per elements in a TypedArray
- * @return -1 if wrong type
- */
- // TODO these types don't exist anymore
-/*int getTypedArrayBytes(ExternalArrayType type)
-{
-  switch(type) {
-    case kExternalByteArray:
-    case kExternalUnsignedByteArray:
-    case kExternalPixelArray:
-      return 1;
-    case kExternalShortArray:
-    case kExternalUnsignedShortArray:
-      return 2;
-    case kExternalIntArray:
-    case kExternalUnsignedIntArray:
-    case kExternalFloatArray:
-      return 4;
-    case kExternalDoubleArray:
-      return 8;
-  }
-  return -1;
-}*/
-
 // TODO replace TypedArray with node::Buffer or v8::ArrayBuffer (same thing)
 void getPtrAndLen(const Local<Value> value, void* &ptr, int &len)
 {
-  ptr=NULL;
+  ptr=nullptr;
   len=0;
   if(!value->IsUndefined() && !value->IsNull()) {
     if(value->IsArray()) {
       // JS Array
-      std::cout<<"[getPtrAndLen] JS array TODO"<<std::endl;
-      Local<Array> arr=Local<Array>::Cast(value);
-      // ptr = arr->GetIndexedPropertiesExternalArrayData();
-      // len = arr->GetIndexedPropertiesExternalArrayDataLength() * getTypedArrayBytes(arr->GetIndexedPropertiesExternalArrayDataType());
+      std::cout<<"[getPtrAndLen] JS array"<<std::endl;
+      // Local<Array> arr=Local<Array>::Cast(value);
+
+      // return Nan::ThrowTypeError("JS Array not supported. Use node's Buffer or JS' ArrayBuffer");
     }
     else if(value->IsTypedArray()) {
-      std::cout<<"[getPtrAndLen] TypedArray"<<std::endl;
+      // std::cout<<"[getPtrAndLen] TypedArray"<<std::endl;
       Local<Object> obj=value->ToObject();
       Local<TypedArray> ta = Local<TypedArray>::Cast(obj);
       len=ta->ByteLength();
       ptr=ta->Buffer()->GetContents().Data();
     }
     else if(value->IsObject()) {
-      std::cout<<"[getPtrAndLen] object"<<std::endl;
+      // std::cout<<"[getPtrAndLen] object"<<std::endl;
       Local<Object> obj=value->ToObject();
       String::Utf8Value name(obj->GetConstructorName());
       std::cout<<"  object name: "<<*name<<std::endl;
@@ -57,11 +32,6 @@ void getPtrAndLen(const Local<Value> value, void* &ptr, int &len)
         // node::Buffer
         ptr=node::Buffer::Data(obj);
         len=(int) node::Buffer::Length(obj);
-      }
-      else {
-        // we have a TypedArray
-        // ptr = obj->GetIndexedPropertiesExternalArrayData();
-        // len = obj->GetIndexedPropertiesExternalArrayDataLength() * getTypedArrayBytes(obj->GetIndexedPropertiesExternalArrayDataType());
       }
     }
   }
