@@ -11,7 +11,7 @@ void getPtrAndLen(const Local<Value> value, void* &ptr, int &len)
   if(!value->IsUndefined() && !value->IsNull()) {
     if(value->IsArray()) {
       // JS Array
-      std::cout<<"[getPtrAndLen] JS array"<<std::endl;
+      // std::cout<<"[getPtrAndLen] JS array"<<std::endl;
       // Local<Array> arr=Local<Array>::Cast(value);
 
       // return Nan::ThrowTypeError("JS Array not supported. Use node's Buffer or JS' ArrayBuffer");
@@ -23,11 +23,18 @@ void getPtrAndLen(const Local<Value> value, void* &ptr, int &len)
       len=ta->ByteLength();
       ptr=ta->Buffer()->GetContents().Data();
     }
+    else if(value->IsArrayBuffer()) {
+      // std::cout<<"[getPtrAndLen] ArrayBuffer"<<std::endl;
+      Local<Object> obj=value->ToObject();
+      Local<ArrayBuffer> ta = Local<ArrayBuffer>::Cast(obj);
+      len=ta->ByteLength();
+      ptr=ta->GetContents().Data();
+    }
     else if(value->IsObject()) {
       // std::cout<<"[getPtrAndLen] object"<<std::endl;
       Local<Object> obj=value->ToObject();
       String::Utf8Value name(obj->GetConstructorName());
-      std::cout<<"  object name: "<<*name<<std::endl;
+      // std::cout<<"  object name: "<<*name<<std::endl;
       if(!strcmp("Buffer",*name)) {
         // node::Buffer
         ptr=node::Buffer::Data(obj);

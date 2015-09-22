@@ -1208,7 +1208,7 @@ void freeMapedPtr(char* ptr,void* hint) {
 //                    cl_event *       /* event */,
 //                    cl_int *         /* errcode_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueMapBuffer) {
-  Nan::HandleScope scope;
+  Nan::EscapableHandleScope scope;
   REQ_ARGS(6);
 
   // Arg 0
@@ -1244,12 +1244,12 @@ NAN_METHOD(EnqueueMapBuffer) {
   CHECK_ERR(err)
 
   // TODO why are these mapPointers needed?
-  if( mapPointers.count(mPtr)>0 ) {
-    mapPointers[mPtr]++;
-  }
-  else {
-    mapPointers[mPtr] = 1;
-  }
+  // if( mapPointers.count(mPtr)>0 ) {
+  //   mapPointers[mPtr]++;
+  // }
+  // else {
+  //   mapPointers[mPtr] = 1;
+  // }
 
   // unMapInfo* umi = new unMapInfo();
   // umi->cq = cq->getRaw();
@@ -1257,8 +1257,11 @@ NAN_METHOD(EnqueueMapBuffer) {
   // umi->mem = mem->getRaw();
   // clRetainMemObject(umi->mem);
 
+  // TODO BAD this copies the buffer, not wrap it
   // Local<Object> obj = Nan::NewBuffer((char*)mPtr,size,freeMapedPtr,umi).ToLocalChecked();
-  Local<Object> obj = Nan::NewBuffer((char*)mPtr,size).ToLocalChecked();
+  // Local<Object> obj = Nan::NewBuffer((char*)mPtr,size).ToLocalChecked();
+
+  Local<v8::ArrayBuffer> obj = v8::ArrayBuffer::New(v8::Isolate::GetCurrent(), mPtr, size);
 
   if(eventPtr) {
     obj->Set(JS_STR("event"), NOCL_WRAP(NoCLEvent,event));
@@ -1270,7 +1273,7 @@ NAN_METHOD(EnqueueMapBuffer) {
     // err = clSetEventCallback(event,CL_COMPLETE,notifyMapCB,cb);
     // CHECK_ERR(err)
   }
-  info.GetReturnValue().Set(obj);
+  info.GetReturnValue().Set(scope.Escape(obj));
 
 }
 
@@ -1417,12 +1420,12 @@ NAN_METHOD(EnqueueUnmapMemObject) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  if(mapPointers.count(ptr) && mapPointers[ptr]>0) {
-    mapPointers[ptr]--;
-  }
-  else {
-    THROW_ERR(CL_INVALID_VALUE);
-  }
+  // if(mapPointers.count(ptr) && mapPointers[ptr]>0) {
+  //   mapPointers[ptr]--;
+  // }
+  // else {
+  //   THROW_ERR(CL_INVALID_VALUE);
+  // }
 
   std::vector<NoCLEvent> cl_events;
   if(ARG_EXISTS(3)) {

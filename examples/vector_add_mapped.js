@@ -2,7 +2,7 @@
 * @Author: mikael
 * @Date:   2015-09-21 22:30:37
 * @Last Modified by:   mikael
-* @Last Modified time: 2015-09-21 23:18:13
+* @Last Modified time: 2015-09-22 11:22:13
 */
 
 'use strict';
@@ -88,7 +88,7 @@ function VectorAdd() {
   log("Local work item size: " + localWS);
 
   // Execute (enqueue) kernel
-  /*cl.enqueueNDRangeKernel(queue, kernel, 1,
+  cl.enqueueNDRangeKernel(queue, kernel, 1,
       null,
       globalWS,
       localWS);
@@ -110,9 +110,10 @@ function VectorAdd() {
   log(output);
 
   // we are now reading values as bytes, we need to cast it to the output type we want
-  output = "output = ";
-  for (var i = 0; i < size; i++) {
-    output += map[i] + ", ";
+  output = "output = ["+map.byteLength+" bytes] ";
+  var map_view=new Uint8Array(map);
+  for (var i = 0; i < map_view.length; i++) {
+    output += map_view[i] + ", ";
   }
   log(output);
 
@@ -126,17 +127,10 @@ function VectorAdd() {
 
   cl.finish(queue); // Finish all the operations
 
-  printResults(A,B,C);*/
+  printResults(A,B,C);
 
   // cleanup
-  // queue.release();
-  // kernel.release();
-  // program.release();
-  // aBuffer.release();
-  // bBuffer.release();
-  // cBuffer.release();
-  // context.release();
-  cl.releaseAll();
+  // cl.releaseAll();
 }
 
 function printResults(A,B,C) {

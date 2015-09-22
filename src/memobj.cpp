@@ -8,7 +8,7 @@ using namespace node;
 
 namespace opencl {
 
-
+// TODO This smells wrong. Use Async as for events NoCLEventWorker
 class NoCLAvoidGC:public NanAsyncLaunch {
  public:
    NoCLAvoidGC(const v8::Local<v8::Object> &array):NanAsyncLaunch(nullptr){
@@ -92,8 +92,9 @@ NAN_METHOD(CreateBuffer) {
   CHECK_ERR(ret);
 
   if(host_ptr) {
-    NoCLAvoidGC* user_data = new NoCLAvoidGC(info[3].As<Object>());
-    clSetMemObjectDestructorCallback(mem,notifyFreeClMemObj,user_data);
+    // TODO
+    // NoCLAvoidGC* user_data = new NoCLAvoidGC(info[3].As<Object>());
+    // clSetMemObjectDestructorCallback(mem,notifyFreeClMemObj,user_data);
   }
 
   info.GetReturnValue().Set(NOCL_WRAP(NoCLMem, mem));
