@@ -278,7 +278,7 @@ NAN_METHOD(SetKernelArg) {
       Local<String> s = info[2]->ToString();
       String::Utf8Value tname(s);
       const char* tname_c = *tname;
-      cout<<"[setKernelArg[3]="<<tname_c<<endl;
+      cout<<"setKernelArg[3]="<<tname_c<<endl;
       size_t len = tname.length();
       type_name.resize(len);
       std::copy(tname_c, tname_c + len, type_name.begin());

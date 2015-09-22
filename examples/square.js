@@ -1,4 +1,4 @@
-var cl = require("../../lib/opencl");
+var cl = require("../lib/opencl");
 var fs = require("fs");
 
 

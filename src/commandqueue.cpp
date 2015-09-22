@@ -1112,11 +1112,44 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
 
 static std::map<void*,int> mapPointers;
 
-void CL_CALLBACK notifyMapCB (cl_event event, cl_int event_command_exec_status, void *user_data) {
-    NoCLMapCB* asyncCB = static_cast<NoCLMapCB*>(user_data);
-    if(asyncCB!=nullptr)
-        asyncCB->CallBackIsDone();
+void CL_CALLBACK notifyMapCB (cl_event event, cl_int event_command_exec_status, void *user_data)
+{
+  // NoCLMapCB* asyncCB = static_cast<NoCLMapCB*>(user_data);
+  // if(asyncCB!=nullptr)
+  //     asyncCB->CallBackIsDone();
 }
+
+class NoCLMapWorker : public AsyncWorker
+{
+public:
+  NoCLMapWorker(Callback* callback) :
+  AsyncWorker(callback)
+  {
+  }
+
+  ~NoCLMapWorker() {}
+
+  // Executed inside the worker-thread.
+  // not safe to use V8 calls
+  void Execute()
+  {
+  }
+
+  // Executed when the async work is complete
+  // this function will be run inside the main event loop
+  // so it is safe to use V8 again
+  void HandleOKCallback () {
+    Nan::EscapableHandleScope  scope;
+
+    Local<Value> argv[] = {
+      // GetFromPersistent(kIndex),  // event
+      // JS_INT(mCLCallbackStatus),  // error status
+      // GetFromPersistent(kIndex+1) // userdata
+    };
+    // callback->Call(3,argv);
+  }
+
+};
 
 struct unMapInfo {
   cl_command_queue cq;
@@ -1124,17 +1157,18 @@ struct unMapInfo {
 };
 
 void freeMapedPtr(char* ptr,void* hint) {
-    mapPointers[ptr]--;
-    unMapInfo* umi = static_cast<unMapInfo*>(hint);
-    clEnqueueUnmapMemObject (umi->cq ,
-        umi->mem,
-        ptr,
-        0 ,
-        nullptr ,
-        nullptr );
-    clReleaseCommandQueue(umi->cq);
-    clReleaseMemObject(umi->mem);
-    delete umi;
+  std::cout<<"freeMapedPtr() called"<<std::endl;
+  mapPointers[ptr]--;
+  unMapInfo* umi = static_cast<unMapInfo*>(hint);
+  clEnqueueUnmapMemObject (umi->cq ,
+    umi->mem,
+    ptr,
+    0 ,
+    nullptr ,
+    nullptr );
+  clReleaseCommandQueue(umi->cq);
+  clReleaseMemObject(umi->mem);
+  delete umi;
 }
 
 // extern CL_API_ENTRY void * CL_API_CALL
@@ -1150,14 +1184,13 @@ void freeMapedPtr(char* ptr,void* hint) {
 //                    cl_int *         /* errcode_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueMapBuffer) {
   Nan::HandleScope scope;
-  REQ_ARGS(8);
+  REQ_ARGS(6);
 
   // Arg 0
   NOCL_UNWRAP(cq, NoCLCommandQueue, info[0]);
 
   // Arg 1
   NOCL_UNWRAP(mem, NoCLMem, info[1]);
-
 
   cl_bool blocking_map = info[2]->BooleanValue() ? CL_TRUE : CL_FALSE;
   cl_map_flags map_flags = info[3]->Uint32Value();
@@ -1178,14 +1211,14 @@ NAN_METHOD(EnqueueMapBuffer) {
       eventPtr = &event;
 
   mPtr = clEnqueueMapBuffer(cq->getRaw(),mem->getRaw(),
-                              blocking_map,map_flags, offset,
-                              size, (cl_uint)cl_events.size(),
-                              NOCL_TO_CL_ARRAY(
-                                cl_events, NoCLEvent),
-                                eventPtr,&err);
+                            blocking_map,map_flags, offset,
+                            size, (cl_uint)cl_events.size(),
+                            NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
+                            eventPtr,&err);
 
   CHECK_ERR(err)
 
+  // TODO why are these mapPointers needed?
   if( mapPointers.count(mPtr)>0 ) {
     mapPointers[mPtr]++;
   }
@@ -1193,25 +1226,24 @@ NAN_METHOD(EnqueueMapBuffer) {
     mapPointers[mPtr] = 1;
   }
 
-  Local<Object> obj = Nan::New<Object>();
+  // unMapInfo* umi = new unMapInfo();
+  // umi->cq = cq->getRaw();
+  // clRetainCommandQueue(umi->cq);
+  // umi->mem = mem->getRaw();
+  // clRetainMemObject(umi->mem);
+
+  // Local<Object> obj = Nan::NewBuffer((char*)mPtr,size,freeMapedPtr,umi).ToLocalChecked();
+  Local<Object> obj = Nan::NewBuffer((char*)mPtr,size).ToLocalChecked();
 
   if(eventPtr) {
-    obj->Set(Nan::New<String>("event").ToLocalChecked(), NOCL_WRAP(NoCLEvent,event));
+    obj->Set(JS_STR("event"), NOCL_WRAP(NoCLEvent,event));
   }
-  unMapInfo* umi = new unMapInfo();
-  umi->cq = cq->getRaw();
-  clRetainCommandQueue(umi->cq);
-  umi->mem = mem->getRaw();
-  clRetainMemObject(umi->mem);
-
-  Local<Object> buf = Nan::NewBuffer((char*)mPtr,size,freeMapedPtr,umi).ToLocalChecked();
-  obj->Set(Nan::New<String>("buffer").ToLocalChecked(), buf);
 
   if(!blocking_map) {
     // TODO? buf->SetIndexedPropertiesToExternalArrayData(NULL, buf->GetIndexedPropertiesExternalArrayDataType(), 0);
-    NoCLMapCB* cb = new NoCLMapCB(buf,size,mPtr);
-    err = clSetEventCallback(event,CL_COMPLETE,notifyMapCB,cb);
-    CHECK_ERR(err)
+    // NoCLMapCB* cb = new NoCLMapCB(buf,size,mPtr);
+    // err = clSetEventCallback(event,CL_COMPLETE,notifyMapCB,cb);
+    // CHECK_ERR(err)
   }
   info.GetReturnValue().Set(obj);
 
@@ -1310,9 +1342,9 @@ NAN_METHOD(EnqueueMapImage) {
 
   if(!blocking_map) {
     //TODO? buf->SetIndexedPropertiesToExternalArrayData(NULL, buf->GetIndexedPropertiesExternalArrayDataType(), 0);
-    NoCLMapCB* cb = new NoCLMapCB(buf,size,mPtr);
-    err = clSetEventCallback(event,CL_COMPLETE,notifyMapCB,cb);
-    CHECK_ERR(err)
+    // NoCLMapCB* cb = new NoCLMapCB(buf,size,mPtr);
+    // err = clSetEventCallback(event,CL_COMPLETE,notifyMapCB,cb);
+    // CHECK_ERR(err)
   }
   info.GetReturnValue().Set(obj);
 //
@@ -1385,7 +1417,7 @@ NAN_METHOD(EnqueueUnmapMemObject) {
     (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),nullptr);
   CHECK_ERR(err)
 
-  Local<Object> obj = info[2].As<Object>();
+  // Local<Object> obj = info[2].As<Object>();
   //TODO obj->SetIndexedPropertiesToExternalArrayData(NULL, obj->GetIndexedPropertiesExternalArrayDataType(), 0);
 
   info.GetReturnValue().Set(JS_INT(CL_SUCCESS));

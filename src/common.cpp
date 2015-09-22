@@ -1,4 +1,5 @@
 #include "common.h"
+#include <iostream>
 
 namespace opencl {
 
@@ -34,21 +35,34 @@ void getPtrAndLen(const Local<Value> value, void* &ptr, int &len)
   len=0;
   if(!value->IsUndefined() && !value->IsNull()) {
     if(value->IsArray()) {
+      // JS Array
+      std::cout<<"[getPtrAndLen] JS array TODO"<<std::endl;
       Local<Array> arr=Local<Array>::Cast(value);
       // ptr = arr->GetIndexedPropertiesExternalArrayData();
       // len = arr->GetIndexedPropertiesExternalArrayDataLength() * getTypedArrayBytes(arr->GetIndexedPropertiesExternalArrayDataType());
     }
+    else if(value->IsTypedArray()) {
+      std::cout<<"[getPtrAndLen] TypedArray"<<std::endl;
+      Local<Object> obj=value->ToObject();
+      Local<TypedArray> ta = Local<TypedArray>::Cast(obj);
+      len=ta->ByteLength();
+      ptr=ta->Buffer()->GetContents().Data();
+    }
     else if(value->IsObject()) {
+      std::cout<<"[getPtrAndLen] object"<<std::endl;
       Local<Object> obj=value->ToObject();
       String::Utf8Value name(obj->GetConstructorName());
-      //if(!strcmp("Buffer",*name)) {
+      std::cout<<"  object name: "<<*name<<std::endl;
+      if(!strcmp("Buffer",*name)) {
+        // node::Buffer
         ptr=node::Buffer::Data(obj);
         len=(int) node::Buffer::Length(obj);
-      //}
-      //else {
+      }
+      else {
+        // we have a TypedArray
         // ptr = obj->GetIndexedPropertiesExternalArrayData();
         // len = obj->GetIndexedPropertiesExternalArrayDataLength() * getTypedArrayBytes(obj->GetIndexedPropertiesExternalArrayDataType());
-      //}
+      }
     }
   }
 }

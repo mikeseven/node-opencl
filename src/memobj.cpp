@@ -57,7 +57,10 @@ NAN_METHOD(CreateBuffer) {
   // Arg 3
   void *host_ptr = NULL;
   if(ARG_EXISTS(3)) {
-    if(info[3]->IsArray()) {
+    int len=0;
+    getPtrAndLen(info[3], host_ptr, len);
+
+    /*if(info[3]->IsArray()) {
       THROW_ERR(CL_INVALID_MEM_OBJECT);
     }
     if(info[3]->IsObject()) {
@@ -80,7 +83,8 @@ NAN_METHOD(CreateBuffer) {
       }
     }
     else
-    THROW_ERR(CL_INVALID_MEM_OBJECT);
+      THROW_ERR(CL_INVALID_MEM_OBJECT);
+    */
   }
 
   cl_int ret=CL_SUCCESS;

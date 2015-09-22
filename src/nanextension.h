@@ -4,6 +4,7 @@
 #include "node.h"
 #include "uv.h"
 #include "nan.h"
+#include <iostream>
 
 //// async Fire and Forget call ////
 
@@ -17,7 +18,8 @@ void NanAsyncAddInQueue(uv_async_t *handle, int status);
   * http://docs.libuv.org/en/latest/async.html#c.uv_async_send
   *
   **/
-/* abstract */ class NanAsyncLaunch {
+/* abstract */
+class NanAsyncLaunch {
  public:
   NanAsyncLaunch(Nan::Callback* callback):callback(callback),alreadyFired(false) {
     uv_async_init(uv_default_loop(), &(this->async), NanAsyncLaunch::AddInQueue);
@@ -26,6 +28,7 @@ void NanAsyncAddInQueue(uv_async_t *handle, int status);
 
   void FireAndForget() {
     if(!alreadyFired) {
+      cout<<"FireAndForget"<<endl;
       alreadyFired=true;
       uv_async_send(&(this->async));
     }
@@ -38,6 +41,7 @@ void NanAsyncAddInQueue(uv_async_t *handle, int status);
 
 #if NODE_VERSION_AT_LEAST(0,12,0)
   inline static void AddInQueue(uv_async_t *handle) {
+    std::cout<<"AddInQueue called"<<std::endl;
 #elif NODE_VERSION_AT_LEAST(0,10,0)
   inline static void AddInQueue(uv_async_t *handle, int status) {
 #endif
@@ -49,10 +53,9 @@ void NanAsyncAddInQueue(uv_async_t *handle, int status);
     asyncLaunch->Destroy();
   }
 
-inline static void AsyncClose_(uv_handle_t* handle) {
-      NanAsyncLaunch *launcher =
-              static_cast<NanAsyncLaunch*>(handle->data);
-      delete launcher;
+  inline static void AsyncClose_(uv_handle_t* handle) {
+    NanAsyncLaunch *launcher = static_cast<NanAsyncLaunch*>(handle->data);
+    delete launcher;
   }
 
   virtual ~NanAsyncLaunch(){
@@ -63,44 +66,44 @@ inline static void AsyncClose_(uv_handle_t* handle) {
       delete callback;
   }
 
- protected:
+protected:
   Nan::Callback* callback;
   Nan::Persistent<Object> persistentHandle;
   static const uint32_t kIndex = 0;
- private:
+
+private:
   uv_async_t async;
   bool alreadyFired;
 };
 
 class NoCLMapCB:public NanAsyncLaunch {
- public:
-   NoCLMapCB(const v8::Local<v8::Object> &buffer,size_t size,void* mPtr):NanAsyncLaunch(nullptr),size(size),mPtr(mPtr){
-       Nan::HandleScope scope;
-       v8::Local<v8::Object> obj = Nan::New<v8::Object>();
-       persistentHandle.Reset(obj);
-       v8::Local<v8::Object>  handle = Nan::New(persistentHandle);
-       handle->Set(kIndex, buffer);
-   }
+public:
+  NoCLMapCB(const v8::Local<v8::Object> &buffer,size_t size,void* mPtr):NanAsyncLaunch(nullptr),size(size),mPtr(mPtr){
+    Nan::HandleScope scope;
+    v8::Local<v8::Object> obj = Nan::New<v8::Object>();
+    persistentHandle.Reset(obj);
+    v8::Local<v8::Object>  handle = Nan::New(persistentHandle);
+    handle->Set(kIndex, buffer);
+  }
 
-   void CallBackIsDone(){
-       this->FireAndForget();
-   }
+  void CallBackIsDone(){
+     this->FireAndForget();
+  }
 
-   void Execute() {
-     Nan::HandleScope scope;
-     v8::Local<v8::Object> handle = Nan::New(persistentHandle);
+  void Execute() {
+    Nan::HandleScope scope;
+    v8::Local<v8::Object> handle = Nan::New(persistentHandle);
 
-     // this retrieves the node::Buffer and sets its content to mPtr
-     // TODO I think we can use node::Buffer or v8::ArrayBuffer directly as node::Buffer does
-     // v8::Local<v8::Object> buffer= (handle->Get(kIndex)).As<v8::Object>();
-     // buffer->SetIndexedPropertiesToExternalArrayData(this->mPtr, v8::kExternalByteArray, (int) this->size);
+    // this retrieves the node::Buffer and sets its content to mPtr
+    // TODO I think we can use node::Buffer or v8::ArrayBuffer directly as node::Buffer does
+    // v8::Local<v8::Object> buffer= (handle->Get(kIndex)).As<v8::Object>();
+    // buffer->SetIndexedPropertiesToExternalArrayData(this->mPtr, v8::kExternalByteArray, (int) this->size);
 
-   }
+  }
 
- private:
-   size_t size;
-   void* mPtr;
-
+private:
+  size_t size;
+  void* mPtr;
 };
 
 #endif // NANEXTENSION
