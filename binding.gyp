@@ -3,7 +3,7 @@
     {
       'target_name': 'opencl',
       'defines': [
-        'VERSION=0.3.0',
+        'VERSION=0.4.0',
         'NOCL_REALEASE_DRIVER_ISSUES'
       ],
       'sources': [
@@ -44,7 +44,7 @@
         ['OS=="linux"', {
           'variables' : {
             # AMD APP SDK
-            'OPENCL_SDK' : '/opt/AMDAPPSDK-3.0-0-Beta',
+            'OPENCL_SDK' : '<!(echo %AMDAPPSDKROOT%)',
             'OPENCL_SDK_INCLUDE' : '<(OPENCL_SDK)/include',
             'OPENCL_SDK_LIB' : '<(OPENCL_SDK)/lib/x86_64',
           },

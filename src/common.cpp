@@ -3,44 +3,69 @@
 
 namespace opencl {
 
+class ScopedArrayBufferContents {
+ public:
+  explicit ScopedArrayBufferContents(const v8::ArrayBuffer::Contents& contents)
+      : contents_(contents) {}
+  ~ScopedArrayBufferContents() { free(contents_.Data()); }
+  void* Data() const { return contents_.Data(); }
+  size_t ByteLength() const { return contents_.ByteLength(); }
+
+ private:
+  const v8::ArrayBuffer::Contents contents_;
+};
+
 // TODO replace TypedArray with node::Buffer or v8::ArrayBuffer (same thing)
 void getPtrAndLen(const Local<Value> value, void* &ptr, int &len)
 {
+  Nan::HandleScope scope;
+
   ptr=nullptr;
   len=0;
   if(!value->IsUndefined() && !value->IsNull()) {
     if(value->IsArray()) {
       // JS Array
       // std::cout<<"[getPtrAndLen] JS array"<<std::endl;
-      // Local<Array> arr=Local<Array>::Cast(value);
-
-      // return Nan::ThrowTypeError("JS Array not supported. Use node's Buffer or JS' ArrayBuffer");
-    }
-    else if(value->IsTypedArray()) {
-      // std::cout<<"[getPtrAndLen] TypedArray"<<std::endl;
-      Local<Object> obj=value->ToObject();
-      Local<TypedArray> ta = Local<TypedArray>::Cast(obj);
-      len=ta->ByteLength();
-      ptr=ta->Buffer()->GetContents().Data();
+      // Local<Array> arr=value.As<Array>();
+      // len=arr->Length();
+      // can't access a pointer to JS Array data anymore...
     }
     else if(value->IsArrayBuffer()) {
       // std::cout<<"[getPtrAndLen] ArrayBuffer"<<std::endl;
       Local<Object> obj=value->ToObject();
-      Local<ArrayBuffer> ta = Local<ArrayBuffer>::Cast(obj);
+      Local<ArrayBuffer> ta = obj.As<ArrayBuffer>();
       len=ta->ByteLength();
       ptr=ta->GetContents().Data();
     }
-    else if(value->IsObject()) {
-      // std::cout<<"[getPtrAndLen] object"<<std::endl;
+    else if(value->IsUint8Array()) {
+      // WARNING node::Buffer is an augmented Uint8Array
+      // std::cout<<"[getPtrAndLen] Uint8Array"<<std::endl;
       Local<Object> obj=value->ToObject();
+      Local<Uint8Array> ui = obj.As<Uint8Array>();
+      ArrayBuffer::Contents ab_c = ui->Buffer()->GetContents();
+      len=ui->ByteLength();
+      ptr=static_cast<char*>(ab_c.Data()) + ui->ByteOffset();
+    }
+    else if(value->IsTypedArray()) {
+      // std::cout<<"[getPtrAndLen] TypedArray"<<std::endl;
+      Local<Object> obj=value->ToObject();
+      Local<TypedArray> ta = obj.As<TypedArray>();
+      len=ta->ByteLength();
+      ptr=static_cast<char*>(ta->Buffer()->GetContents().Data()) + ta->ByteOffset();
+    }
+    // else if(value->IsObject()) {
+      // shouldn't be called...
+      // std::cout<<"[getPtrAndLen] object"<<std::endl;
+      /*Local<Object> obj=value->ToObject();
       String::Utf8Value name(obj->GetConstructorName());
-      // std::cout<<"  object name: "<<*name<<std::endl;
+      std::cout<<"  object name: "<<*name<<std::endl;
       if(!strcmp("Buffer",*name)) {
+        std::cout<<"[getPtrAndLen] node::Buffer"<<std::endl;
         // node::Buffer
         ptr=node::Buffer::Data(obj);
         len=(int) node::Buffer::Length(obj);
-      }
-    }
+      }*/
+    // }
   }
 }
 

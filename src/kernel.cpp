@@ -272,13 +272,13 @@ NAN_METHOD(SetKernelArg) {
       local_arg = true;
   } else
 #endif
-  { // behaviour when type is given (mandatory for OpenCL version < 1.2)
-    // read argument 3 as the name of the data type
+  { // behaviour when type is given
+    // read argument 2 as the name of the data type
     if (info[2]->IsString()) {
       Local<String> s = info[2]->ToString();
       String::Utf8Value tname(s);
       const char* tname_c = *tname;
-      cout<<"setKernelArg[3]="<<tname_c<<endl;
+      // cout<<"setKernelArg[3]="<<tname_c<<endl;
       size_t len = tname.length();
       type_name.resize(len);
       std::copy(tname_c, tname_c + len, type_name.begin());
