@@ -23,7 +23,7 @@ function VectorAdd() {
 
   var context = cl.createContextFromType(
     [cl.CONTEXT_PLATFORM, cl.getPlatformIDs()[0]],
-    cl.DEVICE_TYPE_ALL,
+    cl.DEVICE_TYPE_GPU,
     null, null);
 
   var kernelSourceCode = [
