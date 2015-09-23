@@ -471,7 +471,20 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
     case CL_KERNEL_PRIVATE_MEM_SIZE: {
       cl_ulong sz=0;
       CHECK_ERR(::clGetKernelWorkGroupInfo(k->getRaw(),d->getRaw(),param_name,sizeof(cl_ulong),&sz, NULL));
-      info.GetReturnValue().Set(JS_INT(sz));
+      /**
+        JS Compatibility
+
+        As JS does not support 64 bits integer, we return a 2-integer array with
+          output_values[0] = (input_value >> 32) & 0xffffffff;
+          output_values[1] = input_value & 0xffffffff;
+
+        and reconstruction as
+          input_value = ((int64_t) output_values[0]) << 32) | output_values[1];
+      */
+      Local<Array> arr = Nan::New<Array>(2);
+      arr->Set(0, JS_INT((uint32_t) (sz>>32))); // hi
+      arr->Set(1, JS_INT((uint32_t) (sz & 0xffffffff))); // lo
+      info.GetReturnValue().Set(arr);
       return;
     }
   }

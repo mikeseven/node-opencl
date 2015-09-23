@@ -202,13 +202,18 @@ NAN_METHOD(GetDeviceInfo) {
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_ulong), &param_value, NULL));
 
     /**
-    * JS Compatibility
-    *
-    * As JS does not support 64 bits integer, we return a 2 integers array with
-    *  INT = arr[0] * 1024^2 (megabytes) + arr[1]  (bytes - megabytes) */
+      JS Compatibility
+
+      As JS does not support 64 bits integer, we return a 2-integer array with
+        output_values[0] = (input_value >> 32) & 0xffffffff;
+        output_values[1] = input_value & 0xffffffff;
+
+      and reconstruction as
+        input_value = ((int64_t) output_values[0]) << 32) | output_values[1];
+    */
     Local<Array> arr = Nan::New<Array>(2);
-    arr->Set(0, JS_INT((uint32_t)param_value / (1024 * 1024)));
-    arr->Set(1, JS_INT((uint32_t)param_value - param_value / (1024 * 1024)));
+    arr->Set(0, JS_INT((uint32_t) (param_value>>32))); // hi
+    arr->Set(1, JS_INT((uint32_t) (param_value & 0xffffffff))); // lo
     info.GetReturnValue().Set(arr);
 
     return;

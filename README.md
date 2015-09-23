@@ -85,11 +85,9 @@ those behaviours so you can run them to check if it is a known issue.
 
 ## Int 64
 
-Javascript does not support 64 bits integers. OpenCL returns some int64, mainly in getInfo functions. To resolve this, we instead return a data structure
-that changes depending on what kind of value is returned :
+Javascript does not support 64 bits integers. OpenCL returns some int64, mainly in getInfo functions. To resolve this, we return 64-bit values as an array of 2 32-bit integers [hi, lo] such that
 
-- Instead of a 64 bits integer representing nanoseconds time, we return an array with [milliseconds, nanoseconds]
-- Instead of a 64 bits integer representing bytes, we return an array with [megabytes, bytes]
+value = (hi << 32) | lo
 
 ## Differences between Node-OpenCL and WebCL
 
