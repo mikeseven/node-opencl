@@ -381,15 +381,15 @@ NAN_METHOD(EnqueueWriteBuffer) {
   size_t size = info[4]->Uint32Value();
 
   void *ptr=nullptr;
-  int len=0;
   if(info[5]->IsUndefined() || info[5]->IsNull()) {
     CHECK_ERR(CL_INVALID_VALUE);
   }
-  else
+  else {
+    int len=0;
     getPtrAndLen(info[5],ptr,len);
 
-  if(!ptr || !len) {
-    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+    if(!ptr || !len)
+      return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
   std::vector<NoCLEvent> cl_events;
@@ -1511,10 +1511,11 @@ NAN_METHOD(EnqueueNDRangeKernel) {
     q->getRaw(),
     k->getRaw(),
     1,
-    cl_work_offset.size() ? cl_work_offset.data() : NULL,
-    cl_work_global.size() ? cl_work_global.data() : NULL,
-    cl_work_local.size() ? cl_work_local.data() : NULL,
-    0, NULL, NULL
+    cl_work_offset.size() ? cl_work_offset.data() : nullptr,
+    cl_work_global.size() ? cl_work_global.data() : nullptr,
+    cl_work_local.size() ? cl_work_local.data() : nullptr,
+    (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
+    event ? &event : nullptr
   ));
 
   if (event != nullptr) {
@@ -1522,6 +1523,7 @@ NAN_METHOD(EnqueueNDRangeKernel) {
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
+
 }
 
 #ifndef CL_VERSION_2_0

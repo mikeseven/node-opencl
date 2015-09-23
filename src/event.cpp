@@ -12,7 +12,7 @@ NAN_METHOD(WaitForEvents) {
   REQ_ARGS(1);
 
   std::vector<NoCLEvent> events;
-  Local<Array> js_events = Local<Array>::Cast(info[1]);
+  Local<Array> js_events = Local<Array>::Cast(info[0]);
   NOCL_TO_ARRAY(events, js_events, NoCLEvent);
 
   CHECK_ERR(::clWaitForEvents(
@@ -160,17 +160,21 @@ NAN_METHOD(GetEventProfilingInfo) {
     case CL_PROFILING_COMMAND_END:
     {
       /**
-      * JS Compatibility
-      *
-      * As JS does not support 64 bits integer, we return a 2 integers array with
-      *  INT / 1000 = arr[0] * 10^6 (milliseconds) + arr[1]  (nanoseconds - milliseconds) */
+        JS Compatibility
 
+        As JS does not support 64 bits integer, we return a 2-integer array with
+          output_values[0] = (input_value >> 32) & 0xffffffff;
+          output_values[1] = input_value & 0xffffffff;
+
+        and reconstruction as
+          input_value = ((int64_t) output_values[0]) << 32) | output_values[1];
+      */
       cl_ulong val;
       CHECK_ERR(::clGetEventProfilingInfo(ev->getRaw(),param_name,sizeof(cl_ulong), &val, NULL))
 
       Local<Array> arr = Nan::New<Array>(2);
-      arr->Set(0, JS_INT((uint32_t)val / 1000000));
-      arr->Set(1, JS_INT((uint32_t)val - val / 1000000));
+      arr->Set(0, JS_INT((uint32_t) (val>>32))); // hi
+      arr->Set(1, JS_INT((uint32_t) (val & 0xffffffff))); // lo
       info.GetReturnValue().Set(arr);
       return;
     }
