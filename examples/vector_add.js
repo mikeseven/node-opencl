@@ -25,7 +25,7 @@ function VectorAdd() {
     console.info("Platform "+i+": "+cl.getPlatformInfo(platforms[i],cl.PLATFORM_NAME));
   var platform=platforms[0];
 
-  var devices=cl.getDeviceIds(platform, cl.DEVICE_TYPE_ALL);
+  var devices=cl.getDeviceIDs(platform, cl.DEVICE_TYPE_ALL);
   for(var i=0;i<devices.length;i++)
     console.info("  Devices "+i+": "+cl.getDeviceInfo(devices[i],cl.DEVICE_NAME));
 
@@ -34,7 +34,9 @@ function VectorAdd() {
   // var context = cl.createContextFromType(
   //   [cl.CONTEXT_PLATFORM, platform],
   //   cl.DEVICE_TYPE_GPU);
-  var context = cl.createContext(platform, devices);
+  var context = cl.createContext([
+    cl.CONTEXT_PLATFORM, platform],
+    devices);
 
   console.info("created context");
 
