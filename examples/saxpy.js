@@ -44,11 +44,18 @@ function saxpy() {
     cl.DEVICE_TYPE_GPU,
     null, null);
 
-  var device = cl.getContextInfo(context, cl.CONTEXT_DEVICES)[1];
+  var device = cl.getContextInfo(context, cl.CONTEXT_DEVICES)[0];
   log('using device: '+cl.getDeviceInfo(device, cl.DEVICE_NAME));
 
   // Create command queue
-  var queue=cl.createCommandQueue(context,device,cl.QUEUE_PROFILING_ENABLE);
+  var queue;
+  if (cl.createCommandQueueWithProperties !== undefined) {
+    queue = cl.createCommandQueueWithProperties(context, device, [
+      cl.QUEUE_PROPERTIES, cl.QUEUE_PROFILING_ENABLE
+    ]); // OpenCL 2
+  } else {
+    queue = cl.createCommandQueue(context, device, cl.QUEUE_PROFILING_ENABLE); // OpenCL 1.x
+  }
 
   var saxpy_kernel_source = [
     "__kernel                             ",
@@ -108,7 +115,7 @@ function saxpy() {
 
   cl.waitForEvents([read_event]);
   // cl.finish(queue);
-  log("C[last_value-1]="+C[VECTOR_SIZE-1]+" should be "+(2*(VECTOR_SIZE-1)+1));
+  log("C[last_value]="+C[VECTOR_SIZE-1]+" should be "+(2*(VECTOR_SIZE-1)+1));
 
   // get all event statistics
   log("Time to transfer matrix A: "+get_event_exec_time(write_events[0])+" ms");

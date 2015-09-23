@@ -46,13 +46,13 @@ NAN_METHOD(CreateCommandQueueWithProperties) {
   Nan::HandleScope scope;
   REQ_ARGS(3);
 
-  // Arg 1
+  // Arg 0
   NOCL_UNWRAP(context, NoCLContext, info[0]);
 
-  // Arg 2
+  // Arg 1
   NOCL_UNWRAP(device, NoCLDeviceId, info[1]);
 
-  // Arg 3
+  // Arg 2
   Local<Array> properties = Local<Array>::Cast(info[2]);
   vector<cl_queue_properties> cl_properties;
 
