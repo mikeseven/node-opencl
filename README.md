@@ -100,6 +100,11 @@ that changes depending on what kind of value is returned :
 - WebCL follows an object-oriented model of OpenCL specification
 - node-opencl follows the C nature of OpenCL specification. It is thus a one-to-one low-level wrapper of OpenCL. This allows better control of native resources, quick upgrade when OpenCL specification changes. Importantly, it allows developers to create higher-level APIs that fit their needs, relying on an implementation close to OpenCL driver.
 
+### Javascript Array not supported
+
+- due to changes in v8, we don't support Javascript arrays for OpenCL buffers
+- only node.js Buffer and Javascript ArrayBuffer/TypedArrays are supported for OpenCL buffers.
+
 ### Raw data type
 
 Due to changes in Chrome v8 embedded in node 4.x, buffers can only be ArrayBuffer or Buffer, or derivative. Using Javascript Array will throw exceptions.
