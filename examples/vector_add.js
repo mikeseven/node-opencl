@@ -8,7 +8,6 @@
 'use strict';
 
 var cl = require("../lib/opencl");
-var log=console.log;
 
 var BUFFER_SIZE=10;
 
@@ -21,19 +20,32 @@ function VectorAdd() {
     B[i] = i * 2;
   }
 
-  var context = cl.createContextFromType(
-    [cl.CONTEXT_PLATFORM, cl.getPlatformIDs()[0]],
-    cl.DEVICE_TYPE_GPU,
-    null, null);
+  var platforms=cl.getPlatformIDs();
+  for(var i=0;i<platforms.length;i++)
+    console.info("Platform "+i+": "+cl.getPlatformInfo(platforms[i],cl.PLATFORM_NAME));
+  var platform=platforms[0];
+
+  var devices=cl.getDeviceIds(platform, cl.DEVICE_TYPE_ALL);
+  for(var i=0;i<devices.length;i++)
+    console.info("  Devices "+i+": "+cl.getDeviceInfo(devices[i],cl.DEVICE_NAME));
+
+  console.info("creating context");
+
+  // var context = cl.createContextFromType(
+  //   [cl.CONTEXT_PLATFORM, platform],
+  //   cl.DEVICE_TYPE_GPU);
+  var context = cl.createContext(platform, devices);
+
+  console.info("created context");
 
   var kernelSourceCode = [
-"__kernel void vadd(__global int *a, __global int *b, __global int *c, uint iNumElements) ",
-"{                                                                           ",
-"    size_t i =  get_global_id(0);                                           ",
-"    if(i >= iNumElements) return;                                           ",
-"    c[i] = a[i] + b[i];                                                     ",
-"}                                                                           "
-].join("\n");
+    "__kernel void vadd(__global int *a, __global int *b, __global int *c, uint iNumElements) ",
+    "{                                                                           ",
+    "    size_t i =  get_global_id(0);                                           ",
+    "    if(i >= iNumElements) return;                                           ",
+    "    c[i] = a[i] + b[i];                                                     ",
+    "}                                                                           "
+  ].join("\n");
 
   //Create and program from source
   var program=cl.createProgramWithSource(context, kernelSourceCode);
@@ -58,7 +70,8 @@ function VectorAdd() {
     kernel= cl.createKernel(program, "vadd");
   }
   catch(err) {
-    console.log(cl.getProgramBuildInfo(program, device, cl.PROGRAM_BUILD_LOG));
+    debug.error(cl.getProgramBuildInfo(program, device, cl.PROGRAM_BUILD_LOG));
+    process.exit(-1);
   }
 
   // Set kernel args
@@ -80,7 +93,7 @@ function VectorAdd() {
   cl.enqueueWriteBuffer (queue, bBuffer, true, 0, B.length*Uint32Array.BYTES_PER_ELEMENT, B);
 
   // Execute (enqueue) kernel
-  log("using enqueueNDRangeKernel");
+  console.info("using enqueueNDRangeKernel");
   cl.enqueueNDRangeKernel(queue, kernel, 1,
       null,
       [BUFFER_SIZE],
@@ -124,11 +137,11 @@ function printResults(A,B,C) {
     output += C[i] + ", ";
   }
 
-  log(output);
+  console.info(output);
 }
 
 VectorAdd();
 
 // Main thread will always finish before CL callbacks are finished.
 // Calling process.exit() in the main thread would skip CL callbacks from executing
-console.log("\n== Main thread terminated ==");
+console.info("\n== Main thread terminated ==");

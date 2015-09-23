@@ -110,9 +110,9 @@ NAN_METHOD(CreateContextFromType) {
   }
 
   int err=CL_SUCCESS;
-  cl_context ctx = ::clCreateContextFromType(&cl_properties.front(),
+  cl_context ctx = ::clCreateContextFromType(cl_properties.data(),
                         device_type,
-                        NULL, NULL, // TODO callback support
+                        nullptr, nullptr, // TODO callback support
                         &err);
   CHECK_ERR(err);
 

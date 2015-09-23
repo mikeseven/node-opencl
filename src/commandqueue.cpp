@@ -227,7 +227,7 @@ NAN_METHOD(EnqueueReadBuffer) {
     CHECK_ERR(CL_INVALID_VALUE);
   }
   else {
-    int len=0;
+    size_t len=0;
     getPtrAndLen(info[5],ptr,len);
     // std::cout<<"[EnqueueReadBuffer] ptr 0x"<<std::hex<<ptr<<std::dec<<std::endl;
 
@@ -314,7 +314,7 @@ NAN_METHOD(EnqueueReadBufferRect) {
   size_t host_slice_pitch = info[9]->Uint32Value();
 
   void *ptr=nullptr;
-  int len=0;
+  size_t len=0;
 
   if(info[10]->IsUndefined() || info[10]->IsNull()) {
     CHECK_ERR(CL_INVALID_VALUE);
@@ -385,7 +385,7 @@ NAN_METHOD(EnqueueWriteBuffer) {
     CHECK_ERR(CL_INVALID_VALUE);
   }
   else {
-    int len=0;
+    size_t len=0;
     getPtrAndLen(info[5],ptr,len);
 
     if(!ptr || !len)
@@ -470,7 +470,7 @@ NAN_METHOD(EnqueueWriteBufferRect) {
   size_t host_slice_pitch = info[9]->Uint32Value();
 
   void *ptr=nullptr;
-  int len=0;
+  size_t len=0;
   if(info[10]->IsUndefined() || info[10]->IsNull()) {
     CHECK_ERR(CL_INVALID_VALUE);
   }
@@ -533,7 +533,7 @@ NAN_METHOD(EnqueueFillBuffer) {
   void *pattern=nullptr;
   cl_double scalar_pattern_double;
   cl_int scalar_pattern_int;
-  int len=0;
+  size_t len=0;
   if(info[2]->IsUndefined() || info[2]->IsNull()) {
     THROW_ERR(CL_INVALID_VALUE);
   }
@@ -752,7 +752,7 @@ NAN_METHOD(EnqueueReadImage) {
   size_t slice_pitch = info[6]->Uint32Value();
 
   void *ptr=nullptr;
-  int len=0;
+  size_t len=0;
   if(info[7]->IsUndefined() || info[7]->IsNull()) {
     THROW_ERR(CL_INVALID_VALUE);
   }
@@ -831,7 +831,7 @@ NAN_METHOD(EnqueueWriteImage) {
   size_t slice_pitch = info[6]->Uint32Value();
 
   void *ptr=nullptr;
-  int len=0;
+  size_t len=0;
   if(info[7]->IsUndefined() || info[7]->IsNull()) {
     THROW_ERR(CL_INVALID_VALUE);
   }
@@ -889,7 +889,7 @@ NAN_METHOD(EnqueueFillImage) {
   NOCL_UNWRAP(image, NoCLMem, info[1]);
 
   void *fill_color=nullptr;
-  int len=0;
+  size_t len=0;
   if(info[2]->IsUndefined() || info[2]->IsNull()) {
     THROW_ERR(CL_INVALID_VALUE);
   }
@@ -1327,7 +1327,7 @@ NAN_METHOD(EnqueueUnmapMemObject) {
   NOCL_UNWRAP(mem, NoCLMem, info[1]);
 
   void *ptr=nullptr;
-  int len=0;
+  size_t len=0;
   if(info[2]->IsUndefined() || info[2]->IsNull()) {
     THROW_ERR(CL_INVALID_VALUE);
   }

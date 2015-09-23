@@ -50,7 +50,7 @@ NAN_METHOD(SVMFree) {
   NOCL_UNWRAP(context, NoCLContext, info[0]);
 
   void *ptr=nullptr;
-  int len=0;
+  size_t len=0;
   getPtrAndLen(info[1], ptr, len);
   if(!ptr || !len) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
@@ -119,7 +119,7 @@ NAN_METHOD(enqueueSVMFree) {
 
   vector<void*> vec ;
   for(cl_uint i=0;i<length;++i){
-    int len=0;
+    size_t len=0;
     void* ptr=nullptr;
     getPtrAndLen(arr->Get(i),ptr,len);
     if(!ptr || !len) {
@@ -180,14 +180,14 @@ NAN_METHOD(enqueueSVMMemcpy) {
   cl_bool blocking_copy = info[1]->BooleanValue() ? CL_TRUE : CL_FALSE;
 
   void* dst=nullptr;
-  int len=0;
+  size_t len=0;
   getPtrAndLen(info[2], dst, len);
     if(!dst || !len) {
       return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
     }
 
   void* src=nullptr;
-  int len2=0;
+  size_t len2=0;
   getPtrAndLen(info[3], src, len2);
   if(!src || !len2) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
@@ -233,14 +233,14 @@ NAN_METHOD(enqueueSVMMemFill) {
   NOCL_UNWRAP(cq, NoCLCommandQueue, info[0]);
 
   void* ptr=nullptr;
-  int length=0;
+  size_t length=0;
   getPtrAndLen(info[1], ptr, length);
   if(!ptr || !length) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
   void* pattern=nullptr;
-  int len=0;
+  size_t len=0;
   getPtrAndLen(info[2], pattern, len);
   if(!pattern || !len) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
@@ -288,7 +288,7 @@ NAN_METHOD(enqueueSVMMap) {
   cl_map_flags map_flags = info[2]->Uint32Value();
 
   void* ptr=nullptr;
-  int len=0;
+  size_t len=0;
   getPtrAndLen(info[3], ptr, len);
   if(!ptr || !len) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
@@ -329,7 +329,7 @@ NAN_METHOD(enqueueSVMUnmap) {
   // Arg 0
   NOCL_UNWRAP(cq, NoCLCommandQueue, info[0]);
   void* ptr=nullptr;
-  int len=0;
+  size_t len=0;
   getPtrAndLen(info[1], ptr, len);
   if(!ptr || !len) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
@@ -370,7 +370,7 @@ NAN_METHOD(setKernelArgSVMPointer) {
   // Arg 1
   unsigned int idx = info[1]->Uint32Value();
   void* ptr=nullptr;
-  int len=0;
+  size_t len=0;
   getPtrAndLen(info[2], ptr, len);
   if(!ptr || !len) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
