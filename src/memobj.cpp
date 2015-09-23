@@ -8,32 +8,6 @@ using namespace node;
 
 namespace opencl {
 
-
-class NoCLAvoidGC:public NanAsyncLaunch {
- public:
-   NoCLAvoidGC(const v8::Local<v8::Object> &array):NanAsyncLaunch(nullptr){
-       Nan::HandleScope scope;
-       v8::Local<v8::Object> obj = Nan::New<v8::Object>();
-       persistentHandle.Reset(obj);
-       v8::Local<v8::Object>  handle = Nan::New(persistentHandle);
-       handle->Set(kIndex, array);
-   }
-
-   void Execute() {
-       return;
-   }
-
- private:
-
-};
-
-void CL_CALLBACK notifyFreeClMemObj (cl_mem mem,void* user_data) {
-    NoCLAvoidGC* asyncCB = static_cast<NoCLAvoidGC*>(user_data);
-    if(asyncCB!=nullptr)
-        asyncCB->FireAndForget();
-}
-
-
 // /* Memory Object APIs */
 // extern CL_API_ENTRY cl_mem CL_API_CALL
 // clCreateBuffer(cl_context   /* context */,
@@ -57,36 +31,24 @@ NAN_METHOD(CreateBuffer) {
   // Arg 3
   void *host_ptr = NULL;
   if(ARG_EXISTS(3)) {
-    if(info[3]->IsArray()) {
-      THROW_ERR(CL_INVALID_MEM_OBJECT);
-    }
-    if(info[3]->IsObject()) {
-      Local<Object> obj=info[3]->ToObject();
-      String::Utf8Value name(obj->GetConstructorName());
-      if(strcmp("Buffer",*name))
-        host_ptr=Buffer::Data(obj);
-      else if(strcmp("Array",*name)) {
-        // TypedArray
-        if (!obj->HasIndexedPropertiesInExternalArrayData()) {
-          THROW_ERR(CL_INVALID_MEM_OBJECT);
-        }
-        host_ptr=obj->GetIndexedPropertiesExternalArrayData();
-      } else {
-        THROW_ERR(CL_INVALID_MEM_OBJECT);
-      }
-    }
-    else
-    THROW_ERR(CL_INVALID_MEM_OBJECT);
+    int len=0;
+    getPtrAndLen(info[3], host_ptr, len);
+    // std::cout<<"[CreateBuffer] host_ptr 0x"<<std::hex<<host_ptr<<std::dec<<std::endl;
+    // for(int i=0;i<len;i++)
+    //   std::cout<<((uint8_t*)host_ptr)[i]<<", ";
+    // std::cout<<std::endl;
+    if(!host_ptr || !len)
+      return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
   cl_int ret=CL_SUCCESS;
   cl_mem mem = ::clCreateBuffer(context->getRaw(), flags, size, host_ptr, &ret);
   CHECK_ERR(ret);
 
-  if(host_ptr) {
-    NoCLAvoidGC* user_data = new NoCLAvoidGC(info[3].As<Object>());
-    clSetMemObjectDestructorCallback(mem,notifyFreeClMemObj,user_data);
-  }
+  // if(host_ptr) {
+  //   NoCLAvoidGC* user_data = new NoCLAvoidGC(info[3].As<Object>());
+  //   clSetMemObjectDestructorCallback(mem,notifyFreeClMemObj,user_data);
+  // }
 
   info.GetReturnValue().Set(NOCL_WRAP(NoCLMem, mem));
 }
@@ -121,6 +83,7 @@ NAN_METHOD(CreateSubBuffer) {
     CHECK_ERR(ret);
 
     info.GetReturnValue().Set(NOCL_WRAP(NoCLMem, mem));
+    return;
   }
 
   CHECK_ERR(CL_INVALID_VALUE);
@@ -171,37 +134,21 @@ NAN_METHOD(CreateImage) {
 
   // Arg 4
   if(ARG_EXISTS(4)) {
-    if(info[4]->IsArray()) {
-      // JS Array
-      Local<Array> arr=Local<Array>::Cast(info[4]);
-      host_ptr=arr->GetIndexedPropertiesExternalArrayData();
-    }
-    else if(info[4]->IsObject()) {
-      Local<Object> obj=info[4]->ToObject();
-      String::Utf8Value name(obj->GetConstructorName());
-      if(!strcmp("Buffer",*name))
-        host_ptr=Buffer::Data(obj);
-      else {
-        // TypedArray
-        if(!obj->HasIndexedPropertiesInExternalArrayData()) {
-          THROW_ERR(CL_INVALID_MEM_OBJECT)
-        }
-        host_ptr=obj->GetIndexedPropertiesExternalArrayData();
-        // printf("external array data type %d\n",obj->GetIndexedPropertiesExternalArrayDataType());
-      }
-    }
-    else
-      Nan::ThrowError("Invalid memory object");
+    int len = 0;
+    getPtrAndLen(info[3], host_ptr, len);
+
+    if(!host_ptr || !len)
+      return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
   cl_int ret=CL_SUCCESS;
   cl_mem mem = ::clCreateImage(context->getRaw(), flags, &image_format, &desc, host_ptr, &ret);
   CHECK_ERR(ret);
 
-  if(host_ptr) {
-    NoCLAvoidGC* user_data = new NoCLAvoidGC(info[3].As<Object>());
-    clSetMemObjectDestructorCallback(mem,notifyFreeClMemObj,user_data);
-  }
+  // if(host_ptr) {
+  //   NoCLAvoidGC* user_data = new NoCLAvoidGC(info[3].As<Object>());
+  //   clSetMemObjectDestructorCallback(mem,notifyFreeClMemObj,user_data);
+  // }
 
   info.GetReturnValue().Set(NOCL_WRAP(NoCLMem, mem));
 }
@@ -241,36 +188,21 @@ NAN_METHOD(CreateImage2D) {
 
   // Arg 4
   if(ARG_EXISTS(6)) {
-    if(info[6]->IsArray()) {
-      // JS Array
-      Local<Array> arr=Local<Array>::Cast(info[6]);
-      host_ptr=arr->GetIndexedPropertiesExternalArrayData();
-    }
-    else if(info[6]->IsObject()) {
-      Local<Object> obj=info[6]->ToObject();
-      String::Utf8Value name(obj->GetConstructorName());
-      if(!strcmp("Buffer",*name))
-        host_ptr=Buffer::Data(obj);
-      else {
-        // TypedArray
-        if(!obj->HasIndexedPropertiesInExternalArrayData()) {
-          THROW_ERR(CL_INVALID_MEM_OBJECT)
-        }
-        host_ptr=obj->GetIndexedPropertiesExternalArrayData();
-      }
-    }
-    else
-      Nan::ThrowError("Invalid memory object");
+    int len =0;
+    getPtrAndLen(info[6], host_ptr, len);
+
+    if(!host_ptr || !len)
+      return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
   cl_int ret=CL_SUCCESS;
   cl_mem mem = ::clCreateImage2D(context->getRaw(), flags, &image_format, image_width,image_height,image_row_pitch, host_ptr, &ret);
   CHECK_ERR(ret);
 
-  if(host_ptr) {
-    NoCLAvoidGC* user_data = new NoCLAvoidGC(info[3].As<Object>());
-    clSetMemObjectDestructorCallback(mem,notifyFreeClMemObj,user_data);
-  }
+  // if(host_ptr) {
+  //   NoCLAvoidGC* user_data = new NoCLAvoidGC(info[3].As<Object>());
+  //   clSetMemObjectDestructorCallback(mem,notifyFreeClMemObj,user_data);
+  // }
 
   info.GetReturnValue().Set(NOCL_WRAP(NoCLMem, mem));
 }
@@ -360,11 +292,13 @@ NAN_METHOD(GetMemObjectInfo) {
       cl_mem_object_type val;
       CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(cl_mem_object_type), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_MEM_FLAGS: {
       cl_mem_flags val;
       CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(cl_mem_flags), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_MEM_SIZE:
     case CL_MEM_OFFSET:
@@ -372,6 +306,7 @@ NAN_METHOD(GetMemObjectInfo) {
       size_t val;
       CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(size_t), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_MEM_MAP_COUNT:
     case CL_MEM_REFERENCE_COUNT:
@@ -379,22 +314,26 @@ NAN_METHOD(GetMemObjectInfo) {
       cl_uint val;
       CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(cl_uint), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_MEM_HOST_PTR: {
       void* val;
       CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(void*), &val, NULL))
 
       //info.GetReturnValue().Set(NOCL_WRAP(NoCLMappedPtr, val));
+      return;
     }
     case CL_MEM_CONTEXT: {
       cl_context val;
       CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(cl_context), &val, NULL))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLContext, val));
+      return;
     }
     case CL_MEM_ASSOCIATED_MEMOBJECT: {
       cl_mem val;
       CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(cl_mem), &val, NULL))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLMem, val));
+      return;
     }
   }
   return Nan::ThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE)));
@@ -424,6 +363,7 @@ NAN_METHOD(GetImageInfo) {
       arr->Set(JS_STR("channel_order"), JS_INT(val.image_channel_order));
       arr->Set(JS_STR("channel_data_type"), JS_INT(val.image_channel_data_type));
       info.GetReturnValue().Set(arr);
+      return;
     }
     case CL_IMAGE_ELEMENT_SIZE:
     case CL_IMAGE_ROW_PITCH:
@@ -438,12 +378,14 @@ NAN_METHOD(GetImageInfo) {
       size_t val;
       CHECK_ERR(::clGetImageInfo(mem->getRaw(),param_name,sizeof(size_t), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
 #ifdef CL_VERSION_1_2
     case CL_IMAGE_BUFFER: {
       cl_mem val;
       CHECK_ERR(::clGetImageInfo(mem->getRaw(),param_name,sizeof(cl_mem), &val, NULL))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLMem, val));
+      return;
     }
     case CL_IMAGE_NUM_MIP_LEVELS:
     case CL_IMAGE_NUM_SAMPLES:
@@ -451,6 +393,7 @@ NAN_METHOD(GetImageInfo) {
       cl_uint val;
       CHECK_ERR(::clGetImageInfo(mem->getRaw(),param_name,sizeof(cl_uint), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
 #endif
   }

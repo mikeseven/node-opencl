@@ -95,8 +95,6 @@ NAN_METHOD(CreateSamplerWithProperties) {
   CHECK_ERR(err);
 
   info.GetReturnValue().Set(NOCL_WRAP(NoCLSampler, sw));
-
-
 }
 #endif
 
@@ -147,31 +145,34 @@ NAN_METHOD(GetSamplerInfo) {
       cl_uint val;
       CHECK_ERR(::clGetSamplerInfo(sampler->getRaw(),param_name,sizeof(cl_uint), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_SAMPLER_CONTEXT:
     {
       cl_context val;
       CHECK_ERR(::clGetSamplerInfo(sampler->getRaw(),param_name,sizeof(cl_context), &val, NULL))
-
-      break;
+      return;
     }
     case CL_SAMPLER_NORMALIZED_COORDS:
     {
       cl_bool val;
       CHECK_ERR(::clGetSamplerInfo(sampler->getRaw(),param_name,sizeof(cl_bool), &val, NULL))
       info.GetReturnValue().Set(val==CL_TRUE ? Nan::True() : Nan::False());
+      return;
     }
     case CL_SAMPLER_ADDRESSING_MODE:
     {
       cl_addressing_mode val;
       CHECK_ERR(::clGetSamplerInfo(sampler->getRaw(),param_name,sizeof(cl_addressing_mode), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_SAMPLER_FILTER_MODE:
     {
       cl_filter_mode val;
       CHECK_ERR(::clGetSamplerInfo(sampler->getRaw(),param_name,sizeof(cl_filter_mode), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
   }
   THROW_ERR(CL_INVALID_VALUE);

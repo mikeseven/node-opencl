@@ -64,6 +64,7 @@ NAN_METHOD(GetDeviceInfo) {
 
     // NOTE: Adjust length because API returns NULL terminated string
     info.GetReturnValue().Set(JS_STR(param_value,(int)param_value_size_ret - 1));
+    return;
   }
   break;
   case CL_DEVICE_PLATFORM: {
@@ -82,31 +83,31 @@ NAN_METHOD(GetDeviceInfo) {
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_device_type), &param_value, NULL));
     info.GetReturnValue().Set(JS_INT(param_value));
   }
-  break;
+  return;
   case CL_DEVICE_LOCAL_MEM_TYPE: {
     cl_device_local_mem_type param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_device_local_mem_type), &param_value, NULL));
     info.GetReturnValue().Set(JS_INT(param_value));
+    return;
   }
-  break;
   case CL_DEVICE_GLOBAL_MEM_CACHE_TYPE: {
     cl_device_mem_cache_type param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_device_mem_cache_type), &param_value, NULL));
     info.GetReturnValue().Set(JS_INT(param_value));
+    return;
   }
-  break;
   case CL_DEVICE_EXECUTION_CAPABILITIES: {
     cl_device_exec_capabilities param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_device_exec_capabilities), &param_value, NULL));
     info.GetReturnValue().Set(JS_INT((int)param_value));
+    return;
   }
-  break;
   case CL_DEVICE_QUEUE_PROPERTIES: {
     cl_command_queue_properties param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_command_queue_properties), &param_value, NULL));
     info.GetReturnValue().Set(JS_INT((int)param_value));
+    return;
   }
-  break;
   case CL_DEVICE_HALF_FP_CONFIG:
   case CL_DEVICE_SINGLE_FP_CONFIG:
   case CL_DEVICE_DOUBLE_FP_CONFIG: {
@@ -114,8 +115,8 @@ NAN_METHOD(GetDeviceInfo) {
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_device_fp_config), &param_value, NULL));
 
     info.GetReturnValue().Set(JS_INT((int)param_value));
+    return;
   }
-  break;
   case CL_DEVICE_MAX_WORK_ITEM_SIZES: {
     // get CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS param
     cl_uint max_work_item_dimensions;
@@ -130,8 +131,8 @@ NAN_METHOD(GetDeviceInfo) {
       arr->Set(i,JS_INT(uint32_t(param_value[i])));
 
     info.GetReturnValue().Set(arr);
+    return;
   }
-  break;
   // cl_bool params
   case CL_DEVICE_AVAILABLE:
   case CL_DEVICE_COMPILER_AVAILABLE:
@@ -144,8 +145,8 @@ NAN_METHOD(GetDeviceInfo) {
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_bool), &param_value, NULL));
     // keeping as Integer vs Boolean so comparisons with cl.TRUE/cl.FALSE work
     info.GetReturnValue().Set((param_value==CL_TRUE) ? Nan::True() : Nan::False());
+    return;
   }
-  break;
   // cl_uint params
   case CL_DEVICE_ADDRESS_BITS:
   case CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE:
@@ -189,8 +190,8 @@ NAN_METHOD(GetDeviceInfo) {
     cl_uint param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_uint), &param_value, NULL));
     info.GetReturnValue().Set(JS_INT((int)param_value));
+    return;
   }
-  break;
   // cl_ulong params
   case CL_DEVICE_GLOBAL_MEM_CACHE_SIZE:
   case CL_DEVICE_GLOBAL_MEM_SIZE:
@@ -201,17 +202,22 @@ NAN_METHOD(GetDeviceInfo) {
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_ulong), &param_value, NULL));
 
     /**
-    * JS Compatibility
-    *
-    * As JS does not support 64 bits integer, we return a 2 integers array with
-    *  INT = arr[0] * 1024^2 (megabytes) + arr[1]  (bytes - megabytes) */
+      JS Compatibility
+
+      As JS does not support 64 bits integer, we return a 2-integer array with
+        output_values[0] = (input_value >> 32) & 0xffffffff;
+        output_values[1] = input_value & 0xffffffff;
+
+      and reconstruction as
+        input_value = ((int64_t) output_values[0]) << 32) | output_values[1];
+    */
     Local<Array> arr = Nan::New<Array>(2);
-    arr->Set(0, JS_INT((uint32_t)param_value / (1024 * 1024)));
-    arr->Set(1, JS_INT((uint32_t)param_value - param_value / (1024 * 1024)));
+    arr->Set(0, JS_INT((uint32_t) (param_value>>32))); // hi
+    arr->Set(1, JS_INT((uint32_t) (param_value & 0xffffffff))); // lo
     info.GetReturnValue().Set(arr);
 
+    return;
   }
-  break;
   // size_t params
   case CL_DEVICE_IMAGE2D_MAX_HEIGHT:
   case CL_DEVICE_IMAGE2D_MAX_WIDTH:
@@ -233,8 +239,8 @@ NAN_METHOD(GetDeviceInfo) {
 
     // assume for these params it will fit in an int
     info.GetReturnValue().Set(Nan::New<Integer>((int)param_value));
+    return;
   }
-  break;
   default: {
     THROW_ERR(CL_INVALID_VALUE);
   }

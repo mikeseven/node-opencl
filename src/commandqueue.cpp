@@ -142,21 +142,25 @@ NAN_METHOD(GetCommandQueueInfo) {
       cl_context val;
       CHECK_ERR(::clGetCommandQueueInfo(q->getRaw(),param_name,sizeof(cl_context), &val, nullptr))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLContext, val));
+      return;
     }
     case CL_QUEUE_DEVICE: {
       cl_device_id val;
       CHECK_ERR(::clGetCommandQueueInfo(q->getRaw(),param_name,sizeof(cl_device_id), &val, nullptr))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLDeviceId, val));
+      return;
     }
     case CL_QUEUE_REFERENCE_COUNT: {
       cl_uint val;
       CHECK_ERR(::clGetCommandQueueInfo(q->getRaw(),param_name,sizeof(cl_uint), &val, nullptr))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_QUEUE_PROPERTIES: {
       cl_command_queue_properties val;
       CHECK_ERR(::clGetCommandQueueInfo(q->getRaw(),param_name,sizeof(cl_command_queue_properties), &val, nullptr))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
   }
   return Nan::ThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE)));
@@ -219,12 +223,17 @@ NAN_METHOD(EnqueueReadBuffer) {
   size_t size = info[4]->Uint32Value();
 
   void *ptr=nullptr;
-  int len=0;
   if(info[5]->IsUndefined() || info[5]->IsNull()) {
     CHECK_ERR(CL_INVALID_VALUE);
   }
-  else
+  else {
+    int len=0;
     getPtrAndLen(info[5],ptr,len);
+    // std::cout<<"[EnqueueReadBuffer] ptr 0x"<<std::hex<<ptr<<std::dec<<std::endl;
+
+    if(!ptr || !len)
+      return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+  }
 
   std::vector<NoCLEvent> cl_events;
 
@@ -312,6 +321,9 @@ NAN_METHOD(EnqueueReadBufferRect) {
   }
   else
     getPtrAndLen(info[10],ptr,len);
+  if(!ptr || !len) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+  }
 
   std::vector<NoCLEvent> cl_events;
 
@@ -369,12 +381,16 @@ NAN_METHOD(EnqueueWriteBuffer) {
   size_t size = info[4]->Uint32Value();
 
   void *ptr=nullptr;
-  int len=0;
   if(info[5]->IsUndefined() || info[5]->IsNull()) {
     CHECK_ERR(CL_INVALID_VALUE);
   }
-  else
+  else {
+    int len=0;
     getPtrAndLen(info[5],ptr,len);
+
+    if(!ptr || !len)
+      return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+  }
 
   std::vector<NoCLEvent> cl_events;
 
@@ -460,6 +476,9 @@ NAN_METHOD(EnqueueWriteBufferRect) {
   }
   else
     getPtrAndLen(info[10],ptr,len);
+  if(!ptr || !len) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+  }
 
   std::vector<NoCLEvent> cl_events;
   if (ARG_EXISTS(12)) {
@@ -530,6 +549,9 @@ NAN_METHOD(EnqueueFillBuffer) {
   }
   else {
     getPtrAndLen(info[2], pattern, len);
+  }
+  if(!pattern || !len) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
   size_t offset=info[3]->Uint32Value();
@@ -737,6 +759,9 @@ NAN_METHOD(EnqueueReadImage) {
   else {
     getPtrAndLen(info[7], ptr, len);
   }
+  if(!ptr || !len) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+  }
 
   std::vector<NoCLEvent> cl_events;
   if(ARG_EXISTS(8)) {
@@ -812,6 +837,9 @@ NAN_METHOD(EnqueueWriteImage) {
   }
   else
     getPtrAndLen(info[7],ptr,len);
+  if(!ptr || !len) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+  }
 
   std::vector<NoCLEvent> cl_events;
   if (ARG_EXISTS(8)) {
@@ -867,6 +895,9 @@ NAN_METHOD(EnqueueFillImage) {
   }
   else
     getPtrAndLen(info[2],fill_color,len);
+  if(!fill_color || !len) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+  }
 
   size_t origin[]={0,0,0};
   size_t region[]={1,1,1};
@@ -1108,29 +1139,11 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
 
 static std::map<void*,int> mapPointers;
 
-void CL_CALLBACK notifyMapCB (cl_event event, cl_int event_command_exec_status, void *user_data) {
-    NoCLMapCB* asyncCB = static_cast<NoCLMapCB*>(user_data);
-    if(asyncCB!=nullptr)
-        asyncCB->CallBackIsDone();
-}
-
-struct unMapInfo {
-  cl_command_queue cq;
-  cl_mem mem;
-};
-
-void freeMapedPtr(char* ptr,void* hint) {
-    mapPointers[ptr]--;
-    unMapInfo* umi = static_cast<unMapInfo*>(hint);
-    clEnqueueUnmapMemObject (umi->cq ,
-        umi->mem,
-        ptr,
-        0 ,
-        nullptr ,
-        nullptr );
-    clReleaseCommandQueue(umi->cq);
-    clReleaseMemObject(umi->mem);
-    delete umi;
+void CL_CALLBACK notifyMapCB (cl_event event, cl_int event_command_exec_status, void *user_data)
+{
+  // NoCLMapCB* asyncCB = static_cast<NoCLMapCB*>(user_data);
+  // if(asyncCB!=nullptr)
+  //     asyncCB->CallBackIsDone();
 }
 
 // extern CL_API_ENTRY void * CL_API_CALL
@@ -1145,15 +1158,14 @@ void freeMapedPtr(char* ptr,void* hint) {
 //                    cl_event *       /* event */,
 //                    cl_int *         /* errcode_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueMapBuffer) {
-  Nan::HandleScope scope;
-  REQ_ARGS(8);
+  Nan::EscapableHandleScope scope;
+  REQ_ARGS(6);
 
   // Arg 0
   NOCL_UNWRAP(cq, NoCLCommandQueue, info[0]);
 
   // Arg 1
   NOCL_UNWRAP(mem, NoCLMem, info[1]);
-
 
   cl_bool blocking_map = info[2]->BooleanValue() ? CL_TRUE : CL_FALSE;
   cl_map_flags map_flags = info[3]->Uint32Value();
@@ -1174,42 +1186,26 @@ NAN_METHOD(EnqueueMapBuffer) {
       eventPtr = &event;
 
   mPtr = clEnqueueMapBuffer(cq->getRaw(),mem->getRaw(),
-                              blocking_map,map_flags, offset,
-                              size, (cl_uint)cl_events.size(),
-                              NOCL_TO_CL_ARRAY(
-                                cl_events, NoCLEvent),
-                                eventPtr,&err);
+                            blocking_map,map_flags, offset,
+                            size, (cl_uint)cl_events.size(),
+                            NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
+                            eventPtr,&err);
 
   CHECK_ERR(err)
 
-  if( mapPointers.count(mPtr)>0 ) {
-    mapPointers[mPtr]++;
-  }
-  else {
-    mapPointers[mPtr] = 1;
-  }
-
-  Local<Object> obj = Nan::New<Object>();
+  Local<v8::ArrayBuffer> obj = v8::ArrayBuffer::New(v8::Isolate::GetCurrent(), mPtr, size);
 
   if(eventPtr) {
-    obj->Set(Nan::New<String>("event").ToLocalChecked(), NOCL_WRAP(NoCLEvent,event));
+    obj->Set(JS_STR("event"), NOCL_WRAP(NoCLEvent,event));
   }
-  unMapInfo* umi = new unMapInfo();
-  umi->cq = cq->getRaw();
-  clRetainCommandQueue(umi->cq);
-  umi->mem = mem->getRaw();
-  clRetainMemObject(umi->mem);
-
-  Local<Object> buf = Nan::NewBuffer((char*)mPtr,size,freeMapedPtr,umi).ToLocalChecked();
-  obj->Set(Nan::New<String>("buffer").ToLocalChecked(), buf);
 
   if(!blocking_map) {
-    buf->SetIndexedPropertiesToExternalArrayData(NULL, buf->GetIndexedPropertiesExternalArrayDataType(), 0);
-    NoCLMapCB* cb = new NoCLMapCB(buf,size,mPtr);
-    err = clSetEventCallback(event,CL_COMPLETE,notifyMapCB,cb);
-    CHECK_ERR(err)
+    // TODO? buf->SetIndexedPropertiesToExternalArrayData(NULL, buf->GetIndexedPropertiesExternalArrayDataType(), 0);
+    // NoCLMapCB* cb = new NoCLMapCB(buf,size,mPtr);
+    // err = clSetEventCallback(event,CL_COMPLETE,notifyMapCB,cb);
+    // CHECK_ERR(err)
   }
-  info.GetReturnValue().Set(obj);
+  info.GetReturnValue().Set(scope.Escape(obj));
 
 }
 
@@ -1280,35 +1276,21 @@ NAN_METHOD(EnqueueMapImage) {
 
   size_t size = image_row_pitch*region[1]*region[2];
 
-  if( mapPointers.count(mPtr)>0 ) {
-    mapPointers[mPtr]++;
-  }
-  else {
-    mapPointers[mPtr] = 1;
-  }
+  Local<v8::ArrayBuffer> obj = v8::ArrayBuffer::New(v8::Isolate::GetCurrent(), mPtr, size);
 
-  Local<Object> obj = Nan::New<Object>();
-  obj->Set(Nan::New<String>("image_row_pitch").ToLocalChecked(), Nan::New(static_cast<int>(image_row_pitch)));
+  obj->Set(JS_STR("image_row_pitch"), Nan::New(static_cast<int>(image_row_pitch)));
   Local<Object> slice_pitch  = Nan::NewBuffer((char*)image_slice_pitch.get(), (uint32_t) (sizeof(size_t)*region[2])).ToLocalChecked();
-  obj->Set(Nan::New<String>("image_slice_pitch").ToLocalChecked(), slice_pitch);
+  obj->Set(JS_STR("image_slice_pitch"), slice_pitch);
 
   if(eventPtr) {
-    obj->Set(Nan::New<String>("event").ToLocalChecked(), NOCL_WRAP(NoCLEvent,event));
+    obj->Set(JS_STR("event"), NOCL_WRAP(NoCLEvent,event));
   }
-  unMapInfo* umi = new unMapInfo();
-  umi->cq = cq->getRaw();
-  clRetainCommandQueue(umi->cq);
-  umi->mem = mem->getRaw();
-  clRetainMemObject(umi->mem);
-
-  Local<Object> buf = Nan::NewBuffer((char*)mPtr,size,freeMapedPtr,umi).ToLocalChecked();
-  obj->Set(Nan::New<String>("buffer").ToLocalChecked(), buf);
 
   if(!blocking_map) {
-    buf->SetIndexedPropertiesToExternalArrayData(NULL, buf->GetIndexedPropertiesExternalArrayDataType(), 0);
-    NoCLMapCB* cb = new NoCLMapCB(buf,size,mPtr);
-    err = clSetEventCallback(event,CL_COMPLETE,notifyMapCB,cb);
-    CHECK_ERR(err)
+    //TODO? buf->SetIndexedPropertiesToExternalArrayData(NULL, buf->GetIndexedPropertiesExternalArrayDataType(), 0);
+    // NoCLMapCB* cb = new NoCLMapCB(buf,size,mPtr);
+    // err = clSetEventCallback(event,CL_COMPLETE,notifyMapCB,cb);
+    // CHECK_ERR(err)
   }
   info.GetReturnValue().Set(obj);
 //
@@ -1352,12 +1334,8 @@ NAN_METHOD(EnqueueUnmapMemObject) {
   else {
     getPtrAndLen(info[2], ptr, len);
   }
-
-  if(mapPointers.count(ptr) && mapPointers[ptr]>0) {
-    mapPointers[ptr]--;
-  }
-  else {
-    THROW_ERR(CL_INVALID_VALUE);
+  if(!ptr || !len) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
   std::vector<NoCLEvent> cl_events;
@@ -1367,21 +1345,19 @@ NAN_METHOD(EnqueueUnmapMemObject) {
   }
 
   cl_int err;
-  //info 4
+
   if(ARG_EXISTS(4) && info[4]->BooleanValue()) {
     cl_event event;
     err = clEnqueueUnmapMemObject(cq->getRaw(),mem->getRaw(),ptr,
       (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),&event);
     CHECK_ERR(err)
     info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    return;
   }
 
   err = clEnqueueUnmapMemObject(cq->getRaw(),mem->getRaw(),ptr,
     (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),nullptr);
   CHECK_ERR(err)
-
-  Local<Object> obj = info[2].As<Object>();
-  obj->SetIndexedPropertiesToExternalArrayData(NULL, obj->GetIndexedPropertiesExternalArrayDataType(), 0);
 
   info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
  }
@@ -1535,10 +1511,11 @@ NAN_METHOD(EnqueueNDRangeKernel) {
     q->getRaw(),
     k->getRaw(),
     1,
-    cl_work_offset.size() ? cl_work_offset.data() : NULL,
-    cl_work_global.size() ? cl_work_global.data() : NULL,
-    cl_work_local.size() ? cl_work_local.data() : NULL,
-    0, NULL, NULL
+    cl_work_offset.size() ? cl_work_offset.data() : nullptr,
+    cl_work_global.size() ? cl_work_global.data() : nullptr,
+    cl_work_local.size() ? cl_work_local.data() : nullptr,
+    (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
+    event ? &event : nullptr
   ));
 
   if (event != nullptr) {
@@ -1546,6 +1523,7 @@ NAN_METHOD(EnqueueNDRangeKernel) {
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
+
 }
 
 #ifndef CL_VERSION_2_0
@@ -1645,6 +1623,7 @@ NAN_METHOD(EnqueueMarkerWithWaitList) {
       (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
         &event));
     info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    return;
   }
 
   CHECK_ERR(::clEnqueueMarkerWithWaitList(
@@ -1652,7 +1631,6 @@ NAN_METHOD(EnqueueMarkerWithWaitList) {
     (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),nullptr));
 
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -1679,6 +1657,7 @@ NAN_METHOD(EnqueueBarrierWithWaitList) {
         (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
           &event));
       info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+      return;
     }
 
     CHECK_ERR(::clEnqueueBarrierWithWaitList(
@@ -1705,6 +1684,7 @@ NAN_METHOD(EnqueueMarker) {
 
     CHECK_ERR(::clEnqueueMarker(q->getRaw(), &event));
     info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    return;
   }
 
   CHECK_ERR(::clEnqueueMarker(q->getRaw(), nullptr));
@@ -1752,6 +1732,8 @@ NAN_METHOD(EnqueueBarrier) {
 #endif
 
 #ifdef CL_VERSION_2_0
+// moved to svm.cpp
+
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clEnqueueSVMFree(cl_command_queue  /* command_queue */,
 //                  cl_uint           /* num_svm_pointers */,

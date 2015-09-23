@@ -12,7 +12,7 @@ NAN_METHOD(WaitForEvents) {
   REQ_ARGS(1);
 
   std::vector<NoCLEvent> events;
-  Local<Array> js_events = Local<Array>::Cast(info[1]);
+  Local<Array> js_events = Local<Array>::Cast(info[0]);
   NOCL_TO_ARRAY(events, js_events, NoCLEvent);
 
   CHECK_ERR(::clWaitForEvents(
@@ -43,30 +43,35 @@ NAN_METHOD(GetEventInfo) {
       cl_command_queue val;
       CHECK_ERR(::clGetEventInfo(ev->getRaw(),param_name,sizeof(cl_command_queue), &val, NULL))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLCommandQueue, val));
+      return;
     }
     case CL_EVENT_CONTEXT:
     {
       cl_context val;
       CHECK_ERR(::clGetEventInfo(ev->getRaw(),param_name,sizeof(cl_context), &val, NULL))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLContext, val));
+      return;
     }
     case CL_EVENT_COMMAND_TYPE:
     {
       cl_command_type val;
       CHECK_ERR(::clGetEventInfo(ev->getRaw(),param_name,sizeof(cl_command_type), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_EVENT_COMMAND_EXECUTION_STATUS:
     {
       cl_int val;
       CHECK_ERR(::clGetEventInfo(ev->getRaw(),param_name,sizeof(cl_int), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_EVENT_REFERENCE_COUNT:
     {
       cl_uint val;
       CHECK_ERR(::clGetEventInfo(ev->getRaw(),param_name,sizeof(cl_uint), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
   }
   return Nan::ThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE)));
@@ -155,78 +160,91 @@ NAN_METHOD(GetEventProfilingInfo) {
     case CL_PROFILING_COMMAND_END:
     {
       /**
-      * JS Compatibility
-      *
-      * As JS does not support 64 bits integer, we return a 2 integers array with
-      *  INT / 1000 = arr[0] * 10^6 (milliseconds) + arr[1]  (nanoseconds - milliseconds) */
+        JS Compatibility
 
+        As JS does not support 64 bits integer, we return a 2-integer array with
+          output_values[0] = (input_value >> 32) & 0xffffffff;
+          output_values[1] = input_value & 0xffffffff;
+
+        and reconstruction as
+          input_value = ((int64_t) output_values[0]) << 32) | output_values[1];
+      */
       cl_ulong val;
       CHECK_ERR(::clGetEventProfilingInfo(ev->getRaw(),param_name,sizeof(cl_ulong), &val, NULL))
 
       Local<Array> arr = Nan::New<Array>(2);
-      arr->Set(0, JS_INT((uint32_t)val / 1000000));
-      arr->Set(1, JS_INT((uint32_t)val - val / 1000000));
+      arr->Set(0, JS_INT((uint32_t) (val>>32))); // hi
+      arr->Set(1, JS_INT((uint32_t) (val & 0xffffffff))); // lo
       info.GetReturnValue().Set(arr);
+      return;
     }
   }
   return Nan::ThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE)));
 }
 
-class NoCLEventCLCallback:public NanAsyncLaunch {
- public:
-   NoCLEventCLCallback(Nan::Callback* callback,const v8::Local<v8::Object> &userData,const v8::Local<v8::Object> &noCLEvent):NanAsyncLaunch(callback){
-       Nan::HandleScope scope;
-       v8::Local<v8::Object> obj = Nan::New<v8::Object>();
-       persistentHandle.Reset(obj);
-       v8::Local<v8::Object>  handle = Nan::New(persistentHandle);
-       handle->Set(kIndex, noCLEvent);
-       handle->Set(kIndex+1, userData);
+class NoCLEventWorker : public AsyncWorker
+{
+public:
+  NoCLEventWorker(Callback* callback, const v8::Local<v8::Object> &userData,const v8::Local<v8::Object> &noCLEvent) :
+  AsyncWorker(callback)
+  {
+    SaveToPersistent(kIndex,  userData);
+    SaveToPersistent(kIndex+1,noCLEvent);
+  }
 
-   }
+  ~NoCLEventWorker() {}
 
-   void CallBackIsDone(int status) {
-     mCLCallbackStatus = status;
-     this->FireAndForget();
-   }
+  void CallBackIsDone(int status) {
+    mCLCallbackStatus = status;
+  }
 
-   void Execute() {
-     Nan::EscapableHandleScope scope;
-     v8::Local<v8::Object> handle = Nan::New(persistentHandle);
-     v8::Local<v8::Object> noCLEvent = (handle->Get(kIndex)).As<v8::Object>();
-     v8::Local<v8::Object> userData= (handle->Get(kIndex+1)).As<v8::Object>();
-     Local<Value> argv[] = {
-         Nan::New(noCLEvent),
-         JS_INT(mCLCallbackStatus),
-         Nan::New(userData)
-     };
-     callback->Call(3,argv);
-   }
+  // Executed inside the worker-thread.
+  // not safe to use V8 calls
+  void Execute()
+  {
+  }
+
+  // Executed when the async work is complete
+  // this function will be run inside the main event loop
+  // so it is safe to use V8 again
+  void HandleOKCallback () {
+    Nan::EscapableHandleScope  scope;
+
+    Local<Value> argv[] = {
+      GetFromPersistent(kIndex),  // event
+      JS_INT(mCLCallbackStatus),  // error status
+      GetFromPersistent(kIndex+1) // userdata
+    };
+    callback->Call(3,argv);
+  }
+
+protected:
+  static const uint32_t kIndex = 0;
 
  private:
-   int mCLCallbackStatus;
-
+   int mCLCallbackStatus = 0;
 };
 
 void CL_CALLBACK notifyCB (cl_event event, cl_int event_command_exec_status, void *user_data) {
-    NoCLEventCLCallback* asyncCB = static_cast<NoCLEventCLCallback*>(user_data);
-    asyncCB->CallBackIsDone(event_command_exec_status);
+  NoCLEventWorker* asyncCB = static_cast<NoCLEventWorker*>(user_data);
+  asyncCB->CallBackIsDone(event_command_exec_status);
+  AsyncQueueWorker(asyncCB);
 }
 
-NAN_METHOD(SetEventCallback){
+NAN_METHOD(SetEventCallback)
+{
   Nan::HandleScope scope;
   REQ_ARGS(3);
   NOCL_UNWRAP(event, NoCLEvent, info[0]);
   cl_int callbackStatusType = info[1]->Int32Value();
-  Local<Function> callbackHandle = info[2].As<Function>();
-  Nan::Callback *callback = new Nan::Callback(callbackHandle);
+  Nan::Callback *callback = new Nan::Callback(info[2].As<v8::Function>());
   Local<Object> userData = info[3].As<Object>();
 
-  NoCLEventCLCallback* asyncCB = new NoCLEventCLCallback(callback,userData,info[0].As<Object>());
+  NoCLEventWorker* asyncCB = new NoCLEventWorker(callback,userData,info[0].As<Object>());
 
   CHECK_ERR(clSetEventCallback(event->getRaw(),callbackStatusType,notifyCB,asyncCB));
 
   info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-
 }
 
 
