@@ -98,6 +98,10 @@ value = (hi << 32) | lo
 - WebCL follows an object-oriented model of OpenCL specification
 - node-opencl follows the C nature of OpenCL specification. It is thus a one-to-one low-level wrapper of OpenCL. This allows better control of native resources, quick upgrade when OpenCL specification changes. Importantly, it allows developers to create higher-level APIs that fit their needs, relying on an implementation close to OpenCL driver.
 
+### User events
+
+By adding true instead of creating a cl.Event (as in webcl) to any enqueueXXX() methods, the enqueuXXX() returns a cl.Event that can be used to coordinate calls, profiling etc...
+
 ### Javascript Array not supported
 
 - due to changes in v8, we don't support Javascript arrays for OpenCL buffers
