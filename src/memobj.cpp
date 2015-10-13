@@ -31,7 +31,7 @@ NAN_METHOD(CreateBuffer) {
   // Arg 3
   void *host_ptr = NULL;
   if(ARG_EXISTS(3)) {
-    int len=0;
+    size_t len=0;
     getPtrAndLen(info[3], host_ptr, len);
     // std::cout<<"[CreateBuffer] host_ptr 0x"<<std::hex<<host_ptr<<std::dec<<std::endl;
     // for(int i=0;i<len;i++)
@@ -134,7 +134,7 @@ NAN_METHOD(CreateImage) {
 
   // Arg 4
   if(ARG_EXISTS(4)) {
-    int len = 0;
+    size_t len = 0;
     getPtrAndLen(info[3], host_ptr, len);
 
     if(!host_ptr || !len)

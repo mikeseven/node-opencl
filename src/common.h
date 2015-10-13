@@ -85,7 +85,7 @@ namespace opencl {
   (info.Length() >= nth + 1 && !info[nth]->IsNull() && !info[nth]->IsUndefined())
 
 
-void getPtrAndLen(const Local<Value> value, void* &ptr, int &len);
+void getPtrAndLen(const Local<Value> value, void* &ptr, size_t &len);
 
 //template<typename CL_TYPE>
 //void getValuesFromArray(const Local<Array>& arr, std::vector<CL_TYPE>& vals)

@@ -16,7 +16,7 @@ class ScopedArrayBufferContents {
 };
 
 // TODO replace TypedArray with node::Buffer or v8::ArrayBuffer (same thing)
-void getPtrAndLen(const Local<Value> value, void* &ptr, int &len)
+void getPtrAndLen(const Local<Value> value, void* &ptr, size_t &len)
 {
   Nan::HandleScope scope;
 

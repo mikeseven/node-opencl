@@ -76,7 +76,12 @@ function VectorAdd() {
   cl.setKernelArg(kernel, 3, "uint", BUFFER_SIZE);
 
   // Create command queue
-  var queue=cl.createCommandQueue(context, device, 0);
+  var queue;
+  if (cl.createCommandQueueWithProperties !== undefined) {
+    queue = cl.createCommandQueueWithProperties(context, device, []); // OpenCL 2
+  } else {
+    queue = cl.createCommandQueue(context, device, null); // OpenCL 1.x
+  }
 
   // Execute the OpenCL kernel on the list
   // var localWS = [5]; // process one list at a time

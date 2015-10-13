@@ -11,57 +11,6 @@ namespace opencl {
 
 #ifdef CL_VERSION_2_0
 
-class NoCLSVMFreeCallback:public NanAsyncLaunch {
- public:
-   NoCLSVMFreeCallback(Nan::Callback* callback,const v8::Local<v8::Object> &userData):NanAsyncLaunch(callback){
-       Nan::HandleScope scope;
-       v8::Local<v8::Object> obj = Nan::New<v8::Object>();
-       persistentHandle.Reset(obj);
-       v8::Local<v8::Object>  handle = Nan::New(persistentHandle);
-       handle->Set(kIndex, userData);
-   }
-
-   void Execute() {
-     Nan::HandleScope scope;
-     v8::Local<v8::Object> handle = Nan::New(persistentHandle);
-     v8::Local<v8::Object> userData= (handle->Get(kIndex)).As<v8::Object>();
-     Handle<Value> argv[] = {
-         Nan::New(userData)
-     };
-     callback->Call(1,argv);
-   }
-};
-
-void CL_CALLBACK notifySVMFree (cl_command_queue queue, cl_uint num_svm_pointers, void *svm_pointers[],void* user_data) {
-    NoCLSVMFreeCallback* asyncCB = static_cast<NoCLSVMFreeCallback*>(user_data);
-    if(asyncCB!=nullptr) {
-      asyncCB->FireAndForget();
-    }
-}
-
-
-struct SVMStatus {
-    bool deleted;
-    bool mapped;
-    uint16_t count;
-    SVMStatus():deleted(false),
-        mapped(false),count(1u) {
-    }
-};
-
-static std::map<void*,SVMStatus> svmStatusMap;
-
-void freeSVMPtr(char* ptr,void* hint) {
-    NoCLContext* ctx = static_cast<NoCLContext*>(hint);
-    SVMStatus& st = svmStatusMap[(void*)ptr];
-    if(!st.deleted) {
-       clSVMFree(ctx->getRaw(),(void*)ptr);
-       st.deleted = true;
-    }
-    st.count--;
-    delete ctx;
-}
-
 NAN_METHOD(SVMAlloc) {
   Nan::HandleScope scope;
   REQ_ARGS(4);
@@ -87,22 +36,9 @@ NAN_METHOD(SVMAlloc) {
   if(mPtr == NULL)
     THROW_ERR(CL_INVALID_ARG_VALUE);
 
-  char* ptr = (char*)mPtr;
+  Local<v8::ArrayBuffer> obj = v8::ArrayBuffer::New(v8::Isolate::GetCurrent(), mPtr, size);
 
-  //New wrapper to avoid GC
-  NoCLContext* ctx = new NoCLContext(context->getRaw());
-
-  if(svmStatusMap.count(mPtr)){
-    svmStatusMap[mPtr].deleted = false;
-    svmStatusMap[mPtr].count++;
-  }
-  else {
-    svmStatusMap[mPtr] = SVMStatus();
-  }
-
-  Local<Object> buf = Nan::NewBuffer(ptr,size,freeSVMPtr,ctx).ToLocalChecked();
-
-  info.GetReturnValue().Set(buf);
+  info.GetReturnValue().Set(obj);
 }
 
 
@@ -114,13 +50,12 @@ NAN_METHOD(SVMFree) {
   NOCL_UNWRAP(context, NoCLContext, info[0]);
 
   void *ptr=nullptr;
-  int len=0;
+  size_t len=0;
   getPtrAndLen(info[1], ptr, len);
-  if(ptr == NULL || svmStatusMap.count(ptr)==0
-          ||svmStatusMap[ptr].deleted )
-    THROW_ERR(CL_INVALID_ARG_VALUE);
+  if(!ptr || !len) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+  }
 
-  svmStatusMap[ptr].deleted = true;
   clSVMFree(context->getRaw(),ptr);
 
   // TODO sets arg[1] to buffer data
@@ -130,6 +65,47 @@ NAN_METHOD(SVMFree) {
   info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
 }
 
+class NoCLSVMWorker : public AsyncWorker
+{
+public:
+  NoCLSVMWorker(Callback* callback, const v8::Local<v8::Object> &userData,const v8::Local<v8::Object> &noCLCommandQueue) :
+  AsyncWorker(callback)
+  {
+    SaveToPersistent(kIndex,  userData);
+    SaveToPersistent(kIndex+1,noCLCommandQueue);
+  }
+
+  ~NoCLSVMWorker() {}
+
+  // Executed inside the worker-thread.
+  // not safe to use V8 calls
+  void Execute()
+  {
+  }
+
+  // Executed when the async work is complete
+  // this function will be run inside the main event loop
+  // so it is safe to use V8 again
+  void HandleOKCallback () {
+    Nan::EscapableHandleScope  scope;
+
+    Local<Value> argv[] = {
+      GetFromPersistent(kIndex),  // CommandQueue
+      GetFromPersistent(kIndex+1) // userData
+    };
+    callback->Call(2,argv);
+  }
+
+protected:
+  static const uint32_t kIndex = 0;
+};
+
+// TODO should we return the svm_pointers to JS callback?
+void CL_CALLBACK notifySVMCB ( cl_command_queue queue, cl_uint num_svm_pointers, void *svm_pointers[], void *user_data) {
+  NoCLSVMWorker* asyncCB = static_cast<NoCLSVMWorker*>(user_data);
+  AsyncQueueWorker(asyncCB);
+}
+
 NAN_METHOD(enqueueSVMFree) {
   Nan::HandleScope scope;
   REQ_ARGS(2);
@@ -137,33 +113,20 @@ NAN_METHOD(enqueueSVMFree) {
   NOCL_UNWRAP(cq, NoCLCommandQueue, info[0]);
   Local<Array> arr= Local<Array>::Cast(info[1]);
   cl_uint length = arr->Length();
-  map<void*,Local<Object> > svmPtr;
-  int len;
-  void* ptr;
   if(length == 0u) {
     THROW_ERR(CL_INVALID_VALUE)
   }
 
-  for(cl_uint i=0;i<length;++i){
-    getPtrAndLen(arr->Get(i),ptr,len);
-    if(ptr == NULL || svmStatusMap.count(ptr)==0
-            ||svmStatusMap[ptr].deleted )
-      THROW_ERR(CL_INVALID_ARG_VALUE);
-    if(svmPtr.count(ptr)>0) {
-      THROW_ERR(CL_INVALID_ARG_VALUE)
-    }
-    svmPtr[ptr]=arr->Get(i).As<Object>();
-  }
-
   vector<void*> vec ;
-  for(auto const& it:svmPtr) {
-      svmStatusMap[it.first].deleted=true;
-      vec.push_back(it.first);
-
-      // TODO
-      // it.second->SetIndexedPropertiesToExternalArrayData(it.first, it.second->GetIndexedPropertiesExternalArrayDataType(), 0);
+  for(cl_uint i=0;i<length;++i){
+    size_t len=0;
+    void* ptr=nullptr;
+    getPtrAndLen(arr->Get(i),ptr,len);
+    if(!ptr || !len) {
+      return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+    }
+    vec.push_back(ptr);
   }
-
 
   std::vector<NoCLEvent> cl_events;
   if(ARG_EXISTS(4)) {
@@ -177,34 +140,26 @@ NAN_METHOD(enqueueSVMFree) {
       eventPtr = &event;
 
   if (ARG_EXISTS(2)) {
-   Local<Function> callbackHandle = info[2].As<Function>();
-   Nan::Callback *callback = new Nan::Callback(callbackHandle);
-   Local<Object> userData = info[3].As<Object>();
-   NoCLSVMFreeCallback* cb = new NoCLSVMFreeCallback(callback,userData);
-   err = clEnqueueSVMFree(cq->getRaw(),(cl_uint) vec.size(),vec.data(),
-                         notifySVMFree,
-                         cb,
-                         (cl_uint) cl_events.size(),
-                         NOCL_TO_CL_ARRAY(
-                         cl_events, NoCLEvent),
-                         eventPtr);
-    CHECK_ERR(err);
-    if (eventPtr != nullptr) {
-      info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-      return;
-    } else {
-      info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-      return;
-    }
-  }
+    Nan::Callback *callback = new Nan::Callback(info[2].As<v8::Function>());
+    Local<Object> userData = info[3].As<Object>();
 
+    NoCLSVMWorker* cb = new NoCLSVMWorker(callback,userData,info[0].As<Object>());
+
+    err = clEnqueueSVMFree(cq->getRaw(),(cl_uint) vec.size(),vec.data(),
+                            notifySVMCB,
+                            cb,
+                            (cl_uint) cl_events.size(),
+                            NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
+                            eventPtr);
+  }
+  else {
    err = clEnqueueSVMFree(cq->getRaw(),(cl_uint) vec.size(),vec.data(),
                          NULL,
                          NULL,
                          (cl_uint) cl_events.size(),
-                         NOCL_TO_CL_ARRAY(
-                         cl_events, NoCLEvent),
+                         NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
                          eventPtr);
+  }
 
   CHECK_ERR(err);
   if (eventPtr != nullptr) {
@@ -224,13 +179,19 @@ NAN_METHOD(enqueueSVMMemcpy) {
   NOCL_UNWRAP(cq, NoCLCommandQueue, info[0]);
   cl_bool blocking_copy = info[1]->BooleanValue() ? CL_TRUE : CL_FALSE;
 
-  void* dst;
-  int len=0;
+  void* dst=nullptr;
+  size_t len=0;
   getPtrAndLen(info[2], dst, len);
+    if(!dst || !len) {
+      return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+    }
 
-  void* src;
-  int len2;
+  void* src=nullptr;
+  size_t len2=0;
   getPtrAndLen(info[3], src, len2);
+  if(!src || !len2) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+  }
 
   size_t size = info[4]->Uint32Value();
 
@@ -271,17 +232,19 @@ NAN_METHOD(enqueueSVMMemFill) {
   // Arg 0
   NOCL_UNWRAP(cq, NoCLCommandQueue, info[0]);
 
-  void* ptr;
-  int length=0;
+  void* ptr=nullptr;
+  size_t length=0;
   getPtrAndLen(info[1], ptr, length);
+  if(!ptr || !length) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+  }
 
-  if(ptr == NULL || svmStatusMap.count(ptr)==0
-          ||svmStatusMap[ptr].deleted )
-    THROW_ERR(CL_INVALID_VALUE);
-
-  void* pattern;
-  int len;
+  void* pattern=nullptr;
+  size_t len=0;
   getPtrAndLen(info[2], pattern, len);
+  if(!pattern || !len) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+  }
   size_t size = info[3]->Uint32Value();
 
   if(size>static_cast<size_t>(len) ||
@@ -324,13 +287,12 @@ NAN_METHOD(enqueueSVMMap) {
   cl_bool blocking_map = info[1]->BooleanValue() ? CL_TRUE : CL_FALSE;
   cl_map_flags map_flags = info[2]->Uint32Value();
 
-  void* ptr;
-  int len=0;
+  void* ptr=nullptr;
+  size_t len=0;
   getPtrAndLen(info[3], ptr, len);
-
-  if(ptr == NULL || svmStatusMap.count(ptr)==0
-          ||svmStatusMap[ptr].deleted )
-    THROW_ERR(CL_INVALID_VALUE);
+  if(!ptr || !len) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+  }
 
   size_t size = info[4]->Uint32Value();
 
@@ -366,14 +328,12 @@ NAN_METHOD(enqueueSVMUnmap) {
 
   // Arg 0
   NOCL_UNWRAP(cq, NoCLCommandQueue, info[0]);
-  void* ptr;
-  int len=0;
+  void* ptr=nullptr;
+  size_t len=0;
   getPtrAndLen(info[1], ptr, len);
-
-  if(ptr == NULL || svmStatusMap.count(ptr)==0
-          ||svmStatusMap[ptr].deleted )
-    THROW_ERR(CL_INVALID_VALUE);
-
+  if(!ptr || !len) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+  }
 
   std::vector<NoCLEvent> cl_events;
   if(ARG_EXISTS(2)) {
@@ -409,13 +369,12 @@ NAN_METHOD(setKernelArgSVMPointer) {
 
   // Arg 1
   unsigned int idx = info[1]->Uint32Value();
-  void* ptr;
-  int len=0;
+  void* ptr=nullptr;
+  size_t len=0;
   getPtrAndLen(info[2], ptr, len);
-
-  if(ptr == NULL || svmStatusMap.count(ptr)==0
-          ||svmStatusMap[ptr].deleted )
-    THROW_ERR(CL_INVALID_VALUE);
+  if(!ptr || !len) {
+    return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
+  }
 
   err = clSetKernelArgSVMPointer(k->getRaw(),idx,ptr);
 
