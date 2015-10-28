@@ -1,9 +1,9 @@
-﻿{
+{
   "name": "node-opencl",
   "version": "0.4.0",
   "description": "A binding to OpenCL for Node.JS",
   "main": "lib/opencl.js",
-  "author": "Ioweb <context@ioweb.fr>, Mikael Bourges-Sevenier <mikeseven@gmail.com>",
+  "author": "Ioweb <context@ioweb.fr>",
   "keywords": [
     "opencl",
     "gpu",
@@ -12,22 +12,10 @@
     "computing"
   ],
   "maintainers": [
-    {
-      "name": "Mikael Bourges-Sevenier",
-      "email": "mikeseven@gmail.com"
-    },
-    {
-      "name": "Fabien Cellier",
-      "email": "fabien.cellier@gmail.com"
-    },
-    {
-      "name": "Frédéric Langlade",
-      "email": "fred@ioweb.fr"
-    },
-    {
-      "name": "Adrien Plagnol",
-      "email": "adrien@ioweb.fr"
-    }
+    "Mikael Bourges-Sevenier <mikeseven@gmail.com>",
+    "Fabien Cellier <fabien.cellier@gmail.com>",
+    "Frédéric Langlade <fred@ioweb.fr>",
+    "Adrien Plagnol <adrien@ioweb.fr>"
   ],
   "licenses": [
     {
@@ -37,12 +25,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/mikeseven/node-opencl"
+    "url": "git+https://github.com/mikeseven/node-opencl.git"
   },
   "directories": {
-    "src": "src",
-    "lib": "lib",
-    "examples": "examples",
+    "example": "examples",
     "test": "test"
   },
   "scripts": {
@@ -62,10 +48,14 @@
     "chalk": "^0.5.1",
     "mocha": "*"
   },
-  "private": true,
   "gypfile": true,
-  "engines" : {
-    "node" : ">=3.0.0",
-    "npm" : "*"
-  }
+  "engines": {
+    "node": ">=3.0.0",
+    "npm": "*"
+  },
+  "bugs": {
+    "url": "https://github.com/mikeseven/node-opencl/issues"
+  },
+  "homepage": "https://github.com/mikeseven/node-opencl#readme",
+  "license": "BSD-3-Clause"
 }
