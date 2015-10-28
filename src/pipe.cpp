@@ -63,6 +63,7 @@ NAN_METHOD(GetPipeInfo) {
       cl_uint val;
       CHECK_ERR(::clGetPipeInfo(mem->getRaw(),param_name,sizeof(cl_uint), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
   }
 

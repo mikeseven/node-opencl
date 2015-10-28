@@ -3,7 +3,7 @@
     {
       'target_name': 'opencl',
       'defines': [
-        'VERSION=0.3.0',
+        'VERSION=0.4.0',
         'NOCL_REALEASE_DRIVER_ISSUES'
       ],
       'sources': [
@@ -15,7 +15,6 @@
         'src/device.cpp',
         'src/event.cpp',
         'src/kernel.cpp',
-        'src/manager.cpp',
         'src/memobj.cpp',
         'src/pipe.cpp',
         'src/platform.cpp',
@@ -45,7 +44,7 @@
         ['OS=="linux"', {
           'variables' : {
             # AMD APP SDK
-            'OPENCL_SDK' : '/opt/AMDAPPSDK-3.0-0-Beta',
+            'OPENCL_SDK' : '<!(echo %AMDAPPSDKROOT%)',
             'OPENCL_SDK_INCLUDE' : '<(OPENCL_SDK)/include',
             'OPENCL_SDK_LIB' : '<(OPENCL_SDK)/lib/x86_64',
           },
@@ -67,12 +66,17 @@
               'INTEL_OPENCL_SDK' : '<!(echo %INTELOCLSDKROOT%)',
               'INTEL_OPENCL_SDK_INCLUDE' : '<(INTEL_OPENCL_SDK)\\include',
               'INTEL_OPENCL_SDK_LIB' : '<(INTEL_OPENCL_SDK)\\lib\\x64',
+
+              # NVIDA CUDA SDK
+              'NVIDA_CUDA_SDK' : '<!(echo %CUDA_PATH%)',
+              'NVIDA_CUDA_SDK_INCLUDE' : '<(NVIDA_CUDA_SDK)\\include',
+              'NVIDA_CUDA_SDK_LIB' : '<(NVIDA_CUDA_SDK)\\lib\\x64',
             },
             'include_dirs' : [
-              "<(AMD_OPENCL_SDK_INCLUDE)", "<(INTEL_OPENCL_SDK_INCLUDE)","<!(echo %OPENCL_HEADER%)",
+              "<(AMD_OPENCL_SDK_INCLUDE)", "<(INTEL_OPENCL_SDK_INCLUDE)", "<(NVIDA_CUDA_SDK_INCLUDE)","<!(echo %OPENCL_HEADER%)",
             ],
             'library_dirs' : [
-              "<(AMD_OPENCL_SDK_LIB)", "<(INTEL_OPENCL_SDK_LIB)",
+              "<(AMD_OPENCL_SDK_LIB)", "<(INTEL_OPENCL_SDK_LIB)", "<(NVIDA_CUDA_SDK_LIB)"
             ],
             'defines' : [
               'WIN32_LEAN_AND_MEAN',

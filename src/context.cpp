@@ -15,7 +15,7 @@ namespace opencl {
 //                 cl_int *                /* errcode_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(CreateContext) {
   Nan::EscapableHandleScope scope;
-  REQ_ARGS(4)
+  REQ_ARGS(2)
   Local<Array> properties;
   Local<Array> devices;
   Local<Function> callback;
@@ -25,7 +25,7 @@ NAN_METHOD(CreateContext) {
   cl_context ctx=NULL;
   int err=CL_SUCCESS;
 
-  // Arg 1 -- properties
+  // Arg 0 -- properties
   if(ARG_EXISTS(0)) {
     REQ_ARRAY_ARG(0, properties);
     for (uint32_t i=0; i < properties->Length(); i++) {
@@ -39,7 +39,7 @@ NAN_METHOD(CreateContext) {
     cl_properties.push_back(0);
   }
 
-  // Arg 2 -- devices
+  // Arg 1 -- devices
   if(ARG_EXISTS(1)) {
     REQ_ARRAY_ARG(1, devices);
     for (uint32_t i=0; i<devices->Length(); i++) {
@@ -49,12 +49,12 @@ NAN_METHOD(CreateContext) {
     }
   }
 
-  // Arg 3 -- Callback
+  // Arg 2 -- Callback
   if(ARG_EXISTS(2)) {
     callback = Local<Function>::Cast(info[2]);
   }
 
-  // Arg 4 -- Error callback
+  // Arg 3 -- Error callback
   if(ARG_EXISTS(3)) {
     err_cb = Local<Function>::Cast(info[3]);
   }
@@ -110,9 +110,9 @@ NAN_METHOD(CreateContextFromType) {
   }
 
   int err=CL_SUCCESS;
-  cl_context ctx = ::clCreateContextFromType(&cl_properties.front(),
+  cl_context ctx = ::clCreateContextFromType(cl_properties.data(),
                         device_type,
-                        NULL, NULL, // TODO callback support
+                        nullptr, nullptr, // TODO callback support
                         &err);
   CHECK_ERR(err);
 
@@ -162,6 +162,7 @@ NAN_METHOD(GetContextInfo) {
     cl_uint param_value=0;
     CHECK_ERR(::clGetContextInfo(context->getRaw(),param_name,sizeof(cl_uint), &param_value, NULL));
     info.GetReturnValue().Set(JS_INT(param_value));
+    return;
   }
   case CL_CONTEXT_DEVICES: {
     size_t n=0;
@@ -176,6 +177,7 @@ NAN_METHOD(GetContextInfo) {
       arr->Set(i, NOCL_WRAP(NoCLDeviceId, devices[i]));
     }
     info.GetReturnValue().Set(arr);
+    return;
   }
   case CL_CONTEXT_PROPERTIES: {
     size_t n=0;
@@ -189,9 +191,11 @@ NAN_METHOD(GetContextInfo) {
     }
 
     info.GetReturnValue().Set(arr);
+    return;
   }
   default: {
     THROW_ERR(CL_INVALID_VALUE);
+    return;
   }
   }
 

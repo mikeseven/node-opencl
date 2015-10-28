@@ -1,6 +1,6 @@
-{
+﻿{
   "name": "node-opencl",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A binding to OpenCL for Node.JS",
   "main": "lib/opencl.js",
   "author": "Ioweb <context@ioweb.fr>, Mikael Bourges-Sevenier <mikeseven@gmail.com>",
@@ -46,7 +46,7 @@
     "test": "test"
   },
   "scripts": {
-    "install": "node-gyp rebuild --msvs_version=2013",
+    "install": "node-gyp rebuild --msvs_version=auto",
     "clean": "rm -rf build node_modules",
     "lint": "eslint lib test",
     "test": "mocha test"
@@ -55,7 +55,7 @@
     "bindings": "^1.2.1",
     "chai": "^2.0.0",
     "get-pixels": "^3.1.1",
-    "nan": "*",
+    "nan": ">=2.0.0",
     "png-js": "^0.1.1"
   },
   "devDependencies": {
@@ -63,5 +63,9 @@
     "mocha": "*"
   },
   "private": true,
-  "gypfile": true
+  "gypfile": true,
+  "engines" : {
+    "node" : ">=3.0.0",
+    "npm" : "*"
+  }
 }

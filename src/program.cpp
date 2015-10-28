@@ -5,45 +5,8 @@
 
 namespace opencl {
 
-class NoCLProgramCLCallback:public NanAsyncLaunch {
- public:
-   NoCLProgramCLCallback(Nan::Callback* callback,const v8::Local<v8::Object> &userData):NanAsyncLaunch(callback){
-       Nan::HandleScope scope;
-       v8::Local<v8::Object> obj = Nan::New<v8::Object>();
-       persistentHandle.Reset(obj);
-       v8::Local<v8::Object>  handle = Nan::New(persistentHandle);
-       handle->Set(kIndex, userData);
-   }
-
-   void CallBackIsDone(cl_program prg){
-       this->program = prg;
-       this->FireAndForget();
-   }
-
-   void Execute() {
-     Nan::EscapableHandleScope scope;
-     v8::Local<v8::Object> handle = Nan::New(persistentHandle);
-     v8::Local<v8::Object> userData= (handle->Get(kIndex)).As<v8::Object>();
-     Local<Value> argv[] = {
-         Nan::New(NOCL_WRAP(NoCLProgram, program)),
-         Nan::New(userData)
-     };
-     callback->Call(2,argv);
-   }
-
- private:
-   cl_program program;
-
-};
-
-void CL_CALLBACK notifyPCB (cl_program program, void *user_data) {
-    NoCLProgramCLCallback* asyncCB = static_cast<NoCLProgramCLCallback*>(user_data);
-    if(asyncCB!=nullptr)
-        asyncCB->CallBackIsDone(program);
-}
-
-
 // /* Program Object APIs  */
+
 // extern CL_API_ENTRY cl_program CL_API_CALL
 // clCreateProgramWithSource(cl_context        /* context */,
 //                           cl_uint           /* count */,
@@ -193,6 +156,46 @@ NAN_METHOD(ReleaseProgram) {
   info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
 }
 
+class NoCLProgramWorker : public AsyncWorker
+{
+public:
+  NoCLProgramWorker(Callback* callback, const v8::Local<v8::Object> &userData,const v8::Local<v8::Object> &noCLProgram) :
+  AsyncWorker(callback)
+  {
+    SaveToPersistent(kIndex,  userData);
+    SaveToPersistent(kIndex+1,noCLProgram);
+  }
+
+  ~NoCLProgramWorker() {}
+
+  // Executed inside the worker-thread.
+  // not safe to use V8 calls
+  void Execute()
+  {
+  }
+
+  // Executed when the async work is complete
+  // this function will be run inside the main event loop
+  // so it is safe to use V8 again
+  void HandleOKCallback () {
+    Nan::EscapableHandleScope  scope;
+
+    Local<Value> argv[] = {
+      GetFromPersistent(kIndex),  // event
+      GetFromPersistent(kIndex+1) // userdata
+    };
+    callback->Call(2,argv);
+  }
+
+protected:
+  static const uint32_t kIndex = 0;
+};
+
+void CL_CALLBACK notifyPCB (cl_program prog, void *user_data) {
+  NoCLProgramWorker* asyncCB = static_cast<NoCLProgramWorker*>(user_data);
+  AsyncQueueWorker(asyncCB);
+}
+
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clBuildProgram(cl_program           /* program */,
 //                cl_uint              /* num_devices */,
@@ -222,31 +225,26 @@ NAN_METHOD(BuildProgram) {
     options = new String::Utf8Value(info[2]);
   }
 
-  //REQ_STR_ARG(2,options);
-
   //  callback + userdata
   int err;
 
   if (ARG_EXISTS(3)) {
-   Local<Function> callbackHandle = info[3].As<Function>();
-   Nan::Callback *callback = new Nan::Callback(callbackHandle);
-   Local<Object> userData = info[4].As<Object>();
-   NoCLProgramCLCallback* cb = new NoCLProgramCLCallback(callback,userData);
+    Local<Function> callbackHandle = info[3].As<Function>();
+    Nan::Callback *callback = new Nan::Callback(callbackHandle);
+    NoCLProgramWorker* cb = new NoCLProgramWorker(callback,info[4].As<Object>(),info[0].As<Object>());
 
    err = ::clBuildProgram(p->getRaw(),
           (cl_uint) devices.size(), NOCL_TO_CL_ARRAY(devices, NoCLDeviceId),
           options != NULL ? **options : nullptr,
           notifyPCB, cb);
   }
-
-
   else
     err = ::clBuildProgram(p->getRaw(),
           (cl_uint) devices.size(), NOCL_TO_CL_ARRAY(devices, NoCLDeviceId),
           options != NULL ? **options : nullptr,
           nullptr, nullptr);
 
-  delete options;
+  if(options) delete options;
 
 
   CHECK_ERR(err);
@@ -320,32 +318,31 @@ NAN_METHOD(CompileProgram) {
   int err;
 
   if (ARG_EXISTS(5)) {
-   Local<Function> callbackHandle = info[5].As<Function>();
-   Nan::Callback *callback = new Nan::Callback(callbackHandle);
-   Local<Object> userData = info[6].As<Object>();
-   NoCLProgramCLCallback* cb = new NoCLProgramCLCallback(callback,userData);
+    Local<Function> callbackHandle = info[5].As<Function>();
 
-   err = ::clCompileProgram(
-               p->getRaw(),
-               (cl_uint) cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
-               options != NULL ? **options : nullptr,
-               (cl_uint) program_headers.size(), NOCL_TO_CL_ARRAY(program_headers, NoCLProgram),
-               &names.front(),
-               notifyPCB, cb);
+    Nan::Callback *callback = new Nan::Callback(callbackHandle);
+    NoCLProgramWorker* cb = new NoCLProgramWorker(callback,info[6].As<Object>(),info[0].As<Object>());
+
+    err = ::clCompileProgram(
+              p->getRaw(),
+              (cl_uint) cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
+              options != NULL ? **options : nullptr,
+              (cl_uint) program_headers.size(), NOCL_TO_CL_ARRAY(program_headers, NoCLProgram),
+              &names.front(),
+              notifyPCB, cb);
   }
 
 
   else
     err = ::clCompileProgram(
-                p->getRaw(),
-                (cl_uint) cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
-                options != NULL ? **options : nullptr,
-                (cl_uint) program_headers.size(), NOCL_TO_CL_ARRAY(program_headers, NoCLProgram),
-                &names.front(),
-                nullptr, nullptr);
+              p->getRaw(),
+              (cl_uint) cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
+              options != NULL ? **options : nullptr,
+              (cl_uint) program_headers.size(), NOCL_TO_CL_ARRAY(program_headers, NoCLProgram),
+              &names.front(),
+              nullptr, nullptr);
 
-
-  delete options;
+  if(options) delete options;
 
   CHECK_ERR(err);
 
@@ -405,27 +402,27 @@ NAN_METHOD(LinkProgram) {
   cl_program prg;
 
   if (ARG_EXISTS(4)) {
-   Local<Function> callbackHandle = info[4].As<Function>();
-   Nan::Callback *callback = new Nan::Callback(callbackHandle);
-   Local<Object> userData = info[5].As<Object>();
-   NoCLProgramCLCallback* cb = new NoCLProgramCLCallback(callback,userData);
-   prg = ::clLinkProgram(
-     ctx->getRaw(),
-     (cl_uint) cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
-     options != NULL ? **options : nullptr,
-     (cl_uint) cl_programs.size(), NOCL_TO_CL_ARRAY(cl_programs, NoCLProgram),
-     notifyPCB, cb,
-     &ret);
+    Local<Function> callbackHandle = info[4].As<Function>();
+    Nan::Callback *callback = new Nan::Callback(callbackHandle);
+    NoCLProgramWorker* cb = new NoCLProgramWorker(callback,info[5].As<Object>(),info[0].As<Object>());
+
+    prg = ::clLinkProgram(
+              ctx->getRaw(),
+              (cl_uint) cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
+              options != NULL ? **options : nullptr,
+              (cl_uint) cl_programs.size(), NOCL_TO_CL_ARRAY(cl_programs, NoCLProgram),
+              notifyPCB, cb,
+              &ret);
   }
 
   else
     prg = ::clLinkProgram(
-    ctx->getRaw(),
-    (cl_uint) cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
-    options != NULL ? **options : nullptr,
-    (cl_uint) cl_programs.size(), NOCL_TO_CL_ARRAY(cl_programs, NoCLProgram),
-    NULL, NULL,
-    &ret);
+              ctx->getRaw(),
+              (cl_uint) cl_devices.size(), NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
+              options != NULL ? **options : nullptr,
+              (cl_uint) cl_programs.size(), NOCL_TO_CL_ARRAY(cl_programs, NoCLProgram),
+              NULL, NULL,
+              &ret);
 
   CHECK_ERR(ret);
   info.GetReturnValue().Set(NOCL_WRAP(NoCLProgram, prg));
@@ -473,12 +470,14 @@ NAN_METHOD(GetProgramInfo) {
       cl_uint val;
       CHECK_ERR(::clGetProgramInfo(prog->getRaw(),param_name,sizeof(cl_uint), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_PROGRAM_CONTEXT:
     {
       cl_context val;
       CHECK_ERR(::clGetProgramInfo(prog->getRaw(),param_name,sizeof(cl_context), &val, NULL))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLContext, val));
+      return;
     }
     case CL_PROGRAM_DEVICES:
     {
@@ -495,6 +494,7 @@ NAN_METHOD(GetProgramInfo) {
       }
 
       info.GetReturnValue().Set(arr);
+      return;
     }
     case CL_PROGRAM_BINARY_SIZES:
     {
@@ -515,6 +515,7 @@ NAN_METHOD(GetProgramInfo) {
         arr->Set(i,JS_INT(uint32_t(sizes[i])));
 
       info.GetReturnValue().Set(arr);
+      return;
     }
 
     /*
@@ -560,6 +561,7 @@ NAN_METHOD(GetProgramInfo) {
       }
 
       info.GetReturnValue().Set(arr);
+      return;
     }
 #ifdef CL_VERSION_1_2
     case CL_PROGRAM_NUM_KERNELS:
@@ -567,6 +569,7 @@ NAN_METHOD(GetProgramInfo) {
       size_t val;
       CHECK_ERR(::clGetProgramInfo(prog->getRaw(),param_name,sizeof(size_t), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_PROGRAM_KERNEL_NAMES:
 #endif
@@ -577,6 +580,7 @@ NAN_METHOD(GetProgramInfo) {
       unique_ptr<char[]> names(new char[nchars]);
       CHECK_ERR(::clGetProgramInfo(prog->getRaw(), param_name, nchars*sizeof(char), names.get(), NULL));
       info.GetReturnValue().Set(JS_STR(names.get()));
+      return;
     }
   }
   THROW_ERR(CL_INVALID_VALUE);
@@ -603,6 +607,7 @@ NAN_METHOD(GetProgramBuildInfo) {
       cl_build_status val;
       CHECK_ERR(::clGetProgramBuildInfo(prog->getRaw(), device->getRaw(),param_name,sizeof(cl_build_status), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
     case CL_PROGRAM_BUILD_OPTIONS:
     case CL_PROGRAM_BUILD_LOG:
@@ -612,6 +617,7 @@ NAN_METHOD(GetProgramBuildInfo) {
       unique_ptr<char[]> param_value(new char[param_value_size_ret]);
       CHECK_ERR(::clGetProgramBuildInfo(prog->getRaw(), device->getRaw(), param_name, param_value_size_ret, param_value.get(), NULL));
       info.GetReturnValue().Set(JS_STR(param_value.get(),(int)param_value_size_ret));
+      return;
     }
 #ifdef CL_VERSION_1_2
     case CL_PROGRAM_BINARY_TYPE:
@@ -619,6 +625,7 @@ NAN_METHOD(GetProgramBuildInfo) {
       cl_program_binary_type val;
       CHECK_ERR(::clGetProgramBuildInfo(prog->getRaw(), device->getRaw(), param_name,sizeof(cl_program_binary_type), &val, NULL))
       info.GetReturnValue().Set(JS_INT(val));
+      return;
     }
 #endif
   }

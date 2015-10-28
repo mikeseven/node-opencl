@@ -257,7 +257,7 @@ NAN_METHOD(SetKernelArg) {
   // - CL_KERNEL_ARG_ADDRESS_LOCAL
   // - CL_KERNEL_ARG_ADDRESS_CONSTANT
   // - CL_KERNEL_ARG_ADDRESS_PRIVATE
-  if(!ARG_EXISTS(3)) {
+  if(!ARG_EXISTS(2)) {
     cl_kernel_arg_address_qualifier adrqual;
     CHECK_ERR(::clGetKernelArgInfo(k->getRaw(), arg_idx, CL_KERNEL_ARG_ADDRESS_QUALIFIER, sizeof(cl_kernel_arg_address_qualifier), &adrqual, NULL));
 
@@ -272,12 +272,13 @@ NAN_METHOD(SetKernelArg) {
       local_arg = true;
   } else
 #endif
-  { // behaviour when type is given (mandatory for OpenCL version < 1.2)
-    // read argument 3 as the name of the data type
-    if (info[3]->IsString()) {
-      Local<String> s = info[3]->ToString();
+  { // behaviour when type is given
+    // read argument 2 as the name of the data type
+    if (info[2]->IsString()) {
+      Local<String> s = info[2]->ToString();
       String::Utf8Value tname(s);
       const char* tname_c = *tname;
+      // cout<<"setKernelArg[3]="<<tname_c<<endl;
       size_t len = tname.length();
       type_name.resize(len);
       std::copy(tname_c, tname_c + len, type_name.begin());
@@ -300,14 +301,14 @@ NAN_METHOD(SetKernelArg) {
     err = ::clSetKernelArg(k->getRaw(), arg_idx, local_size, NULL);
   } else if ('*' == type_name[type_name.length() - 1] || type_name == "cl_mem"){
     // type must be a buffer (CLMem object)
-    NOCL_UNWRAP(mem , NoCLMem, info[2]);
+    NOCL_UNWRAP(mem , NoCLMem, info[3]);
     err = ::clSetKernelArg(k->getRaw(), arg_idx, sizeof(cl_mem), &mem->getRaw());
   } else if (type_converter.hasType(type_name)) {
     // convert primitive types using the conversion
     // function map (indexed by OpenCL type name)
     void* data;
     size_t size;
-    std::tie(size, data, err) = type_converter.convert(type_name, info[2]);
+    std::tie(size, data, err) = type_converter.convert(type_name, info[3]);
     CHECK_ERR(err);
     err = ::clSetKernelArg(k->getRaw(), arg_idx, size, data);
     free(data);
@@ -318,7 +319,7 @@ NAN_METHOD(SetKernelArg) {
 
   // Otherwise it should be a native type
   else if (type_name == "sampler_t") {
-    NOCL_UNWRAP(sw , NoCLSampler, info[2]);
+    NOCL_UNWRAP(sw , NoCLSampler, info[3]);
     err = ::clSetKernelArg(k->getRaw(), arg_idx, sizeof(cl_sampler), &sw->getRaw());
   } else {
     std::string errstr = std::string("Unsupported OpenCL argument type: ") + type_name;
@@ -353,22 +354,26 @@ NAN_METHOD(GetKernelInfo) {
       unique_ptr<char[]> name(new char[nchars]);
       CHECK_ERR(::clGetKernelInfo(k->getRaw(),param_name,nchars,name.get(),NULL));
       info.GetReturnValue().Set(JS_STR(name.get()));
+      return;
     }
     case CL_KERNEL_NUM_ARGS:
     case CL_KERNEL_REFERENCE_COUNT: {
       cl_uint num=0;
       CHECK_ERR(::clGetKernelInfo(k->getRaw(),param_name,sizeof(cl_uint),&num, NULL));
       info.GetReturnValue().Set(JS_INT(num));
+      return;
     }
     case CL_KERNEL_CONTEXT: {
       cl_context ctx=0;
       CHECK_ERR(::clGetKernelInfo(k->getRaw(),param_name,sizeof(cl_context),&ctx, NULL));
       info.GetReturnValue().Set(NOCL_WRAP(NoCLContext, ctx));
+      return;
     }
     case CL_KERNEL_PROGRAM: {
       cl_program p=0;
       CHECK_ERR(::clGetKernelInfo(k->getRaw(),param_name,sizeof(cl_program),&p, NULL));
       info.GetReturnValue().Set(NOCL_WRAP(NoCLProgram, p));
+      return;
     }
   }
 
@@ -396,16 +401,19 @@ NAN_METHOD(GetKernelArgInfo) {
       cl_kernel_arg_address_qualifier num=0;
       CHECK_ERR(::clGetKernelArgInfo(k->getRaw(),arg_idx,param_name,sizeof(cl_kernel_arg_address_qualifier),&num, NULL));
       info.GetReturnValue().Set(JS_INT(num));
+      return;
     }
     case CL_KERNEL_ARG_ACCESS_QUALIFIER: {
       cl_kernel_arg_access_qualifier num=0;
       CHECK_ERR(::clGetKernelArgInfo(k->getRaw(),arg_idx,param_name,sizeof(cl_kernel_arg_access_qualifier),&num, NULL));
       info.GetReturnValue().Set(JS_INT(num));
+      return;
     }
     case CL_KERNEL_ARG_TYPE_QUALIFIER: {
       cl_kernel_arg_type_qualifier num=0;
       CHECK_ERR(::clGetKernelArgInfo(k->getRaw(),arg_idx,param_name,sizeof(cl_kernel_arg_type_qualifier),&num, NULL));
       info.GetReturnValue().Set(JS_INT(num));
+      return;
     }
     case CL_KERNEL_ARG_TYPE_NAME:
     case CL_KERNEL_ARG_NAME: {
@@ -414,6 +422,7 @@ NAN_METHOD(GetKernelArgInfo) {
       unique_ptr<char[]> name(new char[nchars]);
       CHECK_ERR(::clGetKernelArgInfo(k->getRaw(),arg_idx,param_name,nchars,name.get(),NULL));
       info.GetReturnValue().Set(JS_STR(name.get()));
+      return;
     }
   }
 
@@ -449,18 +458,34 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
       szarr->Set(1,JS_INT(sz[1]));
       szarr->Set(2,JS_INT(sz[2]));
       info.GetReturnValue().Set(szarr);
+      return;
     }
     case CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE:
     case CL_KERNEL_WORK_GROUP_SIZE: {
       size_t sz=0;
       CHECK_ERR(::clGetKernelWorkGroupInfo(k->getRaw(),d->getRaw(),param_name,sizeof(size_t),&sz, NULL));
       info.GetReturnValue().Set(JS_INT(sz));
+      return;
     }
     case CL_KERNEL_LOCAL_MEM_SIZE:
     case CL_KERNEL_PRIVATE_MEM_SIZE: {
       cl_ulong sz=0;
       CHECK_ERR(::clGetKernelWorkGroupInfo(k->getRaw(),d->getRaw(),param_name,sizeof(cl_ulong),&sz, NULL));
-      info.GetReturnValue().Set(JS_INT(sz));
+      /**
+        JS Compatibility
+
+        As JS does not support 64 bits integer, we return a 2-integer array with
+          output_values[0] = (input_value >> 32) & 0xffffffff;
+          output_values[1] = input_value & 0xffffffff;
+
+        and reconstruction as
+          input_value = ((int64_t) output_values[0]) << 32) | output_values[1];
+      */
+      Local<Array> arr = Nan::New<Array>(2);
+      arr->Set(0, JS_INT((uint32_t) (sz>>32))); // hi
+      arr->Set(1, JS_INT((uint32_t) (sz & 0xffffffff))); // lo
+      info.GetReturnValue().Set(arr);
+      return;
     }
   }
 
