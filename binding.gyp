@@ -35,7 +35,7 @@
           #   ['CXX', '/usr/bin/clang++'],
           # ],
           "xcode_settings": {
-            'OTHER_CPLUSPLUSFLAGS' : ['-std=c++11','-stdlib=libc++', ' -Wall'],
+            'OTHER_CPLUSPLUSFLAGS' : ['-mavx','-O3','-std=c++11','-stdlib=libc++', ' -Wall'],
             'OTHER_LDFLAGS': ['-stdlib=libc++'],
             'MACOSX_DEPLOYMENT_TARGET': '10.10'
           },
@@ -51,8 +51,8 @@
           'include_dirs' : [
             "<(OPENCL_SDK_INCLUDE)",
           ],
-          'libraries': ['-lGL', '-lOpenCL','-L<(OPENCL_SDK_LIB) -lOpenCL'],
-          'cflags': ['-std=c++11' ' -Wall']
+          'libraries': ['-L<(OPENCL_SDK_LIB)','-lOpenCL'],
+          'cflags': ['-std=c++11',' -Wall','-O3']
         }],
         ['OS=="win"', {
           'variables' :
