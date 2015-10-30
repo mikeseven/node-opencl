@@ -3,7 +3,7 @@
     {
       'target_name': 'opencl',
       'defines': [
-        'VERSION=0.4.0',
+        'VERSION=0.4.1',
         'NOCL_REALEASE_DRIVER_ISSUES'
       ],
       'sources': [
