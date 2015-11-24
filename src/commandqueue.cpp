@@ -1510,7 +1510,7 @@ NAN_METHOD(EnqueueNDRangeKernel) {
   CHECK_ERR(::clEnqueueNDRangeKernel(
     q->getRaw(),
     k->getRaw(),
-    1,
+    work_dim,
     cl_work_offset.size() ? cl_work_offset.data() : nullptr,
     cl_work_global.size() ? cl_work_global.data() : nullptr,
     cl_work_local.size() ? cl_work_local.data() : nullptr,
