@@ -79,7 +79,7 @@
               "<(AMD_OPENCL_SDK_LIB)", "<(INTEL_OPENCL_SDK_LIB)", "<(NVIDA_CUDA_SDK_LIB)"
             ],
             'defines' : [
-              'WIN32_LEAN_AND_MEAN',
+              # 'WIN32_LEAN_AND_MEAN',
               'VC_EXTRALEAN',
             ],
             'msvs_settings' : {

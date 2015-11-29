@@ -67,7 +67,7 @@ NAN_METHOD(CreateContext) {
 
   CHECK_ERR(err);
   Local<Object> obj = NoCLWrapCLObject<NoCLContext>(new NoCLContext(ctx));
-
+  
   info.GetReturnValue().Set(obj);
 }
 

@@ -1,11 +1,11 @@
 /*
 * @Author: mikael
 * @Date:   2015-09-21 18:06:21
-* @Last Modified by:   mikael
-* @Last Modified time: 2015-09-22 10:30:46
+* @Last Modified by:   msevenier
+* @Last Modified time: 2015-11-27 19:20:59
 */
 
-'use strict';
+//'use strict';
 
 var cl = require("../lib/opencl");
 

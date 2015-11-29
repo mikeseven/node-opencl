@@ -1523,7 +1523,6 @@ NAN_METHOD(EnqueueNDRangeKernel) {
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
-
 }
 
 #ifndef CL_VERSION_2_0
