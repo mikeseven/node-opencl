@@ -1,9 +1,12 @@
 {
   "name": "node-opencl",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "A binding to OpenCL for Node.JS",
   "main": "lib/opencl.js",
-  "author": ["Mikael Bourges-Sevenier <mikeseven@gmail.com>", "Ioweb <context@ioweb.fr>"],
+  "author": [
+    "Mikael Bourges-Sevenier <mikeseven@gmail.com>",
+    "Ioweb <context@ioweb.fr>"
+  ],
   "keywords": [
     "opencl",
     "gpu",
@@ -17,16 +20,15 @@
     "Frédéric Langlade <fred@ioweb.fr>",
     "Adrien Plagnol <adrien@ioweb.fr>"
   ],
-  "licenses": [
-    {
-      "type": "BSD",
-      "url": "https://github.com/mikeseven/node-opencl/blob/master/LICENSES"
-    }
-  ],
+  "license" : "BSD-3-Clause",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mikeseven/node-opencl.git"
+    "url": "https://github.com/mikeseven/node-opencl.git"
   },
+  "bugs": {
+    "url": "https://github.com/mikeseven/node-opencl/issues"
+  },
+  "homepage": "https://github.com/mikeseven/node-opencl#readme",
   "directories": {
     "docker": "docker",
     "src": "src",
@@ -41,11 +43,11 @@
     "test": "mocha test"
   },
   "dependencies": {
-    "bindings": ">=1.2.1",
+    "bindings": "^1.2.1",
     "chai": ">=2.0.0",
     "get-pixels": ">=3.1.1",
-    "nan": ">=2.0.0",
-    "png-js": ">=0.1.1"
+    "nan": "^2.1.0",
+    "pngjs2": "*"
   },
   "devDependencies": {
     "chalk": ">=0.5.1",
@@ -56,9 +58,4 @@
     "node": ">=3.0.0",
     "npm": "*"
   },
-  "bugs": {
-    "url": "https://github.com/mikeseven/node-opencl/issues"
-  },
-  "homepage": "https://github.com/mikeseven/node-opencl#readme",
-  "license": "BSD-3-Clause"
 }

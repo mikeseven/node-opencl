@@ -83,9 +83,9 @@ NAN_METHOD(CreateSamplerWithProperties) {
   cl_properties.push_back(0);
 
 
-  cl_sampler_properties  pp [] = {CL_SAMPLER_NORMALIZED_COORDS, true,
-   CL_SAMPLER_ADDRESSING_MODE, CL_ADDRESS_NONE,
-   CL_SAMPLER_FILTER_MODE, CL_FILTER_LINEAR, 0};
+  // cl_sampler_properties  pp [] = {CL_SAMPLER_NORMALIZED_COORDS, true,
+  //  CL_SAMPLER_ADDRESSING_MODE, CL_ADDRESS_NONE,
+  //  CL_SAMPLER_FILTER_MODE, CL_FILTER_LINEAR, 0};
 
   cl_int err = CL_SUCCESS;
   cl_sampler sw = ::clCreateSamplerWithProperties(
