@@ -1,6 +1,6 @@
 {
   "name": "node-opencl",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "A binding to OpenCL for Node.JS",
   "main": "lib/opencl.js",
   "author": [
@@ -20,15 +20,15 @@
     "Frédéric Langlade <fred@ioweb.fr>",
     "Adrien Plagnol <adrien@ioweb.fr>"
   ],
-  "bugs": {
-    "url": "https://github.com/mikeseven/node-opencl/issues"
-  },
-  "homepage": "https://github.com/mikeseven/node-opencl#readme",
-  "license": "BSD-3-Clause"
+  "license" : "BSD-3-Clause",
   "repository": {
     "type": "git",
     "url": "https://github.com/mikeseven/node-opencl.git"
   },
+  "bugs": {
+    "url": "https://github.com/mikeseven/node-opencl/issues"
+  },
+  "homepage": "https://github.com/mikeseven/node-opencl#readme",
   "directories": {
     "docker": "docker",
     "src": "src",
@@ -47,7 +47,7 @@
     "chai": ">=2.0.0",
     "get-pixels": ">=3.1.1",
     "nan": "^2.1.0",
-    "png-js": ">=0.1.1"
+    "pngjs2": "*"
   },
   "devDependencies": {
     "chalk": ">=0.5.1",

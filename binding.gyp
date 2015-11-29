@@ -3,7 +3,7 @@
     {
       'target_name': 'opencl',
       'defines': [
-        'VERSION=0.4.1',
+        'VERSION=0.4.2',
         'NOCL_REALEASE_DRIVER_ISSUES'
       ],
       'sources': [
@@ -90,12 +90,6 @@
                 'AdditionalOptions' : ['/OPT:REF','/OPT:ICF','/LTCG']
               },
             },
-            'cflags' : [
-              '/O2','/Oy','/GL','/GF','/Gm-','/EHsc','/MT','/GS','/Gy','/GR-','/Gd'
-            ],
-            'ldflags' : [
-              '/OPT:REF','/OPT:ICF','/LTCG'
-            ],
             'libraries': ['OpenCL.lib'],
           },
        ],
