@@ -100,7 +100,7 @@ value = (hi << 32) | lo
 
 ### User events
 
-By adding true instead of creating a cl.Event (as in webcl) to any enqueueXXX() methods, the enqueuXXX() returns a cl.Event that can be used to coordinate calls, profiling etc...
+By adding true instead of creating a cl.Event (as in webcl) to any enqueueXXX() methods, the enqueueXXX() returns a cl.Event that can be used to coordinate calls, profiling etc...
 
 ### Javascript Array not supported
 
