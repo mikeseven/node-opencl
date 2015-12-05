@@ -26,7 +26,7 @@ NAN_METHOD(CreateProgramWithSource) {
   cl_program p=::clCreateProgramWithSource(context->getRaw(), 1, strings, lengths, &ret);
   CHECK_ERR(ret);
 
-  info.GetReturnValue().Set(NOCL_WRAP(NoCLProgram, p));
+  info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLProgram, p));
 }
 
 // extern CL_API_ENTRY cl_program CL_API_CALL
@@ -84,7 +84,7 @@ NAN_METHOD(CreateProgramWithBinary) {
 
   CHECK_ERR(ret);
 
-  info.GetReturnValue().Set(NOCL_WRAP(NoCLProgram, p));
+  info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLProgram, p));
 }
 
 #ifdef CL_VERSION_1_2
@@ -129,7 +129,7 @@ NAN_METHOD(CreateProgramWithBuiltInKernels) {
 
   CHECK_ERR(err);
 
-  info.GetReturnValue().Set(NOCL_WRAP(NoCLProgram, prg));
+  info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLProgram, prg));
 }
 #endif
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -425,7 +425,7 @@ NAN_METHOD(LinkProgram) {
               &ret);
 
   CHECK_ERR(ret);
-  info.GetReturnValue().Set(NOCL_WRAP(NoCLProgram, prg));
+  info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLProgram, prg));
 }
 #endif
 

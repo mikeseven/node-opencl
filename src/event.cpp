@@ -90,7 +90,7 @@ NAN_METHOD(CreateUserEvent) {
   cl_int err;
   cl_event uev=::clCreateUserEvent(context->getRaw(), &err);
   CHECK_ERR(err)
-  info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, uev));
+  info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, uev));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL

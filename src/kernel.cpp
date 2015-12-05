@@ -24,7 +24,7 @@ NAN_METHOD(CreateKernel) {
   cl_kernel k = ::clCreateKernel(program->getRaw(), (const char*) *name, &ret);
   CHECK_ERR(ret);
 
-  info.GetReturnValue().Set(NOCL_WRAP(NoCLKernel, k));
+  info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLKernel, k));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -55,7 +55,7 @@ NAN_METHOD(CreateKernelsInProgram) {
   Local<Array> karr = Nan::New<Array>();
 
   for(cl_uint i = 0; i < numkernels;i++) {
-    karr->Set(i,NOCL_WRAP(NoCLKernel, kernels[i]));
+    karr->Set(i,NOCL_WRAP_AND_RELEASE(NoCLKernel, kernels[i]));
   }
 
   delete kernels;

@@ -169,76 +169,27 @@ class NoCLRefCountObject : public NoCLObject<T,elid,err> {
      this->release();
    }
 
-   bool isDeleted() const{
-     if(myMap[this->raw]>0)
-         return true;
-     return false;
-   }
-
    int acquire(bool init=false) {
-#ifdef NOCL_REALEASE_DRIVER_ISSUES
-     if(myMap[this->raw]<1)
-       return CL_INVALID_ARG_VALUE;
-#endif
-     cl_int result = cl_acquire(this->raw);
-     if(result == CL_SUCCESS)
-        myMap[this->raw]++;
-     return result;
+     return cl_acquire(this->raw);
    }
 
    int release() {
-     int result;
-
-#ifdef NOCL_REALEASE_DRIVER_ISSUES
-     if(myMap[this->raw]>1) {
-       myMap[this->raw]--;
-       result = cl_release(this->raw);
-     }
-     else {
-       result = CL_SUCCESS;
-     }
-#else
-     if(myMap.count(this->raw)>0)
-       myMap[this->raw]--;
-     result = cl_release(this->raw);
-#endif
-     return result;
+     return cl_release(this->raw);
    }
-
-#ifdef NOCL_REALEASE_DRIVER_ISSUES
-   static void releaseAll(){
-     for (auto const & kv : myMap) {
-       for(int cpt = 0;cpt < kv.second;++cpt){
-         cl_release(kv.first);
-       }
-     }
-   }
-
-#endif
 
  protected:
    static std::map<T,int> myMap;
 
  private:
    void init() {
-     if(myMap.count(this->raw)>0) {
-       this->acquire();
-         //if(result != CL_SUCCESS)
-         //  throw result;
-       }
-       else
-         myMap[this->raw] = 1;
+     this->acquire();
    }
 
    void releaseAndInit(T raw) {
-       this->release();
-       //if(result!=CL_SUCCESS)
-       //    throw result;
-       this->raw = raw;
-       this->init();
+     this->release();
+     this->raw = raw;
+     this->init();
    }
-
-
 };
 
 #define NOCL_TO_ARRAY(TO, FROM, TYPE) \
@@ -255,6 +206,8 @@ class NoCLPlatformId : public NoCLObject<cl_platform_id, 0, CL_INVALID_PLATFORM>
 public:
   NoCLPlatformId(cl_platform_id raw) : NoCLObject(raw) {
   }
+
+  void release() { }
 };
 
 class NoCLDeviceId : public NoCLObject<cl_device_id, 1, CL_INVALID_DEVICE> {
@@ -262,6 +215,8 @@ class NoCLDeviceId : public NoCLObject<cl_device_id, 1, CL_INVALID_DEVICE> {
 public:
   NoCLDeviceId(cl_device_id raw) : NoCLObject(raw) {
   }
+
+  void release() { }
 };
 
 class NoCLContext : public NoCLRefCountObject<cl_context, 2, CL_INVALID_CONTEXT,clReleaseContext,clRetainContext> {
@@ -318,6 +273,8 @@ class NoCLProgramBinary : public NoCLObject<const unsigned char *, 9, CL_INVALID
 public:
   NoCLProgramBinary(const unsigned char * raw) : NoCLObject(raw) {
   }
+
+  void release() { }
 };
 
 /*
@@ -330,12 +287,10 @@ public:
 
 NAN_METHOD(Equals);
 
-NAN_METHOD(releaseAll);
-
 // FIXME static does not seem to work great with V8 (random segfaults)
 // But we should not create a template each time we create an object
 template <typename T>
-Local<Object> NoCLWrapCLObject(T * elm) {
+Local<Object> NoCLWrapCLObject(T * elm, bool release) {
   Local<ObjectTemplate> tpl = Nan::New<ObjectTemplate>();
 
   tpl->Set(Nan::New<v8::String>("equals").ToLocalChecked(),
@@ -346,6 +301,10 @@ Local<Object> NoCLWrapCLObject(T * elm) {
 
   Nan::SetInternalFieldPointer(obj, 0, elm);
   Nan::SetInternalFieldPointer(obj, 1, new unsigned int(T::GetId()));
+
+  if (release)
+    elm->release();
+
   return obj;
 }
 
@@ -354,7 +313,10 @@ NAN_MODULE_INIT(init);
 }
 
 #define NOCL_WRAP(T, V) \
-  NoCLWrapCLObject<T>(new T(V))
+  NoCLWrapCLObject<T>(new T(V), false)
+
+#define NOCL_WRAP_AND_RELEASE(T, V) \
+  NoCLWrapCLObject<T>(new T(V), true)
 
 }
 #endif

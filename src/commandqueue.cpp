@@ -32,7 +32,7 @@ NAN_METHOD(CreateCommandQueue) {
     context->getRaw(), device->getRaw(), properties, &err);
 
   CHECK_ERR(err)
-  info.GetReturnValue().Set(NOCL_WRAP(NoCLCommandQueue, q));
+  info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLCommandQueue, q));
 }
 
 #else
@@ -89,7 +89,7 @@ NAN_METHOD(CreateCommandQueueWithProperties) {
 
   CHECK_ERR(err)
 
-  info.GetReturnValue().Set(NOCL_WRAP(NoCLCommandQueue, q));
+  info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLCommandQueue, q));
 }
 #endif
 
@@ -260,7 +260,7 @@ NAN_METHOD(EnqueueReadBuffer) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -350,7 +350,7 @@ NAN_METHOD(EnqueueReadBufferRect) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -416,7 +416,7 @@ NAN_METHOD(EnqueueWriteBuffer) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -505,7 +505,7 @@ NAN_METHOD(EnqueueWriteBufferRect) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -580,7 +580,7 @@ NAN_METHOD(EnqueueFillBuffer) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -708,7 +708,7 @@ NAN_METHOD(EnqueueCopyBufferRect) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -786,7 +786,7 @@ NAN_METHOD(EnqueueReadImage) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -864,7 +864,7 @@ NAN_METHOD(EnqueueWriteImage) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -933,7 +933,7 @@ NAN_METHOD(EnqueueFillImage) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -1000,7 +1000,7 @@ NAN_METHOD(EnqueueCopyImage) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -1065,7 +1065,7 @@ NAN_METHOD(EnqueueCopyImageToBuffer) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -1131,7 +1131,7 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -1196,7 +1196,7 @@ NAN_METHOD(EnqueueMapBuffer) {
   Local<v8::ArrayBuffer> obj = v8::ArrayBuffer::New(v8::Isolate::GetCurrent(), mPtr, size);
 
   if(eventPtr) {
-    obj->Set(JS_STR("event"), NOCL_WRAP(NoCLEvent,event));
+    obj->Set(JS_STR("event"), NOCL_WRAP_AND_RELEASE(NoCLEvent,event));
   }
 
   if(!blocking_map) {
@@ -1283,7 +1283,7 @@ NAN_METHOD(EnqueueMapImage) {
   obj->Set(JS_STR("image_slice_pitch"), slice_pitch);
 
   if(eventPtr) {
-    obj->Set(JS_STR("event"), NOCL_WRAP(NoCLEvent,event));
+    obj->Set(JS_STR("event"), NOCL_WRAP_AND_RELEASE(NoCLEvent,event));
   }
 
   if(!blocking_map) {
@@ -1351,7 +1351,7 @@ NAN_METHOD(EnqueueUnmapMemObject) {
     err = clEnqueueUnmapMemObject(cq->getRaw(),mem->getRaw(),ptr,
       (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),&event);
     CHECK_ERR(err)
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
     return;
   }
 
@@ -1419,7 +1419,7 @@ NAN_METHOD(EnqueueMigrateMemObjects) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -1519,7 +1519,7 @@ NAN_METHOD(EnqueueNDRangeKernel) {
   ));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -1567,7 +1567,7 @@ NAN_METHOD(EnqueueTask) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -1621,7 +1621,7 @@ NAN_METHOD(EnqueueMarkerWithWaitList) {
         q->getRaw(),
       (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
         &event));
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
     return;
   }
 
@@ -1655,7 +1655,7 @@ NAN_METHOD(EnqueueBarrierWithWaitList) {
           q->getRaw(),
         (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
           &event));
-      info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+      info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
       return;
     }
 
@@ -1682,7 +1682,7 @@ NAN_METHOD(EnqueueMarker) {
     cl_event event;
 
     CHECK_ERR(::clEnqueueMarker(q->getRaw(), &event));
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
     return;
   }
 

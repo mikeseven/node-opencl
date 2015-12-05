@@ -66,9 +66,8 @@ NAN_METHOD(CreateContext) {
                          &err);
 
   CHECK_ERR(err);
-  Local<Object> obj = NoCLWrapCLObject<NoCLContext>(new NoCLContext(ctx));
-  
-  info.GetReturnValue().Set(obj);
+
+  info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLContext, ctx));
 }
 
 // extern CL_API_ENTRY cl_context CL_API_CALL
@@ -116,7 +115,7 @@ NAN_METHOD(CreateContextFromType) {
                         &err);
   CHECK_ERR(err);
 
-  info.GetReturnValue().Set(NoCLWrapCLObject<NoCLContext>(new NoCLContext(ctx)));
+  info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLContext, ctx));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL

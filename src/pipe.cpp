@@ -43,7 +43,7 @@ NAN_METHOD(CreatePipe) {
 
   CHECK_ERR(err);
 
-  info.GetReturnValue().Set(NOCL_WRAP(NoCLMem, pipe));
+  info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLMem, pipe));
 }
 
 

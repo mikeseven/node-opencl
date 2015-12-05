@@ -3,8 +3,6 @@
 
 namespace opencl {
 
-template <typename T, unsigned int elid, int err,int cl_release(T),int cl_acquire(T)> std::map<T,int>NoCLRefCountObject<T,elid,err,cl_release,cl_acquire>::myMap;
-
 NAN_METHOD(Equals) {
   Nan::HandleScope scope;
   REQ_ARGS(1);
@@ -54,26 +52,11 @@ NAN_METHOD(Equals) {
 
 }
 
-NAN_METHOD(releaseAll){
-  cout<<"Releasing all OpenCL objects"<<endl;
-
-  // be careful with the order of the releases: could segfault if the order is not good
-  // on some drivers
-  NoCLEvent::releaseAll();
-  NoCLSampler::releaseAll();
-  NoCLMem::releaseAll();
-  NoCLKernel::releaseAll();
-  NoCLProgram::releaseAll();
-  NoCLCommandQueue::releaseAll();
-  NoCLContext::releaseAll();
-}
-
 int myCpt = 0;
 
 namespace Types {
 NAN_MODULE_INIT(init)
 {
-  Nan::SetMethod(target, "releaseAll", releaseAll);
 }
 
 }

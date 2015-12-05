@@ -35,7 +35,7 @@ NAN_METHOD(CreateSampler) {
               filter_mode,
               &ret);
   CHECK_ERR(ret);
-  info.GetReturnValue().Set(NOCL_WRAP(NoCLSampler, sw));
+  info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLSampler, sw));
 }
 
 #else
@@ -94,7 +94,7 @@ NAN_METHOD(CreateSamplerWithProperties) {
               &err);
   CHECK_ERR(err);
 
-  info.GetReturnValue().Set(NOCL_WRAP(NoCLSampler, sw));
+  info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLSampler, sw));
 }
 #endif
 

@@ -50,7 +50,7 @@ NAN_METHOD(CreateBuffer) {
   //   clSetMemObjectDestructorCallback(mem,notifyFreeClMemObj,user_data);
   // }
 
-  info.GetReturnValue().Set(NOCL_WRAP(NoCLMem, mem));
+  info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLMem, mem));
 }
 
 // extern CL_API_ENTRY cl_mem CL_API_CALL
@@ -82,7 +82,7 @@ NAN_METHOD(CreateSubBuffer) {
     cl_mem mem = ::clCreateSubBuffer(buffer->getRaw(), flags, buffer_create_type, &buffer_create_info, &ret);
     CHECK_ERR(ret);
 
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLMem, mem));
+    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLMem, mem));
     return;
   }
 
@@ -150,7 +150,7 @@ NAN_METHOD(CreateImage) {
   //   clSetMemObjectDestructorCallback(mem,notifyFreeClMemObj,user_data);
   // }
 
-  info.GetReturnValue().Set(NOCL_WRAP(NoCLMem, mem));
+  info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLMem, mem));
 }
 #elif CL_VERSION_1_1
 //TODO createImage2D/3D from 1.1 spec
@@ -204,7 +204,7 @@ NAN_METHOD(CreateImage2D) {
   //   clSetMemObjectDestructorCallback(mem,notifyFreeClMemObj,user_data);
   // }
 
-  info.GetReturnValue().Set(NOCL_WRAP(NoCLMem, mem));
+  info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLMem, mem));
 }
 #endif
 // extern CL_API_ENTRY cl_int CL_API_CALL

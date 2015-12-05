@@ -282,7 +282,7 @@ NAN_METHOD(CreateSubDevices) {
 
   Local<Array> subDevicesArray = Nan::New<Array>(capacity);
   for (uint32_t i=0; i<capacity; i++) {
-    subDevicesArray->Set(i, NOCL_WRAP(NoCLDeviceId, subDevices[i]));
+    subDevicesArray->Set(i, NOCL_WRAP_AND_RELEASE(NoCLDeviceId, subDevices[i]));
   }
 
   info.GetReturnValue().Set(subDevicesArray);
