@@ -50,6 +50,25 @@ private:
   T raw;
 };
 
+template <typename T, int cl_release(T), int cl_acquire(T)>
+class RefCounted {
+public:
+  RefCounted(T *p) : ptr(p) {
+    cl_acquire(ptr);
+  }
+
+  ~RefCounted() {
+    cl_release(ptr);
+  }
+
+  operator T*() {
+    return ptr;
+  }
+
+private:
+  T *ptr;
+};
+
 template <typename T>
 T * NoCLUnwrap(Local<Value> val) {
   if (val->IsNull() || val->IsUndefined()) {
