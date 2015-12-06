@@ -33,6 +33,24 @@ using namespace v8;
 namespace opencl {
 
 template <typename T>
+class NoCLWrapper : public Nan::ObjectWrap {
+public:
+  NoCLWrapper();
+  virtual ~NoCLWrapper();
+
+  static NAN_MODULE_INIT(Init);
+  static Local<Object> NewInstance();
+  static T *Unwrap(Local<Value> value);
+
+private:
+  static Nan::Persistent<v8::Function> & constructor();
+  static Nan::Persistent<v8::FunctionTemplate> & prototype();
+  static NAN_METHOD(New);
+
+  T raw;
+};
+
+template <typename T>
 T * NoCLUnwrap(Local<Value> val) {
   if (val->IsNull() || val->IsUndefined()) {
     return NULL;
