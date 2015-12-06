@@ -63,8 +63,6 @@ T * NoCLUnwrap(Local<Value> val) {
   return output;
 }
 
-Local<ObjectTemplate> & GetNodeOpenCLObjectGenericTemplate();
-
 #define NOCL_UNWRAP(VAR, TYPE, EXPR) \
   TYPE * VAR = NoCLUnwrap<TYPE>(EXPR);\
   if (VAR == NULL) { \
@@ -142,8 +140,6 @@ protected:
 
 };
 
-extern int myCpt;
-
 template <typename T, unsigned int elid, int err,int cl_release(T),int cl_acquire(T)>
 class NoCLRefCountObject : public NoCLObject<T,elid,err> {
  public:
@@ -176,9 +172,6 @@ class NoCLRefCountObject : public NoCLObject<T,elid,err> {
    int release() {
      return cl_release(this->raw);
    }
-
- protected:
-   static std::map<T,int> myMap;
 
  private:
    void init() {
