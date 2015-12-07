@@ -5,59 +5,6 @@ namespace opencl {
 
 using namespace v8;
 
-template <typename T>
-NoCLWrapper<T>::NoCLWrapper() {
-}
-
-template <typename T>
-NoCLWrapper<T>::~NoCLWrapper() {
-}
-
-template <typename T>
-NAN_MODULE_INIT(NoCLWrapper<T>::Init) {
-  Nan::HandleScope scope;
-
-  Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(New);
-  tpl->InstanceTemplate()->SetInternalFieldCount(1);
-  prototype().Reset(tpl);
-  constructor().Reset(tpl->GetFunction());
-}
-
-template <typename T>
-Local<Object> NoCLWrapper<T>::NewInstance() {
-  Local<Function> ctor = Nan::New(constructor());
-  return Nan::NewInstance(ctor, 0, nullptr).ToLocalChecked();
-}
-
-template <typename T>
-Nan::Persistent<v8::Function> & NoCLWrapper<T>::constructor() {
-  static Nan::Persistent<v8::Function> ctor;
-  return ctor;
-}
-
-template <typename T>
-Nan::Persistent<v8::FunctionTemplate> & NoCLWrapper<T>::prototype() {
-  static Nan::Persistent<v8::FunctionTemplate> proto;
-  return proto;
-}
-
-template <typename T>
-NAN_METHOD(NoCLWrapper<T>::New) {
-  NoCLWrapper<T> *obj = new NoCLWrapper<T>();
-  obj->Wrap(info.This());
-  info.GetReturnValue().Set(info.This());
-}
-
-template <typename T>
-T *NoCLWrapper<T>::Unwrap(Local<Value> value) {
-  if (!value->IsObject())
-    return nullptr;
-  Local<Object> obj = value->ToObject();
-  if (!Nan::New(prototype())->HasInstance(obj))
-    return nullptr;
-  return ObjectWrap::Unwrap<T>(obj);
-}
-
 NAN_METHOD(Equals) {
   Nan::HandleScope scope;
   REQ_ARGS(1);

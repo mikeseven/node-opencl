@@ -35,13 +35,33 @@ namespace opencl {
 template <typename T>
 class NoCLWrapper : public Nan::ObjectWrap {
 public:
-  NoCLWrapper();
+  NoCLWrapper(T raw);
   virtual ~NoCLWrapper();
 
   static NAN_MODULE_INIT(Init);
   static Local<Object> NewInstance();
   static T *Unwrap(Local<Value> value);
 
+  template <typename A>
+  static bool fromJSArray(std::vector<A> & outArr, Local<Array> &arr) {
+    for (unsigned int i = 0; i < arr->Length(); ++i) {
+      A * v = NoCLWrapper<A>::Unwrap(arr->Get(i));
+      if (v == NULL) {
+	return false;
+      }
+      outArr.push_back(*v);
+    }
+    return true;
+  }
+
+  template <typename U>
+    static std::vector<T> toCLArray(std::vector<U> outArr) {
+    std::vector<T> out;
+    for (unsigned int i = 0; i < outArr.size(); ++i) {
+      out.push_back(outArr[i].getRaw());
+    }
+    return out;
+  }
 private:
   static Nan::Persistent<v8::Function> & constructor();
   static Nan::Persistent<v8::FunctionTemplate> & prototype();
@@ -50,23 +70,93 @@ private:
   T raw;
 };
 
-template <typename T, int cl_release(T), int cl_acquire(T)>
-class RefCounted {
+template <typename T>
+NoCLWrapper<T>::NoCLWrapper(T raw) : raw(raw) {
+}
+
+template <typename T>
+NoCLWrapper<T>::~NoCLWrapper() {
+}
+
+template <typename T>
+NAN_MODULE_INIT(NoCLWrapper<T>::Init) {
+  Nan::HandleScope scope;
+
+  Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(New);
+  tpl->InstanceTemplate()->SetInternalFieldCount(1);
+  prototype().Reset(tpl);
+  constructor().Reset(tpl->GetFunction());
+}
+
+template <typename T>
+Local<Object> NoCLWrapper<T>::NewInstance() {
+  Local<Function> ctor = Nan::New(constructor());
+  return Nan::NewInstance(ctor, 0, nullptr).ToLocalChecked();
+}
+
+template <typename T>
+Nan::Persistent<v8::Function> & NoCLWrapper<T>::constructor() {
+  static Nan::Persistent<v8::Function> ctor;
+  return ctor;
+}
+
+template <typename T>
+Nan::Persistent<v8::FunctionTemplate> & NoCLWrapper<T>::prototype() {
+  static Nan::Persistent<v8::FunctionTemplate> proto;
+  return proto;
+}
+
+template <typename T>
+NAN_METHOD(NoCLWrapper<T>::New) {
+  NoCLWrapper<T> *obj = new NoCLWrapper<T>();
+  obj->Wrap(info.This());
+  info.GetReturnValue().Set(info.This());
+}
+
+template <typename T>
+T *NoCLWrapper<T>::Unwrap(Local<Value> value) {
+  if (!value->IsObject())
+    return nullptr;
+  Local<Object> obj = value->ToObject();
+  if (!Nan::New(prototype())->HasInstance(obj))
+    return nullptr;
+  return ObjectWrap::Unwrap<T>(obj);
+}
+
+template <typename T, int err, int cl_release(T), int cl_acquire(T)>
+class NoCLWrappedType {
 public:
-  RefCounted(T *p) : ptr(p) {
-    cl_acquire(ptr);
+  NoCLWrappedType(T raw) : raw(raw) { }
+
+  void acquire() {
+    cl_acquire(raw);
   }
 
-  ~RefCounted() {
-    cl_release(ptr);
+  void release() {
+    cl_release(raw);
   }
 
-  operator T*() {
-    return ptr;
+  operator T() {
+    return raw;
+  }
+
+  static int GetErrorCode() {
+    return err;
   }
 
 private:
-  T *ptr;
+  T raw;
+};
+
+template <typename T>
+static inline int noop(T _) {
+  return 0;
+}
+
+class _NoCLPlatformId : public NoCLWrapper<NoCLWrappedType<cl_platform_id, CL_INVALID_PLATFORM, noop, noop> > {
+public:
+  _NoCLPlatformId(cl_platform_id raw) : NoCLWrapper(raw) {
+  }
 };
 
 template <typename T>
