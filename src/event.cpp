@@ -11,7 +11,7 @@ NAN_METHOD(WaitForEvents) {
   Nan::HandleScope scope;
   REQ_ARGS(1);
 
-  std::vector<NoCLEvent> events;
+  std::vector<NoCLEvent *> events;
   Local<Array> js_events = Local<Array>::Cast(info[0]);
   NOCL_TO_ARRAY(events, js_events, NoCLEvent);
 
@@ -90,7 +90,7 @@ NAN_METHOD(CreateUserEvent) {
   cl_int err;
   cl_event uev=::clCreateUserEvent(context->getRaw(), &err);
   CHECK_ERR(err)
-  info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, uev));
+  info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, uev));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL

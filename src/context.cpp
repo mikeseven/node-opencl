@@ -67,7 +67,7 @@ NAN_METHOD(CreateContext) {
 
   CHECK_ERR(err);
 
-  info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLContext, ctx));
+  info.GetReturnValue().Set(NOCL_WRAP(NoCLContext, ctx));
 }
 
 // extern CL_API_ENTRY cl_context CL_API_CALL
@@ -115,7 +115,7 @@ NAN_METHOD(CreateContextFromType) {
                         &err);
   CHECK_ERR(err);
 
-  info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLContext, ctx));
+  info.GetReturnValue().Set(NOCL_WRAP(NoCLContext, ctx));
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL

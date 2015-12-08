@@ -32,7 +32,7 @@ NAN_METHOD(CreateCommandQueue) {
     context->getRaw(), device->getRaw(), properties, &err);
 
   CHECK_ERR(err)
-  info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLCommandQueue, q));
+  info.GetReturnValue().Set(NOCL_WRAP(NoCLCommandQueue, q));
 }
 
 #else
@@ -89,7 +89,7 @@ NAN_METHOD(CreateCommandQueueWithProperties) {
 
   CHECK_ERR(err)
 
-  info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLCommandQueue, q));
+  info.GetReturnValue().Set(NOCL_WRAP(NoCLCommandQueue, q));
 }
 #endif
 
@@ -235,7 +235,7 @@ NAN_METHOD(EnqueueReadBuffer) {
       return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent*> cl_events;
 
   if (ARG_EXISTS(6)) {
     Local<Array> js_events = Local<Array>::Cast(info[6]);
@@ -260,7 +260,7 @@ NAN_METHOD(EnqueueReadBuffer) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -325,7 +325,7 @@ NAN_METHOD(EnqueueReadBufferRect) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent *> cl_events;
 
   if (ARG_EXISTS(11)) {
     Local<Array> js_events = Local<Array>::Cast(info[6]);
@@ -350,7 +350,7 @@ NAN_METHOD(EnqueueReadBufferRect) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -392,7 +392,7 @@ NAN_METHOD(EnqueueWriteBuffer) {
       return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent *> cl_events;
 
   if (ARG_EXISTS(6)) {
     Local<Array> js_events = Local<Array>::Cast(info[6]);
@@ -416,7 +416,7 @@ NAN_METHOD(EnqueueWriteBuffer) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -480,7 +480,7 @@ NAN_METHOD(EnqueueWriteBufferRect) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent *> cl_events;
   if (ARG_EXISTS(12)) {
     Local<Array> js_events = Local<Array>::Cast(info[11]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
@@ -505,7 +505,7 @@ NAN_METHOD(EnqueueWriteBufferRect) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -557,7 +557,7 @@ NAN_METHOD(EnqueueFillBuffer) {
   size_t offset=info[3]->Uint32Value();
   size_t size=info[4]->Uint32Value();
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent *> cl_events;
   if (ARG_EXISTS(5)) {
     Local<Array> js_events = Local<Array>::Cast(info[5]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
@@ -580,7 +580,7 @@ NAN_METHOD(EnqueueFillBuffer) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -614,7 +614,7 @@ NAN_METHOD(EnqueueCopyBuffer) {
   size_t dst_offset=info[4]->Uint32Value();
   size_t size=info[5]->Uint32Value();
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent *> cl_events;
 
   if (ARG_EXISTS(6)) {
     Local<Array> js_events = Local<Array>::Cast(info[6]);
@@ -683,7 +683,7 @@ NAN_METHOD(EnqueueCopyBufferRect) {
   size_t dst_row_pitch = info[8]->Uint32Value();
   size_t dst_slice_pitch = info[9]->Uint32Value();
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent *> cl_events;
   if(ARG_EXISTS(10)) {
     Local<Array> js_events = Local<Array>::Cast(info[10]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
@@ -708,7 +708,7 @@ NAN_METHOD(EnqueueCopyBufferRect) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -763,7 +763,7 @@ NAN_METHOD(EnqueueReadImage) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent *> cl_events;
   if(ARG_EXISTS(8)) {
     Local<Array> js_events = Local<Array>::Cast(info[8]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
@@ -786,7 +786,7 @@ NAN_METHOD(EnqueueReadImage) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -841,7 +841,7 @@ NAN_METHOD(EnqueueWriteImage) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent *> cl_events;
   if (ARG_EXISTS(8)) {
     Local<Array> js_events = Local<Array>::Cast(info[8]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
@@ -864,7 +864,7 @@ NAN_METHOD(EnqueueWriteImage) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -909,7 +909,7 @@ NAN_METHOD(EnqueueFillImage) {
   for(i=0;i<max(arr->Length(),2u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent *> cl_events;
   if(ARG_EXISTS(5)) {
     Local<Array> js_events = Local<Array>::Cast(info[5]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
@@ -933,7 +933,7 @@ NAN_METHOD(EnqueueFillImage) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -976,7 +976,7 @@ NAN_METHOD(EnqueueCopyImage) {
   for(i=0;i<max(arr->Length(),2u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent *> cl_events;
   if (ARG_EXISTS(6)) {
     Local<Array> js_events = Local<Array>::Cast(info[6]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
@@ -1000,7 +1000,7 @@ NAN_METHOD(EnqueueCopyImage) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -1041,7 +1041,7 @@ NAN_METHOD(EnqueueCopyImageToBuffer) {
 
   size_t dst_offset = info[5]->Uint32Value();
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent *> cl_events;
   if (ARG_EXISTS(6)) {
     Local<Array> js_events = Local<Array>::Cast(info[6]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
@@ -1065,7 +1065,7 @@ NAN_METHOD(EnqueueCopyImageToBuffer) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -1107,7 +1107,7 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
   for(i=0;i<max(arr->Length(),2u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent *> cl_events;
   if(ARG_EXISTS(6)) {
     Local<Array> js_events = Local<Array>::Cast(info[7]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
@@ -1131,7 +1131,7 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -1172,7 +1172,7 @@ NAN_METHOD(EnqueueMapBuffer) {
   size_t offset = info[4]->Uint32Value();
   size_t size = info[5]->Uint32Value();
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent *> cl_events;
   if(ARG_EXISTS(6)) {
     Local<Array> js_events = Local<Array>::Cast(info[6]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
@@ -1196,7 +1196,7 @@ NAN_METHOD(EnqueueMapBuffer) {
   Local<v8::ArrayBuffer> obj = v8::ArrayBuffer::New(v8::Isolate::GetCurrent(), mPtr, size);
 
   if(eventPtr) {
-    obj->Set(JS_STR("event"), NOCL_WRAP_AND_RELEASE(NoCLEvent,event));
+    obj->Set(JS_STR("event"), NOCL_WRAP(NoCLEvent,event));
   }
 
   if(!blocking_map) {
@@ -1248,7 +1248,7 @@ NAN_METHOD(EnqueueMapImage) {
 
   std::unique_ptr<size_t[]> image_slice_pitch(new size_t[region[2]]);
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent *> cl_events;
   if(ARG_EXISTS(6)) {
     Local<Array> js_events = Local<Array>::Cast(info[6]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
@@ -1283,7 +1283,7 @@ NAN_METHOD(EnqueueMapImage) {
   obj->Set(JS_STR("image_slice_pitch"), slice_pitch);
 
   if(eventPtr) {
-    obj->Set(JS_STR("event"), NOCL_WRAP_AND_RELEASE(NoCLEvent,event));
+    obj->Set(JS_STR("event"), NOCL_WRAP(NoCLEvent,event));
   }
 
   if(!blocking_map) {
@@ -1338,7 +1338,7 @@ NAN_METHOD(EnqueueUnmapMemObject) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent *> cl_events;
   if(ARG_EXISTS(3)) {
     Local<Array> js_events = Local<Array>::Cast(info[3]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
@@ -1351,7 +1351,7 @@ NAN_METHOD(EnqueueUnmapMemObject) {
     err = clEnqueueUnmapMemObject(cq->getRaw(),mem->getRaw(),ptr,
       (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),&event);
     CHECK_ERR(err)
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
     return;
   }
 
@@ -1395,7 +1395,7 @@ NAN_METHOD(EnqueueMigrateMemObjects) {
 
   cl_mem_migration_flags flags=info[2]->Uint32Value();
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent *> cl_events;
   if(ARG_EXISTS(3)) {
     Local<Array> js_events = Local<Array>::Cast(info[3]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
@@ -1419,7 +1419,7 @@ NAN_METHOD(EnqueueMigrateMemObjects) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -1490,7 +1490,7 @@ NAN_METHOD(EnqueueNDRangeKernel) {
     }
   }
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent *> cl_events;
   if (ARG_EXISTS(6)) {
     Local<Array> js_events = Local<Array>::Cast(info[6]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
@@ -1519,7 +1519,7 @@ NAN_METHOD(EnqueueNDRangeKernel) {
   ));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -1543,7 +1543,7 @@ NAN_METHOD(EnqueueTask) {
   NOCL_UNWRAP(k, NoCLKernel, info[1]);
 
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent *> cl_events;
   Local<Array> js_events;
   if (ARG_EXISTS(2)) {
     js_events = Local<Array>::Cast(info[2]);
@@ -1567,7 +1567,7 @@ NAN_METHOD(EnqueueTask) {
     event ? &event : nullptr));
 
   if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -1610,7 +1610,7 @@ NAN_METHOD(EnqueueMarkerWithWaitList) {
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, info[0]);
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent *> cl_events;
   Local<Array> js_events = Local<Array>::Cast(info[1]);
   NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
 
@@ -1621,7 +1621,7 @@ NAN_METHOD(EnqueueMarkerWithWaitList) {
         q->getRaw(),
       (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
         &event));
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
     return;
   }
 
@@ -1644,7 +1644,7 @@ NAN_METHOD(EnqueueBarrierWithWaitList) {
     // Arg 0
     NOCL_UNWRAP(q, NoCLCommandQueue, info[0]);
 
-    std::vector<NoCLEvent> cl_events;
+    std::vector<NoCLEvent *> cl_events;
     Local<Array> js_events = Local<Array>::Cast(info[1]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
 
@@ -1655,7 +1655,7 @@ NAN_METHOD(EnqueueBarrierWithWaitList) {
           q->getRaw(),
         (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
           &event));
-      info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+      info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
       return;
     }
 
@@ -1682,7 +1682,7 @@ NAN_METHOD(EnqueueMarker) {
     cl_event event;
 
     CHECK_ERR(::clEnqueueMarker(q->getRaw(), &event));
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
     return;
   }
 
@@ -1701,7 +1701,7 @@ NAN_METHOD(EnqueueWaitForEvents) {
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, info[0]);
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent *> cl_events;
   Local<Array> js_events = Local<Array>::Cast(info[1]);
   NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   std::vector<cl_event> events;
