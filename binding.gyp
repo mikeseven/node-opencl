@@ -52,7 +52,7 @@
             "<(OPENCL_SDK_INCLUDE)",
           ],
           'libraries': ['-L<(OPENCL_SDK_LIB)','-lOpenCL'],
-          'cflags': ['-std=c++11',' -Wall','-O3','-g']
+          'cflags': ['-std=c++11',' -Wall','-O3']
         }],
         ['OS=="win"', {
           'variables' :
