@@ -163,7 +163,7 @@ NAN_METHOD(enqueueSVMFree) {
 
   CHECK_ERR(err);
   if (eventPtr != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -218,7 +218,7 @@ NAN_METHOD(enqueueSVMMemcpy) {
 
   CHECK_ERR(err);
   if (eventPtr != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -270,7 +270,7 @@ NAN_METHOD(enqueueSVMMemFill) {
                              eventPtr);
   CHECK_ERR(err);
   if (eventPtr != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -315,7 +315,7 @@ NAN_METHOD(enqueueSVMMap) {
 
   CHECK_ERR(err);
   if (eventPtr != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
@@ -353,7 +353,7 @@ NAN_METHOD(enqueueSVMUnmap) {
 
   CHECK_ERR(err)
   if (eventPtr != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP_AND_RELEASE(NoCLEvent, event));
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
   } else {
     info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
   }
