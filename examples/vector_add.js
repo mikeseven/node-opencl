@@ -1,8 +1,8 @@
 /*
 * @Author: mikael
 * @Date:   2015-09-21 18:06:21
-* @Last Modified by:   msevenier
-* @Last Modified time: 2015-11-27 19:20:59
+* @Last Modified by:   mikael
+* @Last Modified time: 2015-12-08 21:00:39
 */
 
 //'use strict';
@@ -110,13 +110,13 @@ function VectorAdd() {
 
   // cleanup
   // test release each CL object
-  // queue.release();
-  // kernel.release();
-  // program.release();
-  // aBuffer.release();
-  // bBuffer.release();
-  // cBuffer.release();
-  // context.release();
+  cl.releaseCommandQueue(queue);
+  cl.releaseKernel(kernel);
+  cl.releaseProgram(program);
+  cl.releaseMemObject(aBuffer);
+  cl.releaseMemObject(bBuffer);
+  cl.releaseMemObject(cBuffer);
+  cl.releaseContext(context);
 
   // test release all CL objects
   // cl.releaseAll();

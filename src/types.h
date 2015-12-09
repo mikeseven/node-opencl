@@ -44,6 +44,8 @@ public:
   }
 
   virtual ~NoCLWrapper() {
+    // std::cout<<"~NoCLWrapper for elem "<<id<<std::endl;
+    assert(release()==CL_SUCCESS);
   };
 
   static NAN_MODULE_INIT(Init) {
@@ -100,7 +102,10 @@ public:
     return cl_acquire(raw);
   }
 
-  int release() const {
+  int release() /*const*/ {
+    if(released) return CL_SUCCESS;
+    // std::cout<<"Release elem "<<id<<std::endl;
+    released=true;
     return cl_release(raw);
   }
 
@@ -126,7 +131,8 @@ private:
     info.GetReturnValue().Set(Nan::New<String>(ss.str()).ToLocalChecked());
   }
 
-  T raw;
+  T raw=nullptr;
+  bool released=false;
 };
 
 template <typename T>
@@ -168,12 +174,13 @@ NOCL_WRAPPER(NoCLEvent, cl_event, 8, CL_INVALID_EVENT, clReleaseEvent, clRetainE
 NOCL_WRAPPER(NoCLProgramBinary, cl_program_binary, 9, CL_INVALID_VALUE, noop, noop);
 NOCL_WRAPPER(NoCLMappedPtr, cl_mapped_ptr, 10, CL_INVALID_VALUE, noop, noop);
 
+#define NOCL_WRAP(T, V) \
+  T::NewInstance(V)
+
 namespace Types {
 NAN_MODULE_INIT(init);
 }
 
-#define NOCL_WRAP(T, V) \
-  T::NewInstance(V)
-
 }
+
 #endif

@@ -31,8 +31,26 @@ Nan::Persistent<v8::Function>& constructor(int id) {
 }
 
 namespace Types {
+NAN_METHOD(releaseAll){
+  // force GC to trigger release of lingering OpenCL objects
+  static const int idle_time_in_ms = 5;
+  v8::Isolate::GetCurrent()->IdleNotification(idle_time_in_ms);
+
+  // be careful with the order of the releases: could segfault if the order is not good
+  // on some drivers
+  // NoCLEvent::releaseAll();
+  // NoCLSampler::releaseAll();
+  // NoCLMem::releaseAll();
+  // NoCLKernel::releaseAll();
+  // NoCLProgram::releaseAll();
+  // NoCLCommandQueue::releaseAll();
+  // NoCLContext::releaseAll();
+}
+
 NAN_MODULE_INIT(init)
 {
+  Nan::SetMethod(target, "releaseAll", releaseAll);
+
   NoCLPlatformId::Init(target);
   NoCLDeviceId::Init(target);
   NoCLContext::Init(target);
@@ -45,6 +63,7 @@ NAN_MODULE_INIT(init)
   NoCLProgramBinary::Init(target);
   NoCLMappedPtr::Init(target);
 }
+
 }
 
 }
