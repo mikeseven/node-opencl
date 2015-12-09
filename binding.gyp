@@ -3,7 +3,7 @@
     {
       'target_name': 'opencl',
       'defines': [
-        'VERSION=0.4.2',
+        'VERSION=0.4.3',
         'NOCL_REALEASE_DRIVER_ISSUES'
       ],
       'sources': [
@@ -35,13 +35,13 @@
           #   ['CXX', '/usr/bin/clang++'],
           # ],
           "xcode_settings": {
-            'OTHER_CPLUSPLUSFLAGS' : ['-mavx','-O3','-std=c++11','-stdlib=libc++', ' -Wall'],
+            'OTHER_CPLUSPLUSFLAGS' : ['-mavx','-O3','-std=c++11','-stdlib=libc++','-Wall'],
             'OTHER_LDFLAGS': ['-stdlib=libc++'],
             'MACOSX_DEPLOYMENT_TARGET': '10.10'
           },
           'libraries': ['-framework OpenCL'],
         }],
-        ['OS=="linux"', {
+        ['OS in "linux freebsd openbsd solaris android"', {
           'variables' : {
             # AMD APP SDK
             'OPENCL_SDK' : '<!(echo %AMDAPPSDKROOT%)',
@@ -52,7 +52,7 @@
             "<(OPENCL_SDK_INCLUDE)",
           ],
           'libraries': ['-L<(OPENCL_SDK_LIB)','-lOpenCL'],
-          'cflags': ['-std=c++11',' -Wall','-O3']
+          'cflags_cc': ['-std=c++11',' -Wall','-O3']
         }],
         ['OS=="win"', {
           'variables' :

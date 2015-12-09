@@ -6,7 +6,6 @@
 #include <string>
 #include <vector>
 #include <v8.h>
-#include <map>
 #include <iostream>
 #include <sstream>
 

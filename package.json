@@ -1,6 +1,6 @@
 {
   "name": "node-opencl",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "A binding to OpenCL for Node.JS",
   "main": "lib/opencl.js",
   "author": [

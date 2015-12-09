@@ -1,9 +1,9 @@
-#include "commandqueue.h"
-#include "types.h"
-#include <map>
-#include "nanextension.h"
 #include <algorithm>
 #include <memory>
+// #include <unordered_map>
+#include "commandqueue.h"
+#include "types.h"
+#include "nanextension.h"
 
 namespace opencl {
 
@@ -1137,7 +1137,7 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
   }
 }
 
-static std::map<void*,int> mapPointers;
+// static std::unordered_map<void*,int> mapPointers;
 
 void CL_CALLBACK notifyMapCB (cl_event event, cl_int event_command_exec_status, void *user_data)
 {
