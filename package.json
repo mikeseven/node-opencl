@@ -20,7 +20,7 @@
     "Frédéric Langlade <fred@ioweb.fr>",
     "Adrien Plagnol <adrien@ioweb.fr>"
   ],
-  "license" : "BSD-3-Clause",
+  "license": "BSD-3-Clause",
   "repository": {
     "type": "git",
     "url": "https://github.com/mikeseven/node-opencl.git"
@@ -46,6 +46,7 @@
     "bindings": "^1.2.1",
     "chai": ">=2.0.0",
     "get-pixels": ">=3.1.1",
+    "memwatch-next": "^0.2.10",
     "nan": "^2.1.0",
     "pngjs2": "*"
   },
