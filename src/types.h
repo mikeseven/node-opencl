@@ -7,7 +7,8 @@
 #include <vector>
 #include <v8.h>
 #include <map>
-#include<iostream>
+#include <iostream>
+#include <sstream>
 
 #if defined (__APPLE__) || defined(MACOSX)
 #ifdef __ECLIPSE__
@@ -32,90 +33,54 @@ using namespace v8;
 
 namespace opencl {
 
-template <typename T>
-T * NoCLUnwrap(Local<Value> val) {
-  if (val->IsNull() || val->IsUndefined()) {
-    return NULL;
-  }
+extern const char *cl_type_names[];
 
-  if (!val->IsObject() || val->IsArray()) {
-    return NULL;
-  }
+Nan::Persistent<v8::FunctionTemplate>& prototype(int id);
+Nan::Persistent<v8::Function>& constructor(int id);
 
-  Local<Object> obj = val->ToObject();
-
-  if (Nan::GetInternalFieldPointer(obj, 0) == NULL) {
-    return NULL;
-  }
-
-  if (Nan::GetInternalFieldPointer(obj, 1) == NULL) {
-    return NULL;
-  }
-
-  unsigned int identifier = * (unsigned int *) Nan::GetInternalFieldPointer(obj, 1);
-
-  if (identifier != T::GetId()) {
-    return NULL;
-  }
-
-
-  T * output = (T *) Nan::GetInternalFieldPointer(obj, 0);
-  return output;
-}
-
-Local<ObjectTemplate> & GetNodeOpenCLObjectGenericTemplate();
-
-#define NOCL_UNWRAP(VAR, TYPE, EXPR) \
-  TYPE * VAR = NoCLUnwrap<TYPE>(EXPR);\
-  if (VAR == NULL) { \
-    Nan::ThrowError(JS_STR(opencl::getExceptionMessage(TYPE::getErrorCode()))); \
-    return; \
-  }
-
-
-class NoCLObjectGen {
-
- public:
-
-   virtual unsigned int GetType() = 0;
-
-};
-
-template <typename T,const unsigned int elid, int err>
-class NoCLObject : public NoCLObjectGen {
+template <typename T, int id, int err, int cl_release(T), int cl_acquire(T)>
+class NoCLWrapper : public Nan::ObjectWrap {
 public:
-
-  NoCLObject(T raw) {
-    this->raw = raw;
+  NoCLWrapper() : raw(nullptr) {
   }
 
-  bool operator ==(const NoCLObject<T,elid,err> &b) const {
-    return (this->getRaw() == b.getRaw());
+  virtual ~NoCLWrapper() {
+  };
+
+  static NAN_MODULE_INIT(Init) {
+    Nan::HandleScope scope;
+    Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(New);
+    tpl->InstanceTemplate()->SetInternalFieldCount(1);
+    Nan::SetPrototypeMethod(tpl, "toString", toString);
+    prototype(id).Reset(tpl);
+    constructor(id).Reset(tpl->GetFunction());
   }
 
-  const T& getRaw() const {
-    return this->raw;
+  static Local<Object> NewInstance(T raw) {
+    Local<Function> ctor = Nan::New(constructor(id));
+    Local<Object> obj = Nan::NewInstance(ctor, 0, nullptr).ToLocalChecked();
+    Unwrap(obj)->raw = raw;
+    return obj;
   }
 
-  // implicit cast
-  operator T() const{
-      return (T)raw;
-  }
-
-  static unsigned int GetId() {
-    return elid;
+  static NoCLWrapper<T, id, err, cl_release, cl_acquire> *Unwrap(Local<Value> value) {
+    if (!value->IsObject())
+      return nullptr;
+    Local<Object> obj = value->ToObject();
+    if (!Nan::New(prototype(id))->HasInstance(obj))
+      return nullptr;
+    return ObjectWrap::Unwrap<NoCLWrapper<T, id, err, cl_release, cl_acquire> >(obj);
   }
 
   template <typename A>
   static bool fromJSArray(std::vector<A> & outArr, Local<Array> &arr) {
     for (unsigned int i = 0; i < arr->Length(); ++i) {
-      A * v = NoCLUnwrap<A>(arr->Get(i));
+      A v = Unwrap(arr->Get(i));
       if (v == NULL) {
-        return false;
+	return false;
       }
-      outArr.push_back(*v);
+      outArr.push_back(v);
     }
-
     return true;
   }
 
@@ -123,238 +88,93 @@ public:
   static std::vector<T> toCLArray(std::vector<U> outArr) {
     std::vector<T> out;
     for (unsigned int i = 0; i < outArr.size(); ++i) {
-      out.push_back(outArr[i].getRaw());
+      out.push_back(outArr[i]->getRaw());
     }
-
     return out;
   }
 
-  static cl_uint getErrorCode(){
+  T getRaw() const {
+    return raw;
+  }
+
+  int acquire() const {
+    return cl_acquire(raw);
+  }
+
+  int release() const {
+    return cl_release(raw);
+  }
+
+  static int getErrorCode() {
     return err;
   }
 
-  virtual unsigned int GetType() {
-      return elid;
+private:
+  static NAN_METHOD(New) {
+    NoCLWrapper<T, id, err, cl_release, cl_acquire> *obj = new NoCLWrapper<T, id, err, cl_release, cl_acquire>();
+    obj->Wrap(info.This());
+    info.GetReturnValue().Set(info.This());
   }
 
-protected:
+  static NAN_METHOD(toString) {
+    NoCLWrapper<T, id, err, cl_release, cl_acquire> *obj = Unwrap(info.This());
+    std::stringstream ss;
+    if (!obj) {
+      Nan::TypeError("not a NoCLWrapper object");
+      return;
+    }
+    ss << "[object " << cl_type_names[id] << "@" << obj->raw << "]";
+    info.GetReturnValue().Set(Nan::New<String>(ss.str()).ToLocalChecked());
+  }
+
   T raw;
-
 };
 
-extern int myCpt;
+template <typename T>
+static inline int noop(T _) {
+  return 0;
+}
 
-template <typename T, unsigned int elid, int err,int cl_release(T),int cl_acquire(T)>
-class NoCLRefCountObject : public NoCLObject<T,elid,err> {
- public:
-   NoCLRefCountObject(T raw):NoCLObject<T,elid,err>(raw){
-     this->init();
-   }
-
-   NoCLRefCountObject(const NoCLRefCountObject &other):NoCLObject<T,elid,err>(other.getRaw()) {
-     this->init();
-   }
-
-   NoCLRefCountObject& operator = (const NoCLRefCountObject& other){
-     this->releaseAndInit(other.getRaw());
-     return *this;
-   }
-
-   NoCLRefCountObject& operator = (const T& raw){
-     this->releaseAndInit(raw);
-     return *this;
-   }
-
-   virtual ~NoCLRefCountObject() {
-     this->release();
-   }
-
-   bool isDeleted() const{
-     if(myMap[this->raw]>0)
-         return true;
-     return false;
-   }
-
-   int acquire(bool init=false) {
-#ifdef NOCL_REALEASE_DRIVER_ISSUES
-     if(myMap[this->raw]<1)
-       return CL_INVALID_ARG_VALUE;
-#endif
-     cl_int result = cl_acquire(this->raw);
-     if(result == CL_SUCCESS)
-        myMap[this->raw]++;
-     return result;
-   }
-
-   int release() {
-     int result;
-
-#ifdef NOCL_REALEASE_DRIVER_ISSUES
-     if(myMap[this->raw]>1) {
-       myMap[this->raw]--;
-       result = cl_release(this->raw);
-     }
-     else {
-       result = CL_SUCCESS;
-     }
-#else
-     if(myMap.count(this->raw)>0)
-       myMap[this->raw]--;
-     result = cl_release(this->raw);
-#endif
-     return result;
-   }
-
-#ifdef NOCL_REALEASE_DRIVER_ISSUES
-   static void releaseAll(){
-     for (auto const & kv : myMap) {
-       for(int cpt = 0;cpt < kv.second;++cpt){
-         cl_release(kv.first);
-       }
-     }
-   }
-
-#endif
-
- protected:
-   static std::map<T,int> myMap;
-
- private:
-   void init() {
-     if(myMap.count(this->raw)>0) {
-       this->acquire();
-         //if(result != CL_SUCCESS)
-         //  throw result;
-       }
-       else
-         myMap[this->raw] = 1;
-   }
-
-   void releaseAndInit(T raw) {
-       this->release();
-       //if(result!=CL_SUCCESS)
-       //    throw result;
-       this->raw = raw;
-       this->init();
-   }
-
-
-};
+#define NOCL_UNWRAP(VAR, TYPE, EXPR) \
+  TYPE * VAR = TYPE::Unwrap(EXPR);	\
+  if (VAR == NULL) { \
+    Nan::ThrowError(JS_STR(opencl::getExceptionMessage(TYPE::getErrorCode()))); \
+    return; \
+  }
 
 #define NOCL_TO_ARRAY(TO, FROM, TYPE) \
-  if (!TYPE::fromJSArray<TYPE>(TO, FROM)) { \
+  if (!TYPE::fromJSArray(TO, FROM)) { \
     Nan::ThrowError(JS_STR(opencl::getExceptionMessage(TYPE::getErrorCode()))); \
     return;\
   }
 
 #define NOCL_TO_CL_ARRAY(FROM, TYPE) \
-  FROM.size() ? &TYPE::toCLArray<TYPE>(FROM).front() : nullptr
+  FROM.size() ? &TYPE::toCLArray(FROM).front() : nullptr
 
-class NoCLPlatformId : public NoCLObject<cl_platform_id, 0, CL_INVALID_PLATFORM> {
+#define NOCL_WRAPPER(name, type, id, err, release, acquire)	\
+  typedef NoCLWrapper<type, id, err, release, acquire> name
 
-public:
-  NoCLPlatformId(cl_platform_id raw) : NoCLObject(raw) {
-  }
-};
+typedef const unsigned char *cl_program_binary;
+typedef const void *cl_mapped_ptr;
 
-class NoCLDeviceId : public NoCLObject<cl_device_id, 1, CL_INVALID_DEVICE> {
-
-public:
-  NoCLDeviceId(cl_device_id raw) : NoCLObject(raw) {
-  }
-};
-
-class NoCLContext : public NoCLRefCountObject<cl_context, 2, CL_INVALID_CONTEXT,clReleaseContext,clRetainContext> {
-
-public:
-  NoCLContext(cl_context raw) : NoCLRefCountObject(raw) {
-  }
-};
-
-class NoCLProgram : public NoCLRefCountObject<cl_program, 3, CL_INVALID_PROGRAM,clReleaseProgram,clRetainProgram> {
-
-public:
-  NoCLProgram(cl_program raw) : NoCLRefCountObject(raw) {
-  }
-};
-
-class NoCLKernel : public NoCLRefCountObject<cl_kernel, 4, CL_INVALID_KERNEL,clReleaseKernel,clRetainKernel> {
-
-public:
-  NoCLKernel(cl_kernel raw) : NoCLRefCountObject(raw) {
-  }
-};
-
-class NoCLMem : public NoCLRefCountObject<cl_mem, 5, CL_INVALID_MEM_OBJECT,clReleaseMemObject,clRetainMemObject> {
-
-public:
-  NoCLMem(cl_mem raw) : NoCLRefCountObject(raw) {
-  }
-};
-
-class NoCLSampler : public NoCLRefCountObject<cl_sampler, 6, CL_INVALID_SAMPLER,clReleaseSampler,clRetainSampler> {
-
-public:
-  NoCLSampler(cl_sampler raw) : NoCLRefCountObject(raw) {
-  }
-};
-
-class NoCLCommandQueue : public NoCLRefCountObject<cl_command_queue, 7, CL_INVALID_COMMAND_QUEUE,clReleaseCommandQueue,clRetainCommandQueue> {
-
-public:
-  NoCLCommandQueue(cl_command_queue raw) : NoCLRefCountObject(raw) {
-  }
-};
-
-class NoCLEvent : public NoCLRefCountObject<cl_event, 8, CL_INVALID_EVENT,clReleaseEvent,clRetainEvent> {
-
-public:
-  NoCLEvent(cl_event raw) : NoCLRefCountObject(raw) {
-  }
-};
-
-class NoCLProgramBinary : public NoCLObject<const unsigned char *, 9, CL_INVALID_VALUE> {
-
-public:
-  NoCLProgramBinary(const unsigned char * raw) : NoCLObject(raw) {
-  }
-};
-
-/*
-class NoCLMappedPtr : public NoCLObject<void *, 10, CL_INVALID_VALUE> {
-
-public:
-  NoCLMappedPtr(void * raw) : NoCLObject(raw) {
-  }
-};*/
-
-NAN_METHOD(Equals);
-
-NAN_METHOD(releaseAll);
-
-// FIXME static does not seem to work great with V8 (random segfaults)
-// But we should not create a template each time we create an object
-template <typename T>
-Local<Object> NoCLWrapCLObject(T * elm) {
-  Local<ObjectTemplate> tpl = Nan::New<ObjectTemplate>();
-
-  tpl->Set(Nan::New<v8::String>("equals").ToLocalChecked(),
-    Nan::New<FunctionTemplate>(Equals, Nan::New<v8::External>(elm)));
-
-  tpl->SetInternalFieldCount(2);
-  Local<Object> obj = tpl->NewInstance();
-
-  Nan::SetInternalFieldPointer(obj, 0, elm);
-  Nan::SetInternalFieldPointer(obj, 1, new unsigned int(T::GetId()));
-  return obj;
-}
+NOCL_WRAPPER(NoCLPlatformId, cl_platform_id, 0, CL_INVALID_PLATFORM, noop, noop);
+NOCL_WRAPPER(NoCLDeviceId, cl_device_id, 1, CL_INVALID_DEVICE, noop, noop);
+NOCL_WRAPPER(NoCLContext, cl_context, 2, CL_INVALID_CONTEXT, clReleaseContext, clRetainContext);
+NOCL_WRAPPER(NoCLProgram, cl_program, 3, CL_INVALID_PROGRAM, clReleaseProgram, clRetainProgram);
+NOCL_WRAPPER(NoCLKernel, cl_kernel, 4, CL_INVALID_KERNEL, clReleaseKernel, clRetainKernel);
+NOCL_WRAPPER(NoCLMem, cl_mem, 5, CL_INVALID_MEM_OBJECT, clReleaseMemObject, clRetainMemObject);
+NOCL_WRAPPER(NoCLSampler, cl_sampler, 6, CL_INVALID_SAMPLER, clReleaseSampler, clRetainSampler);
+NOCL_WRAPPER(NoCLCommandQueue, cl_command_queue, 7, CL_INVALID_COMMAND_QUEUE, clReleaseCommandQueue, clRetainCommandQueue);
+NOCL_WRAPPER(NoCLEvent, cl_event, 8, CL_INVALID_EVENT, clReleaseEvent, clRetainEvent);
+NOCL_WRAPPER(NoCLProgramBinary, cl_program_binary, 9, CL_INVALID_VALUE, noop, noop);
+NOCL_WRAPPER(NoCLMappedPtr, cl_mapped_ptr, 10, CL_INVALID_VALUE, noop, noop);
 
 namespace Types {
 NAN_MODULE_INIT(init);
 }
 
 #define NOCL_WRAP(T, V) \
-  NoCLWrapCLObject<T>(new T(V))
+  T::NewInstance(V)
 
 }
 #endif

@@ -302,7 +302,8 @@ NAN_METHOD(SetKernelArg) {
   } else if ('*' == type_name[type_name.length() - 1] || type_name == "cl_mem"){
     // type must be a buffer (CLMem object)
     NOCL_UNWRAP(mem , NoCLMem, info[3]);
-    err = ::clSetKernelArg(k->getRaw(), arg_idx, sizeof(cl_mem), &mem->getRaw());
+    const void *data = mem->getRaw();
+    err = ::clSetKernelArg(k->getRaw(), arg_idx, sizeof(cl_mem), &data);
   } else if (type_converter.hasType(type_name)) {
     // convert primitive types using the conversion
     // function map (indexed by OpenCL type name)
@@ -320,7 +321,8 @@ NAN_METHOD(SetKernelArg) {
   // Otherwise it should be a native type
   else if (type_name == "sampler_t") {
     NOCL_UNWRAP(sw , NoCLSampler, info[3]);
-    err = ::clSetKernelArg(k->getRaw(), arg_idx, sizeof(cl_sampler), &sw->getRaw());
+    const void* data = k->getRaw();
+    err = ::clSetKernelArg(k->getRaw(), arg_idx, sizeof(cl_sampler), &data);
   } else {
     std::string errstr = std::string("Unsupported OpenCL argument type: ") + type_name;
     return Nan::ThrowError(errstr.c_str());

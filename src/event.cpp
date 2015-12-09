@@ -11,7 +11,7 @@ NAN_METHOD(WaitForEvents) {
   Nan::HandleScope scope;
   REQ_ARGS(1);
 
-  std::vector<NoCLEvent> events;
+  std::vector<NoCLEvent *> events;
   Local<Array> js_events = Local<Array>::Cast(info[0]);
   NOCL_TO_ARRAY(events, js_events, NoCLEvent);
 

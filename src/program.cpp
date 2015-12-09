@@ -43,7 +43,7 @@ NAN_METHOD(CreateProgramWithBinary) {
 
   NOCL_UNWRAP(context, NoCLContext, info[0]);
 
-  vector<NoCLDeviceId> cl_devices;
+  vector<NoCLDeviceId *> cl_devices;
   REQ_ARRAY_ARG(1, devices);
   NOCL_TO_ARRAY(cl_devices, devices, NoCLDeviceId);
 
@@ -58,7 +58,7 @@ NAN_METHOD(CreateProgramWithBinary) {
     lengths[i] = sizes->Get(0)->Int32Value();
   }
 
-  std::vector<NoCLProgramBinary> cl_binaries;
+  std::vector<NoCLProgramBinary *> cl_binaries;
   std::vector<unsigned const char *> cl_binaries_str;
 
   REQ_ARRAY_ARG(3, js_binaries);
@@ -69,7 +69,7 @@ NAN_METHOD(CreateProgramWithBinary) {
   }
 
   for (unsigned int i = 0; i < cl_binaries.size(); ++ i){
-    cl_binaries_str.push_back(cl_binaries[i].getRaw());
+    cl_binaries_str.push_back(cl_binaries[i]->getRaw());
   }
 
   cl_int ret=CL_SUCCESS;
@@ -102,7 +102,7 @@ NAN_METHOD(CreateProgramWithBuiltInKernels) {
   NOCL_UNWRAP(context, NoCLContext, info[0]);
 
   // Arg 1
-  vector<NoCLDeviceId> cl_devices;
+  vector<NoCLDeviceId *> cl_devices;
   REQ_ARRAY_ARG(1, devices);
   NOCL_TO_ARRAY(cl_devices, devices, NoCLDeviceId);
 
@@ -209,7 +209,7 @@ NAN_METHOD(BuildProgram) {
 
   NOCL_UNWRAP(p, NoCLProgram, info[0]);
 
-  std::vector<NoCLDeviceId> devices;
+  std::vector<NoCLDeviceId *> devices;
 
   if (ARG_EXISTS(1)){
     REQ_ARRAY_ARG(1, cl_devices);
@@ -271,7 +271,7 @@ NAN_METHOD(CompileProgram) {
   // Arg 1 : program
   NOCL_UNWRAP(p, NoCLProgram, info[0]);
 
-  std::vector<NoCLDeviceId> cl_devices;
+  std::vector<NoCLDeviceId *> cl_devices;
 
   // Arg 2 : devices
   if (ARG_EXISTS(1)) {
@@ -291,7 +291,7 @@ NAN_METHOD(CompileProgram) {
 
   // Arg 4 : programs included
   // Arg 5 : headers names
-  std::vector<NoCLProgram> program_headers;
+  std::vector<NoCLProgram *> program_headers;
   std::vector<const char *> names;
 
   // Checking correct mapping
@@ -367,7 +367,7 @@ NAN_METHOD(LinkProgram) {
   //Arg 0
   NOCL_UNWRAP(ctx, NoCLContext, info[0]);
 
-  std::vector<NoCLDeviceId> cl_devices;
+  std::vector<NoCLDeviceId *> cl_devices;
 
   //Arg 1
   if (ARG_EXISTS(1)) {
@@ -386,7 +386,7 @@ NAN_METHOD(LinkProgram) {
   }
 
   //Arg 3
-  std::vector<NoCLProgram> cl_programs;
+  std::vector<NoCLProgram *> cl_programs;
 
   if (ARG_EXISTS(3)) {
     REQ_ARRAY_ARG(3, js_programs);
