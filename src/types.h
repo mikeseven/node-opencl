@@ -77,8 +77,8 @@ public:
   static bool fromJSArray(std::vector<A> & outArr, Local<Array> &arr) {
     for (unsigned int i = 0; i < arr->Length(); ++i) {
       A v = Unwrap(arr->Get(i));
-      if (v == NULL) {
-	return false;
+      if (v == nullptr) {
+	     return false;
       }
       outArr.push_back(v);
     }
@@ -136,7 +136,7 @@ private:
 };
 
 template <typename T>
-static inline int noop(T _) {
+ inline int noop(T _) {
   return 0;
 }
 

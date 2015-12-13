@@ -128,7 +128,7 @@ NAN_METHOD(enqueueSVMFree) {
     vec.push_back(ptr);
   }
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent*> cl_events;
   if(ARG_EXISTS(4)) {
     Local<Array> js_events = Local<Array>::Cast(info[4]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
@@ -198,7 +198,7 @@ NAN_METHOD(enqueueSVMMemcpy) {
   if(size>static_cast<size_t>(len) || size>static_cast<size_t>(len2))
     THROW_ERR(CL_INVALID_VALUE);
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent*> cl_events;
   if(ARG_EXISTS(5)) {
     Local<Array> js_events = Local<Array>::Cast(info[5]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
@@ -252,7 +252,7 @@ NAN_METHOD(enqueueSVMMemFill) {
      ((size%len)!=0))
     THROW_ERR(CL_INVALID_VALUE);
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent*> cl_events;
   if(ARG_EXISTS(4)) {
     Local<Array> js_events = Local<Array>::Cast(info[4]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
@@ -296,7 +296,7 @@ NAN_METHOD(enqueueSVMMap) {
 
   size_t size = info[4]->Uint32Value();
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent*> cl_events;
   if(ARG_EXISTS(5)) {
     Local<Array> js_events = Local<Array>::Cast(info[5]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
@@ -335,7 +335,7 @@ NAN_METHOD(enqueueSVMUnmap) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  std::vector<NoCLEvent> cl_events;
+  std::vector<NoCLEvent*> cl_events;
   if(ARG_EXISTS(2)) {
     Local<Array> js_events = Local<Array>::Cast(info[2]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
