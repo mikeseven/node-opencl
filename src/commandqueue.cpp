@@ -1706,7 +1706,7 @@ NAN_METHOD(EnqueueWaitForEvents) {
   NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   std::vector<cl_event> events;
   for(unsigned int cpt = 0;cpt<cl_events.size();++cpt)
-      events.push_back((cl_events[cpt]).getRaw());
+      events.push_back((cl_events[cpt])->getRaw());
 
   CHECK_ERR(::clEnqueueWaitForEvents(q->getRaw(),
         cl_events.size(),cl_events.size() ?  events.data(): nullptr));
