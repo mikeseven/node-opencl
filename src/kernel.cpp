@@ -294,10 +294,10 @@ NAN_METHOD(SetKernelArg) {
 
   if (local_arg) {
     // expect a size type
-    if (!info[2]->IsNumber())
+    if (!info[3]->IsNumber())
       THROW_ERR(CL_INVALID_ARG_VALUE);
     // local buffers are intialized with their size (data = NULL)
-    size_t local_size = info[2]->ToInteger()->Value();
+    size_t local_size = info[3]->ToInteger()->Value();
     err = ::clSetKernelArg(k->getRaw(), arg_idx, local_size, NULL);
   } else if ('*' == type_name[type_name.length() - 1] || type_name == "cl_mem"){
     // type must be a buffer (CLMem object)
