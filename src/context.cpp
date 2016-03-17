@@ -173,6 +173,7 @@ NAN_METHOD(GetContextInfo) {
 
     Local<Array> arr = Nan::New<Array>((int)n);
     for(uint32_t i=0;i<n;i++) {
+      CHECK_ERR(::clRetainDevice(devices[i]))
       arr->Set(i, NOCL_WRAP(NoCLDeviceId, devices[i]));
     }
     info.GetReturnValue().Set(arr);

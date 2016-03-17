@@ -142,12 +142,14 @@ NAN_METHOD(GetCommandQueueInfo) {
     case CL_QUEUE_CONTEXT: {
       cl_context val;
       CHECK_ERR(::clGetCommandQueueInfo(q->getRaw(),param_name,sizeof(cl_context), &val, nullptr))
+      CHECK_ERR(::clRetainContext(val))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLContext, val));
       return;
     }
     case CL_QUEUE_DEVICE: {
       cl_device_id val;
       CHECK_ERR(::clGetCommandQueueInfo(q->getRaw(),param_name,sizeof(cl_device_id), &val, nullptr))
+      CHECK_ERR(::clRetainDevice(val))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLDeviceId, val));
       return;
     }

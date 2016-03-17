@@ -42,6 +42,7 @@ NAN_METHOD(GetEventInfo) {
     {
       cl_command_queue val;
       CHECK_ERR(::clGetEventInfo(ev->getRaw(),param_name,sizeof(cl_command_queue), &val, NULL))
+      CHECK_ERR(::clRetainCommandQueue(val))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLCommandQueue, val));
       return;
     }
@@ -49,6 +50,7 @@ NAN_METHOD(GetEventInfo) {
     {
       cl_context val;
       CHECK_ERR(::clGetEventInfo(ev->getRaw(),param_name,sizeof(cl_context), &val, NULL))
+      CHECK_ERR(::clRetainContext(val))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLContext, val));
       return;
     }
