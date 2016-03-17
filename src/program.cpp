@@ -476,6 +476,7 @@ NAN_METHOD(GetProgramInfo) {
     {
       cl_context val;
       CHECK_ERR(::clGetProgramInfo(prog->getRaw(),param_name,sizeof(cl_context), &val, NULL))
+      CHECK_ERR(::clRetainContext(val))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLContext, val));
       return;
     }
@@ -490,6 +491,7 @@ NAN_METHOD(GetProgramInfo) {
 
       Local<Array> arr = Nan::New<Array>((int)n);
       for(uint32_t i=0;i<n;i++) {
+        CHECK_ERR(::clRetainDevice(devices[i]))
         arr->Set(i, NOCL_WRAP(NoCLDeviceId, devices[i]));
       }
 

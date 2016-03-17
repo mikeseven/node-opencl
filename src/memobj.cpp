@@ -326,12 +326,14 @@ NAN_METHOD(GetMemObjectInfo) {
     case CL_MEM_CONTEXT: {
       cl_context val;
       CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(cl_context), &val, NULL))
+      CHECK_ERR(::clRetainContext(val))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLContext, val));
       return;
     }
     case CL_MEM_ASSOCIATED_MEMOBJECT: {
       cl_mem val;
       CHECK_ERR(::clGetMemObjectInfo(mem->getRaw(),param_name,sizeof(cl_mem), &val, NULL))
+      CHECK_ERR(::clRetainMemObject(val))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLMem, val));
       return;
     }
@@ -384,6 +386,7 @@ NAN_METHOD(GetImageInfo) {
     case CL_IMAGE_BUFFER: {
       cl_mem val;
       CHECK_ERR(::clGetImageInfo(mem->getRaw(),param_name,sizeof(cl_mem), &val, NULL))
+      CHECK_ERR(::clRetainMemObject(val))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLMem, val));
       return;
     }

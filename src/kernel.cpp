@@ -55,6 +55,7 @@ NAN_METHOD(CreateKernelsInProgram) {
   Local<Array> karr = Nan::New<Array>();
 
   for(cl_uint i = 0; i < numkernels;i++) {
+    CHECK_ERR(::clRetainKernel(kernels[i]))
     karr->Set(i,NOCL_WRAP(NoCLKernel, kernels[i]));
   }
 
@@ -368,12 +369,14 @@ NAN_METHOD(GetKernelInfo) {
     case CL_KERNEL_CONTEXT: {
       cl_context ctx=0;
       CHECK_ERR(::clGetKernelInfo(k->getRaw(),param_name,sizeof(cl_context),&ctx, NULL));
+      CHECK_ERR(::clRetainContext(ctx))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLContext, ctx));
       return;
     }
     case CL_KERNEL_PROGRAM: {
       cl_program p=0;
       CHECK_ERR(::clGetKernelInfo(k->getRaw(),param_name,sizeof(cl_program),&p, NULL));
+      CHECK_ERR(::clRetainProgram(p))
       info.GetReturnValue().Set(NOCL_WRAP(NoCLProgram, p));
       return;
     }
