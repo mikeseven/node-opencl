@@ -79,7 +79,8 @@ NAN_METHOD(CreateCommandQueueWithProperties) {
       THROW_ERR(CL_INVALID_QUEUE_PROPERTIES)
     }
   }
-
+  cl_properties.push_back(0);
+  
   cl_int err;
   cl_command_queue q = ::clCreateCommandQueueWithProperties(
     context->getRaw(),
