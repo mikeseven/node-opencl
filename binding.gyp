@@ -44,7 +44,7 @@
         ['OS in "linux freebsd openbsd solaris android"', {
           'variables' : {
             # AMD APP SDK
-            'OPENCL_SDK' : '<!(echo %AMDAPPSDKROOT%)',
+            'OPENCL_SDK' : '<!(echo $AMDAPPSDKROOT)',
             'OPENCL_SDK_INCLUDE' : '<(OPENCL_SDK)/include',
             'OPENCL_SDK_LIB' : '<(OPENCL_SDK)/lib/x86_64',
           },
