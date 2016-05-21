@@ -128,7 +128,7 @@ public:
     CONVERT_NUMBER("short", cl_short, IsInt32, ToInt32()->Value);
     CONVERT_NUMBER("ushort", cl_ushort, IsInt32, ToUint32()->Value);
     CONVERT_NUMBER("int", cl_int , IsInt32, ToInt32()->Value);
-    CONVERT_NUMBER("uint", cl_uint, IsInt32, ToUint32()->Value);
+    CONVERT_NUMBER("uint", cl_uint, IsUint32, ToUint32()->Value);
     CONVERT_NUMBER("long", cl_long, IsNumber, ToInteger()->Value);
     CONVERT_NUMBER("ulong", cl_ulong, IsNumber, ToInteger()->Value);
     CONVERT_NUMBER("float", cl_float, IsNumber, NumberValue);
