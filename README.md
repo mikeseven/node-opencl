@@ -79,7 +79,7 @@ The API is very close to the low-level one, although there are minor changes whe
 
 ## Drivers issues
 
-Depending on your OpenCL implementation, your OS and the OpenCL implementation you're using, you will get different behaviours that do not
+Depending on your OS and the OpenCL implementation you're using, you will get different behaviours that do not
 always correspond to the one given in Khronos specifications. For now we do not correct them, but we have put warnings when running tests that trigger
 those behaviours so you can run them to check if it is a known issue.
 
