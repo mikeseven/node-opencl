@@ -166,7 +166,7 @@ public:
         }                                                                       \
         return std::tuple<size_t,void*,cl_int>(ptr_size, ptr_data, 0);          \
       };                                                                        \
-      m_converters["NAME ## I"] = f;                                            \
+      m_converters[NAME #I ] = f;                                            \
       }
 
     #define CONVERT_VECTS(NAME, TYPE, PRED, COND) \
@@ -174,14 +174,14 @@ public:
       CONVERT_VECT(NAME, TYPE, 3, PRED, COND);\
       CONVERT_VECT(NAME, TYPE, 4, PRED, COND);\
       CONVERT_VECT(NAME, TYPE, 8, PRED, COND);\
-      CONVERT_VECT(MAME, TYPE, 16, PRED, COND);
+      CONVERT_VECT(NAME, TYPE, 16, PRED, COND);
 
     CONVERT_VECTS("char", cl_char, IsInt32, ToInt32()->Value);
     CONVERT_VECTS("uchar", cl_uchar, IsInt32, ToUint32()->Value);
     CONVERT_VECTS("short", cl_short, IsInt32, ToInt32()->Value);
     CONVERT_VECTS("ushort", cl_ushort, IsInt32, ToUint32()->Value);
     CONVERT_VECTS("int", cl_int, IsInt32, ToInt32()->Value);
-    CONVERT_VECTS("uint", cl_uint, IsInt32, ToUint32()->Value);
+    CONVERT_VECTS("uint", cl_uint, IsUint32, ToUint32()->Value);
     CONVERT_VECTS("long", cl_long, IsNumber, ToInteger()->Value);
     CONVERT_VECTS("ulong", cl_ulong, IsNumber, ToInteger()->Value);
     CONVERT_VECTS("float", cl_float, IsNumber, NumberValue);
