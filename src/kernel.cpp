@@ -55,7 +55,9 @@ NAN_METHOD(CreateKernelsInProgram) {
   Local<Array> karr = Nan::New<Array>();
 
   for(cl_uint i = 0; i < numkernels;i++) {
-    CHECK_ERR(::clRetainKernel(kernels[i]))
+    // This should not be needed. clCreateKernelsInProgram implicitly does clRetainKernel
+    // on each kernel
+    // CHECK_ERR(::clRetainKernel(kernels[i]))
     karr->Set(i,NOCL_WRAP(NoCLKernel, kernels[i]));
   }
 
