@@ -28,6 +28,8 @@ NAN_METHOD(GetDeviceIDs) {
 
   Local<Array> deviceArray = Nan::New<Array>(n);
   for (uint32_t i=0; i<n; i++) {
+    // This is a noop for root-level devices but properly retains sub-devices.
+    CHECK_ERR(::clRetainDevice(devices[i]));
     deviceArray->Set(i, NOCL_WRAP(NoCLDeviceId, devices[i]));
   }
 
