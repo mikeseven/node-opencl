@@ -99,7 +99,7 @@ NAN_METHOD(CreateSubBuffer) {
 //               cl_int *                /* errcode_ret */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(CreateImage) {
   Nan::HandleScope scope;
-  REQ_ARGS(5);
+  REQ_ARGS(4);
 
   // Arg 0
   NOCL_UNWRAP(context, NoCLContext, info[0]);
@@ -125,10 +125,12 @@ NAN_METHOD(CreateImage) {
   desc.image_depth = obj->Get(JS_STR("depth"))->IsUndefined() ? 0 : obj->Get(JS_STR("depth"))->Uint32Value();
   desc.image_array_size = obj->Get(JS_STR("array_size"))->IsUndefined() ? 0 : obj->Get(JS_STR("array_size"))->Uint32Value();
   desc.image_row_pitch = obj->Get(JS_STR("row_pitch"))->IsUndefined() ? 0 : obj->Get(JS_STR("row_pitch"))->Uint32Value();
-  desc.image_slice_pitch = obj->Get(JS_STR("slice_pitch"))->IsUndefined() ? 0 : obj->Get(JS_STR("slice_pitch"))->Uint32Value();;
-  // desc.num_mip_levels = obj->Get(JS_STR("channel_order"))->Uint32Value();;
-  // desc.num_samples = obj->Get(JS_STR("channel_order"))->Uint32Value();;
-  // desc.buffer;
+  desc.image_slice_pitch = obj->Get(JS_STR("slice_pitch"))->IsUndefined() ? 0 : obj->Get(JS_STR("slice_pitch"))->Uint32Value();
+  Local<Value> buffer_value = obj->Get(JS_STR("buffer"));
+  if (buffer_value->IsObject()) {
+    NOCL_UNWRAP(buffer, NoCLMem, buffer_value);
+    desc.buffer = buffer->getRaw();
+  }
 
   void *host_ptr = NULL;
 
