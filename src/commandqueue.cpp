@@ -1248,8 +1248,7 @@ NAN_METHOD(EnqueueMapImage) {
     region[i]=arr->Get(i)->Int32Value();
 
   size_t image_row_pitch;
-
-  std::unique_ptr<size_t[]> image_slice_pitch(new size_t[region[2]]);
+  size_t image_slice_pitch;
 
   std::vector<NoCLEvent *> cl_events;
   if(ARG_EXISTS(6)) {
@@ -1269,7 +1268,7 @@ NAN_METHOD(EnqueueMapImage) {
   mPtr = clEnqueueMapImage (cq->getRaw(),mem->getRaw(),
                               blocking_map,map_flags, origin,
                               region,
-                              &image_row_pitch, image_slice_pitch.get(),
+                              &image_row_pitch, &image_slice_pitch,
                               (cl_uint)cl_events.size(),
                               NOCL_TO_CL_ARRAY(
                                 cl_events, NoCLEvent),
@@ -1282,8 +1281,7 @@ NAN_METHOD(EnqueueMapImage) {
   Local<v8::ArrayBuffer> obj = v8::ArrayBuffer::New(v8::Isolate::GetCurrent(), mPtr, size);
 
   obj->Set(JS_STR("image_row_pitch"), Nan::New(static_cast<int>(image_row_pitch)));
-  Local<Object> slice_pitch  = Nan::NewBuffer((char*)image_slice_pitch.get(), (uint32_t) (sizeof(size_t)*region[2])).ToLocalChecked();
-  obj->Set(JS_STR("image_slice_pitch"), slice_pitch);
+  obj->Set(JS_STR("image_slice_pitch"), Nan::New(static_cast<int>(image_slice_pitch)));
 
   if(eventPtr) {
     obj->Set(JS_STR("event"), NOCL_WRAP(NoCLEvent,event));
