@@ -7,6 +7,30 @@
 
 namespace opencl {
 
+#define GET_WAIT_LIST(n)                                  \
+  std::vector<NoCLEvent*> cl_events;                      \
+  if (ARG_EXISTS(n)) {                                    \
+    Local<Array> js_events = Local<Array>::Cast(info[n]); \
+    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);       \
+  }
+
+#define GET_EVENT_FLAG(n)                                 \
+  cl_event event = nullptr;                               \
+  cl_event* eventPtr =                                    \
+    (ARG_EXISTS(n) && info[n]->BooleanValue())            \
+    ? &event : nullptr;
+
+#define GET_WAIT_LIST_AND_EVENT(n)                        \
+  GET_WAIT_LIST(n)                                        \
+  GET_EVENT_FLAG(n+1)
+
+#define RETURN_EVENT                                        \
+  if (eventPtr) {                                           \
+    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event)); \
+  } else {                                                  \
+    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));          \
+  }
+
 #ifndef CL_VERSION_2_0
 
 // /* Command Queue APIs */
@@ -238,35 +262,14 @@ NAN_METHOD(EnqueueReadBuffer) {
       return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  std::vector<NoCLEvent*> cl_events;
-
-  if (ARG_EXISTS(6)) {
-    Local<Array> js_events = Local<Array>::Cast(info[6]);
-    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-  }
-
-  //::clGetCommandQueueInfo(q->getRaw(),param_name,sizeof(cl_context), &val, nullptr)
-  cl_event event=nullptr;
-  if(ARG_EXISTS(7) && info[7]->BooleanValue()) {
-    cl_context ctx;
-    cl_int err = 0;
-    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
-    CHECK_ERR(err);
-
-    event = ::clCreateUserEvent(ctx, &err);
-    CHECK_ERR(err);
-  }
+  GET_WAIT_LIST_AND_EVENT(6)
 
   CHECK_ERR(::clEnqueueReadBuffer(
     q->getRaw(),buffer->getRaw(),blocking_read,offset,size,ptr,
     (cl_uint) cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-    event ? &event : nullptr));
+    eventPtr));
 
-  if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-  }
+  RETURN_EVENT
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -328,35 +331,15 @@ NAN_METHOD(EnqueueReadBufferRect) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  std::vector<NoCLEvent *> cl_events;
-
-  if (ARG_EXISTS(11)) {
-    Local<Array> js_events = Local<Array>::Cast(info[6]);
-    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-  }
-
-  cl_event event=nullptr;
-  if(ARG_EXISTS(12) && info[12]->BooleanValue()) {
-    cl_context ctx;
-    cl_int err = 0;
-    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
-    CHECK_ERR(err);
-
-    event = ::clCreateUserEvent(ctx, &err);
-    CHECK_ERR(err);
-  }
+  GET_WAIT_LIST_AND_EVENT(11)
 
   CHECK_ERR(::clEnqueueReadBufferRect(
     q->getRaw(),buffer->getRaw(),blocking_read,buffer_offset,host_offset,region,
     buffer_row_pitch,buffer_slice_pitch,host_row_pitch,host_slice_pitch,ptr,
     (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-    event ? &event : nullptr));
+    eventPtr));
 
-  if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-  }
+  RETURN_EVENT
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -395,34 +378,14 @@ NAN_METHOD(EnqueueWriteBuffer) {
       return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  std::vector<NoCLEvent *> cl_events;
-
-  if (ARG_EXISTS(6)) {
-    Local<Array> js_events = Local<Array>::Cast(info[6]);
-    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-
-  }
-  cl_event event=nullptr;
-  if(ARG_EXISTS(7) && info[7]->BooleanValue()) {
-    cl_context ctx;
-    cl_int err = 0;
-    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
-    CHECK_ERR(err);
-
-    event = ::clCreateUserEvent(ctx, &err);
-    CHECK_ERR(err);
-  }
+  GET_WAIT_LIST_AND_EVENT(6)
 
   CHECK_ERR(::clEnqueueWriteBuffer(
     q->getRaw(),buffer->getRaw(),blocking_write,offset,size,ptr,
     (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-    event ? &event : nullptr));
+    eventPtr));
 
-  if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-  }
+  RETURN_EVENT
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -483,35 +446,15 @@ NAN_METHOD(EnqueueWriteBufferRect) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  std::vector<NoCLEvent *> cl_events;
-  if (ARG_EXISTS(12)) {
-    Local<Array> js_events = Local<Array>::Cast(info[11]);
-    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-  }
-
-
-  cl_event event=nullptr;
-  if(ARG_EXISTS(12) && info[12]->BooleanValue()) {
-    cl_context ctx;
-    cl_int err = 0;
-    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
-    CHECK_ERR(err);
-
-    event = ::clCreateUserEvent(ctx, &err);
-    CHECK_ERR(err);
-  }
+  GET_WAIT_LIST_AND_EVENT(11)
 
   CHECK_ERR(::clEnqueueWriteBufferRect(
     q->getRaw(),buffer->getRaw(),blocking_write,buffer_offset,host_offset,region,
     buffer_row_pitch,buffer_slice_pitch,host_row_pitch,host_slice_pitch,ptr,
     (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-    event ? &event : nullptr));
+    eventPtr));
 
-  if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-  }
+  RETURN_EVENT
 }
 
 #ifdef CL_VERSION_1_2
@@ -560,33 +503,14 @@ NAN_METHOD(EnqueueFillBuffer) {
   size_t offset=info[3]->Uint32Value();
   size_t size=info[4]->Uint32Value();
 
-  std::vector<NoCLEvent *> cl_events;
-  if (ARG_EXISTS(5)) {
-    Local<Array> js_events = Local<Array>::Cast(info[5]);
-    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-  }
-
-  cl_event event=nullptr;
-  if(ARG_EXISTS(6) && info[6]->BooleanValue()) {
-    cl_context ctx;
-    cl_int err = 0;
-    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
-    CHECK_ERR(err);
-
-    event = ::clCreateUserEvent(ctx, &err);
-    CHECK_ERR(err);
-  }
+  GET_WAIT_LIST_AND_EVENT(5)
 
   CHECK_ERR(::clEnqueueFillBuffer(
     q->getRaw(), buffer->getRaw(), pattern, len, offset, size,
     (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-    event ? &event : nullptr));
+    eventPtr));
 
-  if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-  }
+  RETURN_EVENT
 }
 #endif
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -617,28 +541,14 @@ NAN_METHOD(EnqueueCopyBuffer) {
   size_t dst_offset=info[4]->Uint32Value();
   size_t size=info[5]->Uint32Value();
 
-  std::vector<NoCLEvent *> cl_events;
-
-  if (ARG_EXISTS(6)) {
-    Local<Array> js_events = Local<Array>::Cast(info[6]);
-    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-  }
-
-  cl_event event=nullptr;
-  if(ARG_EXISTS(7) && info[7]->BooleanValue()) {
-    cl_context ctx;
-    cl_int err = 0;
-    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
-    CHECK_ERR(err);
-
-    event = ::clCreateUserEvent(ctx, &err);
-    CHECK_ERR(err);
-  }
+  GET_WAIT_LIST_AND_EVENT(6)
 
   CHECK_ERR(::clEnqueueCopyBuffer(q->getRaw(),
     src_buffer->getRaw(),dst_buffer->getRaw(),src_offset,dst_offset, size,
-    (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent), &event));
-  info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
+    (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
+    eventPtr));
+
+  RETURN_EVENT
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -686,35 +596,16 @@ NAN_METHOD(EnqueueCopyBufferRect) {
   size_t dst_row_pitch = info[8]->Uint32Value();
   size_t dst_slice_pitch = info[9]->Uint32Value();
 
-  std::vector<NoCLEvent *> cl_events;
-  if(ARG_EXISTS(10)) {
-    Local<Array> js_events = Local<Array>::Cast(info[10]);
-    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-  }
-
-  cl_event event=nullptr;
-  if(ARG_EXISTS(11) && info[11]->BooleanValue()) {
-    cl_context ctx;
-    cl_int err = 0;
-    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
-    CHECK_ERR(err);
-
-    event = ::clCreateUserEvent(ctx, &err);
-    CHECK_ERR(err);
-  }
+  GET_WAIT_LIST_AND_EVENT(10)
 
   CHECK_ERR(::clEnqueueCopyBufferRect(
     q->getRaw(),src_buffer->getRaw(),dst_buffer->getRaw(),
     src_origin, dst_origin, region,
     src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch,
     (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-    event ? &event : nullptr));
+    eventPtr));
 
-  if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-  }
+  RETURN_EVENT
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -766,33 +657,14 @@ NAN_METHOD(EnqueueReadImage) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  std::vector<NoCLEvent *> cl_events;
-  if(ARG_EXISTS(8)) {
-    Local<Array> js_events = Local<Array>::Cast(info[8]);
-    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-  }
-
-  cl_event event=nullptr;
-  if(ARG_EXISTS(9) && info[9]->BooleanValue()) {
-    cl_context ctx;
-    cl_int err = 0;
-    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
-    CHECK_ERR(err);
-
-    event = ::clCreateUserEvent(ctx, &err);
-    CHECK_ERR(err);
-  }
+  GET_WAIT_LIST_AND_EVENT(8)
 
   CHECK_ERR(::clEnqueueReadImage(q->getRaw(),image->getRaw(),blocking_read,
     origin,region,row_pitch,slice_pitch, ptr,
     (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-    event ? &event : nullptr));
+    eventPtr));
 
-  if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-  }
+  RETURN_EVENT
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -844,33 +716,14 @@ NAN_METHOD(EnqueueWriteImage) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  std::vector<NoCLEvent *> cl_events;
-  if (ARG_EXISTS(8)) {
-    Local<Array> js_events = Local<Array>::Cast(info[8]);
-    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-  }
-
-  cl_event event=nullptr;
-  if(ARG_EXISTS(9) && info[9]->BooleanValue()) {
-    cl_context ctx;
-    cl_int err = 0;
-    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
-    CHECK_ERR(err);
-
-    event = ::clCreateUserEvent(ctx, &err);
-    CHECK_ERR(err);
-  }
+  GET_WAIT_LIST_AND_EVENT(8)
 
   CHECK_ERR(::clEnqueueWriteImage(q->getRaw(),image->getRaw(),blocking_write,
     origin,region,row_pitch,slice_pitch, ptr,
     (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-    event ? &event : nullptr));
+    eventPtr));
 
-  if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-  }
+  RETURN_EVENT
 }
 
 #ifdef CL_VERSION_1_2
@@ -912,34 +765,15 @@ NAN_METHOD(EnqueueFillImage) {
   for(i=0;i<max(arr->Length(),2u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
-  std::vector<NoCLEvent *> cl_events;
-  if(ARG_EXISTS(5)) {
-    Local<Array> js_events = Local<Array>::Cast(info[5]);
-    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-  }
-
-  cl_event event=nullptr;
-  if(ARG_EXISTS(6) && info[6]->BooleanValue()) {
-    cl_context ctx;
-    cl_int err = 0;
-    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
-    CHECK_ERR(err);
-
-    event = ::clCreateUserEvent(ctx, &err);
-    CHECK_ERR(err);
-  }
+  GET_WAIT_LIST_AND_EVENT(5)
 
   CHECK_ERR(::clEnqueueFillImage(
     q->getRaw(),image->getRaw(),fill_color,
     origin,region,
     (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-    event ? &event : nullptr));
+    eventPtr));
 
-  if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-  }
+  RETURN_EVENT
 }
 #endif
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -979,34 +813,15 @@ NAN_METHOD(EnqueueCopyImage) {
   for(i=0;i<max(arr->Length(),2u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
-  std::vector<NoCLEvent *> cl_events;
-  if (ARG_EXISTS(6)) {
-    Local<Array> js_events = Local<Array>::Cast(info[6]);
-    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-  }
-
-  cl_event event=nullptr;
-  if(ARG_EXISTS(7) && info[7]->BooleanValue()) {
-    cl_context ctx;
-    cl_int err = 0;
-    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
-    CHECK_ERR(err);
-
-    event = ::clCreateUserEvent(ctx, &err);
-    CHECK_ERR(err);
-  }
+  GET_WAIT_LIST_AND_EVENT(6)
 
   CHECK_ERR(::clEnqueueCopyImage(
     q->getRaw(),src_image->getRaw(),dst_image->getRaw(),
     src_origin,dst_origin, region,
     (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-    event ? &event : nullptr));
+    eventPtr));
 
-  if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-  }
+  RETURN_EVENT
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -1044,34 +859,15 @@ NAN_METHOD(EnqueueCopyImageToBuffer) {
 
   size_t dst_offset = info[5]->Uint32Value();
 
-  std::vector<NoCLEvent *> cl_events;
-  if (ARG_EXISTS(6)) {
-    Local<Array> js_events = Local<Array>::Cast(info[6]);
-    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-  }
-
-  cl_event event=nullptr;
-  if(ARG_EXISTS(7) && info[7]->BooleanValue()) {
-    cl_context ctx;
-    cl_int err = 0;
-    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
-    CHECK_ERR(err);
-
-    event = ::clCreateUserEvent(ctx, &err);
-    CHECK_ERR(err);
-  }
+  GET_WAIT_LIST_AND_EVENT(6)
 
   CHECK_ERR(::clEnqueueCopyImageToBuffer(
     q->getRaw(),src_image->getRaw(),dst_buffer->getRaw(),
     src_origin, region, dst_offset,
     (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-    event ? &event : nullptr));
+    eventPtr));
 
-  if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-  }
+  RETURN_EVENT
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -1110,34 +906,15 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
   for(i=0;i<max(arr->Length(),2u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
-  std::vector<NoCLEvent *> cl_events;
-  if(ARG_EXISTS(6)) {
-    Local<Array> js_events = Local<Array>::Cast(info[7]);
-    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-  }
-
-  cl_event event=nullptr;
-  if(ARG_EXISTS(7) && info[7]->BooleanValue()) {
-    cl_context ctx;
-    cl_int err = 0;
-    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
-    CHECK_ERR(err);
-
-    event = ::clCreateUserEvent(ctx, &err);
-    CHECK_ERR(err);
-  }
+  GET_WAIT_LIST_AND_EVENT(6)
 
   CHECK_ERR(::clEnqueueCopyBufferToImage(
     q->getRaw(),src_buffer->getRaw(),dst_image->getRaw(),
     src_offset, dst_origin, region,
     (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-    event ? &event : nullptr));
+    eventPtr));
 
-  if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-  }
+  RETURN_EVENT
 }
 
 // static std::unordered_map<void*,int> mapPointers;
@@ -1175,18 +952,10 @@ NAN_METHOD(EnqueueMapBuffer) {
   size_t offset = info[4]->Uint32Value();
   size_t size = info[5]->Uint32Value();
 
-  std::vector<NoCLEvent *> cl_events;
-  if(ARG_EXISTS(6)) {
-    Local<Array> js_events = Local<Array>::Cast(info[6]);
-    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-  }
+  GET_WAIT_LIST_AND_EVENT(6)
+
   void* mPtr = nullptr;
   cl_int err;
-  cl_event* eventPtr = nullptr;
-  cl_event event;
-
-  if(ARG_EXISTS(7) && info[7]->BooleanValue())
-      eventPtr = &event;
 
   mPtr = clEnqueueMapBuffer(cq->getRaw(),mem->getRaw(),
                             blocking_map,map_flags, offset,
@@ -1209,7 +978,6 @@ NAN_METHOD(EnqueueMapBuffer) {
     // CHECK_ERR(err)
   }
   info.GetReturnValue().Set(scope.Escape(obj));
-
 }
 
 // extern CL_API_ENTRY void * CL_API_CALL
@@ -1251,20 +1019,10 @@ NAN_METHOD(EnqueueMapImage) {
 
   std::unique_ptr<size_t[]> image_slice_pitch(new size_t[region[2]]);
 
-  std::vector<NoCLEvent *> cl_events;
-  if(ARG_EXISTS(6)) {
-    Local<Array> js_events = Local<Array>::Cast(info[6]);
-    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-  }
-
+  GET_WAIT_LIST_AND_EVENT(6)
 
   void* mPtr = nullptr;
   cl_int err;
-  cl_event* eventPtr = nullptr;
-  cl_event event;
-
-  if(ARG_EXISTS(7) && info[7]->BooleanValue())
-      eventPtr = &event;
 
   mPtr = clEnqueueMapImage (cq->getRaw(),mem->getRaw(),
                               blocking_map,map_flags, origin,
@@ -1326,7 +1084,7 @@ NAN_METHOD(EnqueueMapImage) {
 NAN_METHOD(EnqueueUnmapMemObject) {
   Nan::HandleScope scope;
   REQ_ARGS(3);
-  NOCL_UNWRAP(cq, NoCLCommandQueue, info[0]);
+  NOCL_UNWRAP(q, NoCLCommandQueue, info[0]);
   NOCL_UNWRAP(mem, NoCLMem, info[1]);
 
   void *ptr=nullptr;
@@ -1341,28 +1099,14 @@ NAN_METHOD(EnqueueUnmapMemObject) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  std::vector<NoCLEvent *> cl_events;
-  if(ARG_EXISTS(3)) {
-    Local<Array> js_events = Local<Array>::Cast(info[3]);
-    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-  }
+  GET_WAIT_LIST_AND_EVENT(3)
 
   cl_int err;
-
-  if(ARG_EXISTS(4) && info[4]->BooleanValue()) {
-    cl_event event;
-    err = clEnqueueUnmapMemObject(cq->getRaw(),mem->getRaw(),ptr,
-      (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),&event);
-    CHECK_ERR(err)
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-    return;
-  }
-
-  err = clEnqueueUnmapMemObject(cq->getRaw(),mem->getRaw(),ptr,
-    (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),nullptr);
+  err = clEnqueueUnmapMemObject(q->getRaw(),mem->getRaw(),ptr,
+    (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent), eventPtr);
   CHECK_ERR(err)
 
-  info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
+  RETURN_EVENT
  }
 
 #ifdef CL_VERSION_1_2
@@ -1398,34 +1142,15 @@ NAN_METHOD(EnqueueMigrateMemObjects) {
 
   cl_mem_migration_flags flags=info[2]->Uint32Value();
 
-  std::vector<NoCLEvent *> cl_events;
-  if(ARG_EXISTS(3)) {
-    Local<Array> js_events = Local<Array>::Cast(info[3]);
-    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-  }
-
-  cl_event event=nullptr;
-  if(ARG_EXISTS(4) && info[4]->BooleanValue()) {
-    cl_context ctx;
-    cl_int err = 0;
-    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
-    CHECK_ERR(err);
-
-    event = ::clCreateUserEvent(ctx, &err);
-    CHECK_ERR(err);
-  }
+  GET_WAIT_LIST_AND_EVENT(3)
 
   CHECK_ERR(::clEnqueueMigrateMemObjects(
     q->getRaw(),num_mem_objects,
     mem_objects.get(),flags,
     (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-    event ? &event : nullptr));
+    eventPtr));
 
-  if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-  }
+  RETURN_EVENT
 }
 #endif
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -1493,22 +1218,7 @@ NAN_METHOD(EnqueueNDRangeKernel) {
     }
   }
 
-  std::vector<NoCLEvent *> cl_events;
-  if (ARG_EXISTS(6)) {
-    Local<Array> js_events = Local<Array>::Cast(info[6]);
-    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-  }
-
-  cl_event event=nullptr;
-  if(ARG_EXISTS(7) && info[7]->BooleanValue()) {
-    cl_context ctx;
-    cl_int err = 0;
-    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
-    CHECK_ERR(err);
-
-    event = ::clCreateUserEvent(ctx, &err);
-    CHECK_ERR(err);
-  }
+  GET_WAIT_LIST_AND_EVENT(6)
 
   CHECK_ERR(::clEnqueueNDRangeKernel(
     q->getRaw(),
@@ -1518,14 +1228,10 @@ NAN_METHOD(EnqueueNDRangeKernel) {
     cl_work_global.size() ? cl_work_global.data() : nullptr,
     cl_work_local.size() ? cl_work_local.data() : nullptr,
     (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-    event ? &event : nullptr
+    eventPtr
   ));
 
-  if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-  }
+  RETURN_EVENT
 }
 
 #ifndef CL_VERSION_2_0
@@ -1546,34 +1252,14 @@ NAN_METHOD(EnqueueTask) {
   NOCL_UNWRAP(k, NoCLKernel, info[1]);
 
 
-  std::vector<NoCLEvent *> cl_events;
-  Local<Array> js_events;
-  if (ARG_EXISTS(2)) {
-    js_events = Local<Array>::Cast(info[2]);
-    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-  }
-
-  cl_event event=nullptr;
-  if(ARG_EXISTS(3) && info[3]->BooleanValue()) {
-    cl_context ctx;
-    cl_int err = 0;
-    err = ::clGetCommandQueueInfo(q->getRaw(), CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
-    CHECK_ERR(err);
-
-    event = ::clCreateUserEvent(ctx, &err);
-    CHECK_ERR(err);
-  }
+  GET_WAIT_LIST_AND_EVENT(2)
 
   CHECK_ERR(::clEnqueueTask(
     q->getRaw(),k->getRaw(),
     cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-    event ? &event : nullptr));
+    eventPtr));
 
-  if (event != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-  }
+  RETURN_EVENT
 }
 #endif
 
@@ -1613,26 +1299,13 @@ NAN_METHOD(EnqueueMarkerWithWaitList) {
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, info[0]);
 
-  std::vector<NoCLEvent *> cl_events;
-  Local<Array> js_events = Local<Array>::Cast(info[1]);
-  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-
-
-  if(ARG_EXISTS(2) && info[2]->BooleanValue()) {
-    cl_event event;
-    CHECK_ERR(::clEnqueueMarkerWithWaitList(
-        q->getRaw(),
-      (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-        &event));
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-    return;
-  }
+  GET_WAIT_LIST_AND_EVENT(1)
 
   CHECK_ERR(::clEnqueueMarkerWithWaitList(
     q->getRaw(),
-    (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),nullptr));
+    (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent), eventPtr));
 
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
+  RETURN_EVENT
 }
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -1641,32 +1314,19 @@ NAN_METHOD(EnqueueMarkerWithWaitList) {
 //                              const cl_event *  /* event_wait_list */,
 //                              cl_event *        /* event */) CL_API_SUFFIX__VERSION_1_2;
 NAN_METHOD(EnqueueBarrierWithWaitList) {
-    Nan::HandleScope scope;
-    REQ_ARGS(2);
+  Nan::HandleScope scope;
+  REQ_ARGS(2);
 
-    // Arg 0
-    NOCL_UNWRAP(q, NoCLCommandQueue, info[0]);
+  // Arg 0
+  NOCL_UNWRAP(q, NoCLCommandQueue, info[0]);
 
-    std::vector<NoCLEvent *> cl_events;
-    Local<Array> js_events = Local<Array>::Cast(info[1]);
-    NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
+  GET_WAIT_LIST_AND_EVENT(1)
 
+  CHECK_ERR(::clEnqueueBarrierWithWaitList(
+    q->getRaw(),
+    (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent), eventPtr));
 
-    if(ARG_EXISTS(2) && info[2]->BooleanValue()) {
-      cl_event event;
-      CHECK_ERR(::clEnqueueBarrierWithWaitList(
-          q->getRaw(),
-        (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),
-          &event));
-      info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-      return;
-    }
-
-    CHECK_ERR(::clEnqueueBarrierWithWaitList(
-      q->getRaw(),
-      (cl_uint)cl_events.size(), NOCL_TO_CL_ARRAY(cl_events, NoCLEvent),nullptr));
-
-      info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
+  RETURN_EVENT
 }
 
 // // Deprecated OpenCL 1.1 APIs
@@ -1681,16 +1341,11 @@ NAN_METHOD(EnqueueMarker) {
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, info[0]);
 
-  if(ARG_EXISTS(1) && info[1]->BooleanValue()) {
-    cl_event event;
+  GET_EVENT_FLAG(1)
 
-    CHECK_ERR(::clEnqueueMarker(q->getRaw(), &event));
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-    return;
-  }
+  CHECK_ERR(::clEnqueueMarker(q->getRaw(), eventPtr));
 
-  CHECK_ERR(::clEnqueueMarker(q->getRaw(), nullptr));
-  info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
+  RETURN_EVENT
 }
 
 // extern CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED cl_int CL_API_CALL
@@ -1704,12 +1359,7 @@ NAN_METHOD(EnqueueWaitForEvents) {
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, info[0]);
 
-  std::vector<NoCLEvent *> cl_events;
-  Local<Array> js_events = Local<Array>::Cast(info[1]);
-  NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
-  std::vector<cl_event> events;
-  for(unsigned int cpt = 0;cpt<cl_events.size();++cpt)
-      events.push_back((cl_events[cpt])->getRaw());
+  GET_WAIT_LIST(1)
 
   CHECK_ERR(::clEnqueueWaitForEvents(q->getRaw(),
         cl_events.size(),cl_events.size() ?  events.data(): nullptr));
