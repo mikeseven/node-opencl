@@ -1034,8 +1034,10 @@ NAN_METHOD(EnqueueMapImage) {
 
   CHECK_ERR(err)
 
-  size_t size = image_row_pitch*region[1]*region[2];
-
+  size_t size = image_row_pitch * region[1];
+  if (image_slice_pitch) {
+    size = image_slice_pitch * region[2];
+  }
   Local<v8::ArrayBuffer> obj = v8::ArrayBuffer::New(v8::Isolate::GetCurrent(), mPtr, size);
 
   obj->Set(JS_STR("image_row_pitch"), Nan::New(static_cast<int>(image_row_pitch)));
