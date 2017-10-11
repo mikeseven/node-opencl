@@ -305,13 +305,13 @@ NAN_METHOD(EnqueueReadBufferRect) {
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       buffer_offset[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(info[4]);
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       host_offset[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(info[5]);
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
   size_t buffer_row_pitch = info[6]->Uint32Value();
@@ -421,13 +421,13 @@ NAN_METHOD(EnqueueWriteBufferRect) {
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       buffer_offset[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(info[4]);
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       host_offset[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(info[5]);
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
   size_t buffer_row_pitch = info[6]->Uint32Value();
@@ -583,13 +583,13 @@ NAN_METHOD(EnqueueCopyBufferRect) {
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       src_origin[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(info[4]);
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       dst_origin[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(info[5]);
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       region[i]=arr->Get(i)->Uint32Value();
   size_t src_row_pitch = info[6]->Uint32Value();
   size_t src_slice_pitch = info[7]->Uint32Value();
@@ -636,10 +636,10 @@ NAN_METHOD(EnqueueReadImage) {
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       origin[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(info[4]);
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
   size_t row_pitch = info[5]->Uint32Value();
@@ -696,10 +696,10 @@ NAN_METHOD(EnqueueWriteImage) {
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       origin[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(info[4]);
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
   size_t row_pitch = info[5]->Uint32Value();
@@ -759,10 +759,10 @@ NAN_METHOD(EnqueueFillImage) {
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       origin[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(info[4]);
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
   GET_WAIT_LIST_AND_EVENT(5)
@@ -804,13 +804,13 @@ NAN_METHOD(EnqueueCopyImage) {
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       src_origin[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(info[4]);
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       dst_origin[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(info[5]);
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
   GET_WAIT_LIST_AND_EVENT(6)
@@ -851,10 +851,10 @@ NAN_METHOD(EnqueueCopyImageToBuffer) {
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       src_origin[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(info[4]);
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
   size_t dst_offset = info[5]->Uint32Value();
@@ -900,10 +900,10 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
   Local<Array> arr= Local<Array>::Cast(info[4]);
   uint32_t i;
 
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       dst_origin[i]=arr->Get(i)->Uint32Value();
   arr= Local<Array>::Cast(info[5]);
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       region[i]=arr->Get(i)->Uint32Value();
 
   GET_WAIT_LIST_AND_EVENT(6)
@@ -1009,10 +1009,10 @@ NAN_METHOD(EnqueueMapImage) {
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(info[4]);
   uint32_t i;
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
     origin[i]=arr->Get(i)->Int32Value();
   arr= Local<Array>::Cast(info[5]);
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
     region[i]=arr->Get(i)->Int32Value();
 
   size_t image_row_pitch;
