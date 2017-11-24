@@ -4,12 +4,12 @@ var cl = require("../lib/opencl");
 var memwatch = require('memwatch-next');
 
 process.on('exit', function dump() {
-  global.gc();
+  memwatch.gc();
   console.info("Exit.");
 });
 
 memwatch.on('stats', function(stats) {
-  console.info("mem: "+stats.estimated_base+" B trend: "+(stats.usage_trend>0 ? '+' : (stats.usage_trend>0 ? '-' : '=')));
+  console.info("mem: "+stats.estimated_base+" trend: "+(stats.usage_trend>0 ? '+' : (stats.usage_trend>0 ? '-' : '=')));
 });
 
 var i=0;
@@ -17,12 +17,13 @@ var i=0;
 var ctx = cl.createContextFromType(
  [cl.CONTEXT_PLATFORM, cl.getPlatformIDs()[0]], cl.DEVICE_TYPE_GPU, null, null);
 
-global.gc();
+memwatch.gc();
 while (i++ < 1000) {
   var ev = cl.createUserEvent(ctx);
   cl.releaseEvent(ev);
-  global.gc();
+  memwatch.gc();
 }
+memwatch.gc();
 
 // === another test ===
 //
