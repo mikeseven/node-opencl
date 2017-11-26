@@ -385,6 +385,18 @@ NAN_METHOD(setKernelArgSVMPointer) {
 
 #endif
 
+#ifdef CL_VERSION_2_1
+// extern CL_API_ENTRY cl_int CL_API_CALL
+// clEnqueueSVMMigrateMem(cl_command_queue         /* command_queue */,
+//                        cl_uint                  /* num_svm_pointers */,
+//                        const void **            /* svm_pointers */,
+//                        const size_t *           /* sizes */,
+//                        cl_mem_migration_flags   /* flags */,
+//                        cl_uint                  /* num_events_in_wait_list */,
+//                        const cl_event *         /* event_wait_list */,
+//                        cl_event *               /* event */) CL_API_SUFFIX__VERSION_2_1;
+#endif
+
 namespace SVM {
 NAN_MODULE_INIT(init)
 {
@@ -397,6 +409,9 @@ NAN_MODULE_INIT(init)
   Nan::SetMethod(target, "enqueueSVMMemFill", enqueueSVMMemFill);
   Nan::SetMethod(target, "enqueueSVMUnmap", enqueueSVMUnmap);
   Nan::SetMethod(target, "setKernelArgSVMPointer", setKernelArgSVMPointer);
+#endif
+#ifdef CL_VERSION_2_1
+  // @TODO Nan::SetMethod(target, "enqueueSVMMigrateMem", EnqueueSVMMigrateMem);
 #endif
 }
 } // namespace Pipe

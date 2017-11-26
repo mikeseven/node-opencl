@@ -337,6 +337,17 @@ NAN_METHOD(ReleaseDevice) {
 }
 #endif
 
+#ifdef CL_VERSION_2_1
+// extern CL_API_ENTRY cl_int CL_API_CALL
+// clGetDeviceAndHostTimer(cl_device_id    /* device */,
+//                         cl_ulong*       /* device_timestamp */,
+//                         cl_ulong*       /* host_timestamp */) CL_API_SUFFIX__VERSION_2_1;
+
+// extern CL_API_ENTRY cl_int CL_API_CALL
+// clGetHostTimer(cl_device_id /* device */,
+//                cl_ulong *   /* host_timestamp */)  CL_API_SUFFIX__VERSION_2_1;
+#endif
+
 namespace Device {
 NAN_MODULE_INIT(init)
 {
@@ -346,6 +357,10 @@ NAN_MODULE_INIT(init)
   Nan::SetMethod(target, "createSubDevices", CreateSubDevices);
   Nan::SetMethod(target, "retainDevice", RetainDevice);
   Nan::SetMethod(target, "releaseDevice", ReleaseDevice);
+#endif
+#ifdef CL_VERSION_2_1
+  // @TODO Nan::SetMethod(target, "getDeviceAndHostTimer", GetDeviceAndHostTimer);
+  // @TODO Nan::SetMethod(target, "getHostTimer", GetHostTimer);
 #endif
 }
 } // namespace Device

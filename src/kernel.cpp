@@ -512,6 +512,22 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
 //                     const void *         /* param_value */) CL_API_SUFFIX__VERSION_2_0;
 #endif
 
+#ifdef CL_VERSION_2_1
+// extern CL_API_ENTRY cl_kernel CL_API_CALL
+// clCloneKernel(cl_kernel      source_kernel ,
+//               cl_int*       /* errcode_ret */) CL_API_SUFFIX__VERSION_2_1;
+
+// extern CL_API_ENTRY cl_int CL_API_CALL
+// clGetKernelSubGroupInfo(cl_kernel                   /* kernel */,
+//                         cl_device_id                /* device */,
+//                         cl_kernel_sub_group_info    /* param_name */,
+//                         size_t                      /* input_value_size */,
+//                         const void*                 /*input_value */,
+//                         size_t                      /* param_value_size */,
+//                         void*                       /* param_value */,
+//                         size_t*                     /* param_value_size_ret */ ) CL_API_SUFFIX__VERSION_2_1;
+#endif
+
 namespace Kernel {
 NAN_MODULE_INIT(init)
 {
@@ -521,10 +537,16 @@ NAN_MODULE_INIT(init)
   Nan::SetMethod(target, "releaseKernel", ReleaseKernel);
   Nan::SetMethod(target, "setKernelArg", SetKernelArg);
   Nan::SetMethod(target, "getKernelInfo", GetKernelInfo);
-#ifdef CL_VERSION_1_2
   Nan::SetMethod(target, "getKernelArgInfo", GetKernelArgInfo);
-#endif
   Nan::SetMethod(target, "getKernelWorkGroupInfo", GetKernelWorkGroupInfo);
+#ifdef CL_VERSION_2_0
+  // @TODO Nan::SetMethod(target, "setKernelArgSVMPointer", SetKernelArgSVMPointer);
+  // @TODO Nan::SetMethod(target, "setKernelExecInfo", SetKernelExecInfo);
+#endif
+#ifdef CL_VERSION_2_1
+  // @TODO Nan::SetMethod(target, "cloneKernel", CloneKernel);
+  // @TODO Nan::SetMethod(target, "getKernelSubGroupInfo", GetKernelSubGroupInfo);
+#endif
 }
 } //namespace Kernel
 
