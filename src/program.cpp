@@ -642,6 +642,19 @@ NAN_METHOD(GetProgramBuildInfo) {
 //                      cl_int*        /* errcode_ret */) CL_API_SUFFIX__VERSION_2_1;
 #endif
 
+#ifdef CL_VERSION_2_2
+// extern CL_API_ENTRY cl_int CL_API_CALL
+// clSetProgramReleaseCallback(cl_program          /* program */,
+//                             void (CL_CALLBACK * /* pfn_notify */)(cl_program /* program */, void * /* user_data */),
+//                             void *              /* user_data */) CL_API_SUFFIX__VERSION_2_2;
+
+// extern CL_API_ENTRY cl_int CL_API_CALL
+// clSetProgramSpecializationConstant(cl_program  /* program */,
+//                                    cl_uint     /* spec_id */,
+//                                    size_t      /* spec_size */,
+//                                    const void* /* spec_value */) CL_API_SUFFIX__VERSION_2_2;
+#endif
+
 namespace Program {
 NAN_MODULE_INIT(init)
 {
@@ -664,6 +677,10 @@ NAN_MODULE_INIT(init)
   Nan::SetMethod(target, "getProgramBuildInfo", GetProgramBuildInfo);
 #ifdef CL_VERSION_2_1
   // @TODO Nan::SetMethod(target, "createProgramWithIL", CreateProgramWithIL);
+#endif
+#ifdef CL_VERSION_2_2
+  // @TODO Nan::SetMethod(target, "setProgramReleaseCallback", SetProgramReleaseCallback);
+  // @TODO Nan::SetMethod(target, "setProgramSpecializationConstant", SetProgramSpecializationConstant);
 #endif
 }
 } // namespace Program
