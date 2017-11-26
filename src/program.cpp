@@ -634,6 +634,14 @@ NAN_METHOD(GetProgramBuildInfo) {
   THROW_ERR(CL_INVALID_VALUE);
 }
 
+#ifdef CL_VERSION_2_1
+// extern CL_API_ENTRY cl_program CL_API_CALL
+// clCreateProgramWithIL(cl_context    /* context */,
+//                      const void*    /* il */,
+//                      size_t         /* length */,
+//                      cl_int*        /* errcode_ret */) CL_API_SUFFIX__VERSION_2_1;
+#endif
+
 namespace Program {
 NAN_MODULE_INIT(init)
 {
@@ -654,6 +662,9 @@ NAN_MODULE_INIT(init)
 #endif
   Nan::SetMethod(target, "getProgramInfo", GetProgramInfo);
   Nan::SetMethod(target, "getProgramBuildInfo", GetProgramBuildInfo);
+#ifdef CL_VERSION_2_1
+  // @TODO Nan::SetMethod(target, "createProgramWithIL", CreateProgramWithIL);
+#endif
 }
 } // namespace Program
 

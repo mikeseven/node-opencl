@@ -227,14 +227,28 @@ NAN_METHOD(GetContextInfo) {
 
 // extern CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED cl_int CL_API_CALL
 // clUnloadCompiler(void) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+
+#ifdef CL_VERSION_2_1
+// extern CL_API_ENTRY cl_int CL_API_CALL
+// clSetDefaultDeviceCommandQueue(cl_context           /* context */,
+//                                cl_device_id         /* device */,
+//                                cl_command_queue     /* command_queue */) CL_API_SUFFIX__VERSION_2_1;
+#endif
+
 namespace Context {
 NAN_MODULE_INIT(init)
 {
-  Nan::SetMethod(target, "createContext", CreateContext);
+#ifdef CL_VERSION_2_0
   Nan::SetMethod(target, "createContextFromType", CreateContextFromType);
+#else
+  Nan::SetMethod(target, "createContext", CreateContext);
+#endif
   Nan::SetMethod(target, "retainContext", RetainContext);
   Nan::SetMethod(target, "releaseContext", ReleaseContext);
   Nan::SetMethod(target, "getContextInfo", GetContextInfo);
+#ifdef CL_VERSION_2_1
+  // @TODO Nan::SetMethod(target, "setDefaultDeviceCommandQueue", SetDefaultDeviceCommandQueue);
+#endif
 }
 } // namespace Context
 

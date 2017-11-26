@@ -104,7 +104,7 @@ NAN_METHOD(CreateCommandQueueWithProperties) {
     }
   }
   cl_properties.push_back(0);
-  
+
   cl_int err;
   cl_command_queue q = ::clCreateCommandQueueWithProperties(
     context->getRaw(),
@@ -1435,6 +1435,19 @@ NAN_METHOD(EnqueueBarrier) {
 //                   cl_uint           /* num_events_in_wait_list */,
 //                   const cl_event *  /* event_wait_list */,
 //                   cl_event *        /* event */) CL_API_SUFFIX__VERSION_2_0;
+#endif
+
+#ifdef CL_VERSION_2_1
+// moved to svm.cpp
+// extern CL_API_ENTRY cl_int CL_API_CALL
+// clEnqueueSVMMigrateMem(cl_command_queue         /* command_queue */,
+//                        cl_uint                  /* num_svm_pointers */,
+//                        const void **            /* svm_pointers */,
+//                        const size_t *           /* sizes */,
+//                        cl_mem_migration_flags   /* flags */,
+//                        cl_uint                  /* num_events_in_wait_list */,
+//                        const cl_event *         /* event_wait_list */,
+//                        cl_event *               /* event */) CL_API_SUFFIX__VERSION_2_1;
 #endif
 
 namespace CommandQueue {
