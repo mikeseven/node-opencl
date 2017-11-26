@@ -34,7 +34,7 @@ namespace Types {
 NAN_METHOD(releaseAll){
   // force GC to trigger release of lingering OpenCL objects
   static const int idle_time_in_ms = 5;
-  v8::Isolate::GetCurrent()->IdleNotification(idle_time_in_ms);
+  Nan::IdleNotification(idle_time_in_ms);
 
   // be careful with the order of the releases: could segfault if the order is not good
   // on some drivers
