@@ -125,14 +125,14 @@ public:
       m_converters[NAME] = f;                                                   \
      }
 
-    CONVERT_NUMBER("char", cl_char, IsInt32, ToInt32()->Value);
-    CONVERT_NUMBER("uchar", cl_uchar, IsInt32, ToUint32()->Value);
-    CONVERT_NUMBER("short", cl_short, IsInt32, ToInt32()->Value);
-    CONVERT_NUMBER("ushort", cl_ushort, IsInt32, ToUint32()->Value);
-    CONVERT_NUMBER("int", cl_int , IsInt32, ToInt32()->Value);
-    CONVERT_NUMBER("uint", cl_uint, IsUint32, ToUint32()->Value);
-    CONVERT_NUMBER("long", cl_long, IsNumber, ToInteger()->Value);
-    CONVERT_NUMBER("ulong", cl_ulong, IsNumber, ToInteger()->Value);
+    CONVERT_NUMBER("char", cl_char, IsInt32, Int32Value);
+    CONVERT_NUMBER("uchar", cl_uchar, IsInt32, Uint32Value);
+    CONVERT_NUMBER("short", cl_short, IsInt32, Int32Value);
+    CONVERT_NUMBER("ushort", cl_ushort, IsInt32, Uint32Value);
+    CONVERT_NUMBER("int", cl_int , IsInt32, Int32Value);
+    CONVERT_NUMBER("uint", cl_uint, IsUint32, Uint32Value);
+    CONVERT_NUMBER("long", cl_long, IsNumber, IntegerValue);
+    CONVERT_NUMBER("ulong", cl_ulong, IsNumber, IntegerValue);
     CONVERT_NUMBER("float", cl_float, IsNumber, NumberValue);
     CONVERT_NUMBER("double", cl_double, IsNumber, NumberValue);
     CONVERT_NUMBER("half", cl_half, IsNumber, NumberValue);
@@ -178,14 +178,14 @@ public:
       CONVERT_VECT(NAME, TYPE, 8, PRED, COND);\
       CONVERT_VECT(NAME, TYPE, 16, PRED, COND);
 
-    CONVERT_VECTS("char", cl_char, IsInt32, ToInt32()->Value);
-    CONVERT_VECTS("uchar", cl_uchar, IsInt32, ToUint32()->Value);
-    CONVERT_VECTS("short", cl_short, IsInt32, ToInt32()->Value);
-    CONVERT_VECTS("ushort", cl_ushort, IsInt32, ToUint32()->Value);
-    CONVERT_VECTS("int", cl_int, IsInt32, ToInt32()->Value);
-    CONVERT_VECTS("uint", cl_uint, IsUint32, ToUint32()->Value);
-    CONVERT_VECTS("long", cl_long, IsNumber, ToInteger()->Value);
-    CONVERT_VECTS("ulong", cl_ulong, IsNumber, ToInteger()->Value);
+    CONVERT_VECTS("char", cl_char, IsInt32, Int32Value);
+    CONVERT_VECTS("uchar", cl_uchar, IsInt32, Int32Value);
+    CONVERT_VECTS("short", cl_short, IsInt32, Int32Value);
+    CONVERT_VECTS("ushort", cl_ushort, IsInt32, Int32Value);
+    CONVERT_VECTS("int", cl_int, IsInt32, Int32Value);
+    CONVERT_VECTS("uint", cl_uint, IsUint32, Uint32Value);
+    CONVERT_VECTS("long", cl_long, IsNumber, IntegerValue);
+    CONVERT_VECTS("ulong", cl_ulong, IsNumber, IntegerValue);
     CONVERT_VECTS("float", cl_float, IsNumber, NumberValue);
     CONVERT_VECTS("double", cl_double, IsNumber, NumberValue);
     CONVERT_VECTS("half", cl_half, IsNumber, NumberValue);
