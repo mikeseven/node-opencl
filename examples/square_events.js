@@ -3,8 +3,17 @@ var fs = require("fs");
 
 var Square = function() {
 
-  var ctx = cl.createContextFromType(
-    [cl.CONTEXT_PLATFORM, cl.getPlatformIDs()[0]], cl.DEVICE_TYPE_ALL, null, null);
+  var ctx;
+  if (cl.createContextFromType !== undefined) {
+    ctx = cl.createContextFromType(
+      [cl.CONTEXT_PLATFORM, cl.getPlatformIDs()[0]], cl.DEVICE_TYPE_ALL, null, null);
+  }
+  else {
+    var platform=cl.getPlatformIDs()[0];
+    ctx = cl.createContext(
+      [cl.CONTEXT_PLATFORM, platform],
+      [cl.getDeviceIDs(platform, cl.DEVICE_TYPE_ALL)[0]]);
+  }
 
   var NVALUES = 100;
   var inputs = new Buffer(NVALUES * 4);
