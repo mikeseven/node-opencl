@@ -137,7 +137,15 @@ describe("Context", function () {
     testForType("CONTEXT_PROPERTIES", assert.isArray.bind(assert));
     testForType("CONTEXT_NUM_DEVICES", assert.isNumber.bind(assert));
 
-    var ctx = cl.createContextFromType(properties, cl.DEVICE_TYPE_ALL, null, null);
+    var ctx;
+    if (cl.createContextFromType !== undefined) {
+      ctx = cl.createContextFromType(properties, cl.DEVICE_TYPE_ALL, null, null);
+    }
+    else {
+      ctx = cl.createContext(
+        properties,
+        cl.getDeviceIDs(platform, cl.DEVICE_TYPE_ALL));
+    }
 
     it("should return at least one device", function () {
       var devices = cl.getContextInfo(ctx, cl.CONTEXT_DEVICES);
@@ -160,7 +168,15 @@ describe("Context", function () {
     var properties = [
       cl.CONTEXT_PLATFORM, platform
     ];
-    var ctx = cl.createContextFromType(properties, cl.DEVICE_TYPE_ALL, null, null);
+    var ctx;
+    if (cl.createContextFromType !== undefined) {
+      ctx = cl.createContextFromType(properties, cl.DEVICE_TYPE_ALL, null, null);
+    }
+    else {
+      ctx = cl.createContext(
+        properties,
+        cl.getDeviceIDs(platform, cl.DEVICE_TYPE_ALL));
+    }
 
     it("should have incremented ref count after call", function () {
       var before = cl.getContextInfo(ctx, cl.CONTEXT_REFERENCE_COUNT);
@@ -174,7 +190,15 @@ describe("Context", function () {
     var properties = [
       cl.CONTEXT_PLATFORM, platform
     ];
-    var ctx = cl.createContextFromType(properties, cl.DEVICE_TYPE_ALL, null, null);
+    var ctx;
+    if (cl.createContextFromType !== undefined) {
+      ctx = cl.createContextFromType(properties, cl.DEVICE_TYPE_ALL, null, null);
+    }
+    else {
+      ctx = cl.createContext(
+        properties,
+        cl.getDeviceIDs(platform, cl.DEVICE_TYPE_ALL));
+    }
 
     it("should have decremented ref count after call", function () {
 
