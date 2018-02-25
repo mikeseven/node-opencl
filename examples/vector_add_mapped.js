@@ -1,8 +1,8 @@
 /*
 * @Author: mikael
 * @Date:   2015-09-21 22:30:37
-* @Last Modified by:   mikael
-* @Last Modified time: 2015-09-22 11:22:13
+* @Last Modified by:   Mikael Bourges-Sevenier
+* @Last Modified time: 2018-02-24 19:38:36
 */
 
 'use strict';
@@ -23,10 +23,29 @@ function VectorAdd() {
   }
 
   // create GPU context for this platform
-  var context = cl.createContextFromType(
+  var context;
+  if (cl.createContextFromType !== undefined) {
+    context = cl.createContextFromType(
     [cl.CONTEXT_PLATFORM, cl.getPlatformIDs()[0]],
     cl.DEVICE_TYPE_GPU,
     null, null);
+  }
+  else {
+    var platform=cl.getPlatformIDs()[0];
+    var devices=cl.getDeviceIDs(platform, cl.DEVICE_TYPE_GPU);
+    console.info("Found "+devices.length+" GPUs: ");
+    var device=devices[0];
+    for(var i=0;i<devices.length;i++) {
+      var name=cl.getDeviceInfo(devices[i],cl.DEVICE_NAME);
+      console.info("  Devices "+i+": "+name);
+      if(name.indexOf("Intel")==-1) // prefer discrete GPU
+        device=devices[i];
+    }
+
+    context = cl.createContext(
+      [cl.CONTEXT_PLATFORM, platform],
+      [device]);
+  }
 
   var devices=cl.getContextInfo(context, cl.CONTEXT_DEVICES);
   var device=devices[0];

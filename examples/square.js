@@ -6,8 +6,17 @@ var fs = require("fs");
 function Square() {
   console.log("Using Buffer");
 
-  var ctx = cl.createContextFromType(
-    [cl.CONTEXT_PLATFORM, cl.getPlatformIDs()[0]], cl.DEVICE_TYPE_ALL, null, null);
+  var ctx;
+  if (cl.createContextFromType !== undefined) {
+    ctx = cl.createContextFromType(
+      [cl.CONTEXT_PLATFORM, cl.getPlatformIDs()[0]], cl.DEVICE_TYPE_ALL, null, null);
+  }
+  else {
+    var platform=cl.getPlatformIDs()[0];
+    ctx = cl.createContext(
+      [cl.CONTEXT_PLATFORM, platform],
+      [cl.getDeviceIDs(platform, cl.DEVICE_TYPE_ALL)[0]]);
+  }
 
   var NVALUES = 100;
   var BYTES_PER_ELEMENT = Uint32Array.BYTES_PER_ELEMENT;
@@ -60,8 +69,17 @@ function Square() {
 function Square_TypedArray() {
   console.log("Using TypedArrays");
 
-  var ctx = cl.createContextFromType(
-    [cl.CONTEXT_PLATFORM, cl.getPlatformIDs()[0]], cl.DEVICE_TYPE_ALL, null, null);
+  var ctx;
+  if (cl.createContextFromType !== undefined) {
+    ctx = cl.createContextFromType(
+      [cl.CONTEXT_PLATFORM, cl.getPlatformIDs()[0]], cl.DEVICE_TYPE_ALL, null, null);
+  }
+  else {
+    var platform=cl.getPlatformIDs()[0];
+    ctx = cl.createContext(
+      [cl.CONTEXT_PLATFORM, platform],
+      [cl.getDeviceIDs(platform, cl.DEVICE_TYPE_ALL)[0]]);
+  }
 
   var NVALUES = 100;
   var BYTES_PER_ELEMENT = Uint32Array.BYTES_PER_ELEMENT;
