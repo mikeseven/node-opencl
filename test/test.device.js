@@ -6,6 +6,7 @@ var log = console.log;
 var skip = require("./utils/diagnostic");
 var U = require("./utils/utils.js");
 var versions = require("./utils/versions");
+var skip = require("./utils/diagnostic");
 
 describe("Device", function() {
   var platforms=cl.getPlatformIDs();
@@ -208,7 +209,7 @@ describe("Device", function() {
 
       if (num > 0)
       {
-        it("should return an array of sub-devices", function() {
+        skip().device("AMD").os("darwin").it("should return an array of sub-devices", function() {
 
           var subdevices;
           try {
@@ -223,14 +224,10 @@ describe("Device", function() {
 
         })
       }
-      else
-      {
-        console.log("The following vendor is not supported" + name);
-      }
 
       if (num>0)
       {
-        it("should return an array of sub-devices", function() {
+        skip().device("AMD").os("darwin").it("should return an array of sub-devices", function() {
 
           var subdevices;
           try {
@@ -245,15 +242,10 @@ describe("Device", function() {
 
         })
       }
-      else
-      {
-        console.log("The following vendor is not supported" + name);
-      }
 
       if (num > 0)
       {
-
-        it("should return an array of sub-devices", function() {
+        skip().device("AMD").os("darwin").it("should return an array of sub-devices", function() {
 
           var subdevices;
           try {
@@ -267,10 +259,6 @@ describe("Device", function() {
           }
 
         })
-      }
-      else
-      {
-        console.log("The following vendor is not supported" + name);
       }
 
       it("should throw cl.INVALID_DEVICE with device = null",function() {

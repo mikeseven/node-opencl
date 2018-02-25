@@ -3,15 +3,19 @@ var os = require("os");
 
 var vendors = {
   "Advanced Micro Devices, Inc." : "AMD",
+  "AMD" : "AMD",
   "Apple" : "Apple",
   "Intel" : "Intel",
+  "Intel Inc." : "Intel",
   "nVidia": "nVidia"
 };
 
 module.exports = function() {
   var _vendors = [];
   var _oss = [];
+  var _devices = [];
   var platformVendor = vendors[cl.getPlatformInfo(global.MAIN_PLATFORM_ID, cl.PLATFORM_VENDOR)];
+  var deviceVendor = vendors[cl.getDeviceInfo(global.MAIN_DEVICE_ID,cl.DEVICE_VENDOR)];
   var osName = os.platform();
 
   var match = function(){
@@ -23,12 +27,21 @@ module.exports = function() {
         return osName == o;
     });
 
-    return vmatch && omatch;
+    var dmatch = _devices.length == 0 || _devices.some(function (o) {
+        return deviceVendor == o;
+    });
+
+    return vmatch && omatch && dmatch;
   };
 
   var obj = {
     vendor: function (v) {
       _vendors.push(v);
+      return obj;
+    },
+
+    device: function (v) {
+      _devices.push(v);
       return obj;
     },
 
