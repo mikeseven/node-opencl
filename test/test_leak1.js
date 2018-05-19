@@ -18,12 +18,12 @@ var platform=cl.getPlatformIDs()[0];
 var properties=[cl.CONTEXT_PLATFORM, platform];
 var ctx;
 if (cl.createContextFromType !== undefined) {
-  ctx = cl.createContextFromType(properties, cl.DEVICE_TYPE_CPU, null, null);
+  ctx = cl.createContextFromType(properties, cl.DEVICE_TYPE_GPU, null, null);
 }
 else {
   ctx = cl.createContext(
     properties,
-    cl.getDeviceIDs(platform, cl.DEVICE_TYPE_CPU));
+    cl.getDeviceIDs(platform, cl.DEVICE_TYPE_GPU));
 }
 
 memwatch.gc();
