@@ -192,9 +192,16 @@ public:
   {
     SaveToPersistent(kIndex,  userData);
     SaveToPersistent(kIndex+1,noCLEvent);
+    this->async = new uv_async_t;
+    this->async->data = (void*) this;
+    uv_async_init(uv_default_loop(), this->async, (uv_async_cb) dispatched_async_uv_callback);
   }
 
-  ~NoCLEventWorker() {}
+  ~NoCLEventWorker() {
+    uv_close((uv_handle_t*)this->async, &delete_async_handle);
+  }
+
+  uv_async_t *async;
 
   void CallBackIsDone(int status) {
     mCLCallbackStatus = status;
@@ -210,27 +217,42 @@ public:
   // this function will be run inside the main event loop
   // so it is safe to use V8 again
   void HandleOKCallback () {
-    Nan::EscapableHandleScope  scope;
+    Nan::HandleScope scope;
 
     Local<Value> argv[] = {
       GetFromPersistent(kIndex),  // event
       JS_INT(mCLCallbackStatus),  // error status
       GetFromPersistent(kIndex+1) // userdata
     };
-    callback->Call(3,argv);
+    callback->Call(3, argv, async_resource);
   }
 
 protected:
   static const uint32_t kIndex = 0;
+  static void delete_async_handle(uv_handle_t *handle);
+  // The callback invoked by the call to uv_async_send() in notifyCB.
+  // Invoked on the main thread, so it's safe to call AsyncQueueWorker.
+  static void dispatched_async_uv_callback(uv_async_t*);
 
- private:
-   int mCLCallbackStatus = 0;
+private:
+  int mCLCallbackStatus = 0;
 };
 
+void NoCLEventWorker::delete_async_handle(uv_handle_t *handle) {
+  delete (uv_async_t *) handle;
+}
+
+void NoCLEventWorker::dispatched_async_uv_callback(uv_async_t *req) {
+  NoCLEventWorker* asyncCB = static_cast<NoCLEventWorker*>(req->data);
+  AsyncQueueWorker(asyncCB);
+}
+
+// callback invoked off the main thread by clSetEventCallback
 void CL_CALLBACK notifyCB (cl_event event, cl_int event_command_exec_status, void *user_data) {
   NoCLEventWorker* asyncCB = static_cast<NoCLEventWorker*>(user_data);
   asyncCB->CallBackIsDone(event_command_exec_status);
-  AsyncQueueWorker(asyncCB);
+  // send a message to the main thread to safely invoke the JS callback
+  uv_async_send(asyncCB->async);
 }
 
 NAN_METHOD(SetEventCallback)
