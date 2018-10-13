@@ -69,6 +69,23 @@ Please note that while node-gyp should work for compilation, it is possible that
 
 You need to update your path in order to to get AMD APP SDK's OpenCL.dll first in path resolution order.
 
+## Android / Termux
+
+Install Termux (https://termux.com)
+
+Install Termux Packages
+- pkg install clang lldb lldb-dev liblldb libuv-dev
+- pkg install nodejs-lts nodejs-lts-dev
+
+Install OpenCL headers and libraries
+- Copy libOpenCL.so to /data/data/com.termux/files/usr/lib
+- Copy opencl header files to /data/data/com.termux/files/usr/include/CL
+
+npm install
+
+When running tests and examples, it may be necessary to set LD_LIBRARY_PATH
+- LD_LIBRARY_PATH=/system/lib64:$LD_LIBRARY_PATH
+
 # Usage
 
 For now you can simply require this project and call native-like functions on the global object returned.

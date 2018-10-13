@@ -1,5 +1,6 @@
 #include "program.h"
 #include "types.h"
+#include <uv.h>
 #include <vector>
 #include "nanextension.h"
 
@@ -156,14 +157,28 @@ NAN_METHOD(ReleaseProgram) {
   info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
 }
 
+static void WorkAsync(uv_work_t *req);
+static void WorkAsyncComplete(uv_work_t *req,int status);
+
+
 class NoCLProgramWorker : public AsyncWorker
 {
 public:
-  NoCLProgramWorker(Callback* callback, const v8::Local<v8::Object> &userData,const v8::Local<v8::Object> &noCLProgram) :
+  uv_work_t _request;
+  uv_sem_t _sem_work;
+  
+public:
+  NoCLProgramWorker(Callback* callback, const v8::Local<v8::Value> &userData,const v8::Local<v8::Value> &noCLProgram) :
   AsyncWorker(callback)
   {
-    SaveToPersistent(kIndex,  userData);
-    SaveToPersistent(kIndex+1,noCLProgram);
+    SaveToPersistent(kIndex,noCLProgram);
+    SaveToPersistent(kIndex+1,  userData);
+    
+    _request.data = this;
+    uv_sem_init(&_sem_work,0);
+    
+    // kick of the worker/waiter thread
+    uv_queue_work(uv_default_loop(),&_request,WorkAsync,WorkAsyncComplete);
   }
 
   ~NoCLProgramWorker() {}
@@ -181,7 +196,7 @@ public:
     Nan::EscapableHandleScope  scope;
 
     Local<Value> argv[] = {
-      GetFromPersistent(kIndex),  // event
+      GetFromPersistent(kIndex),  // program
       GetFromPersistent(kIndex+1) // userdata
     };
     callback->Call(2,argv);
@@ -192,9 +207,30 @@ protected:
 };
 
 void CL_CALLBACK notifyPCB (cl_program prog, void *user_data) {
-  NoCLProgramWorker* asyncCB = static_cast<NoCLProgramWorker*>(user_data);
-  AsyncQueueWorker(asyncCB);
+  NoCLProgramWorker* work = static_cast<NoCLProgramWorker*>(user_data);
+  uv_sem_post(&work->_sem_work);
 }
+
+// called by libuv worker in separate thread
+static void WorkAsync(uv_work_t *req)
+{
+    NoCLProgramWorker *work = static_cast<NoCLProgramWorker *>(req->data);
+    uv_sem_wait(&work->_sem_work);
+}
+
+// called by libuv in event loop when async function completes
+static void WorkAsyncComplete(uv_work_t *req,int status)
+{
+    Isolate * isolate = Isolate::GetCurrent();
+
+    // Fix for Node 4.x - thanks to https://github.com/nwjs/blink/commit/ecda32d117aca108c44f38c8eb2cb2d0810dfdeb
+    v8::HandleScope handleScope(isolate);
+
+    NoCLProgramWorker *work = static_cast<NoCLProgramWorker *>(req->data);
+  
+    AsyncQueueWorker(work);
+}
+
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clBuildProgram(cl_program           /* program */,

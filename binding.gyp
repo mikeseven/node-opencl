@@ -41,7 +41,7 @@
           },
           'libraries': ['-framework OpenCL'],
         }],
-        ['OS in "linux freebsd openbsd solaris android"', {
+        ['OS in "linux freebsd openbsd solaris"', {
           'variables' : {
             # AMD APP SDK
             'OPENCL_SDK' : '<!(echo $AMDAPPSDKROOT)',
@@ -53,6 +53,18 @@
           ],
           'libraries': ['-L<(OPENCL_SDK_LIB)','-lOpenCL'],
           'cflags_cc': ['-std=c++11',' -Wall','-O3']
+        }],
+        ['OS=="android"', {
+          'variables' : {
+            'OPENCL_SDK' : '<!(echo $AMDAPPSDKROOT)',
+            'OPENCL_SDK_INCLUDE' : '<(OPENCL_SDK)/include',
+            'OPENCL_SDK_LIB' : '<(OPENCL_SDK)/lib/x86_64',
+          },
+          'include_dirs' : [
+            "<(OPENCL_SDK_INCLUDE)",
+          ],
+          'libraries': ['-L<(OPENCL_SDK_LIB)','-lOpenCL', '-luv'],
+          'cflags_cc': ['-std=c++11',' -Wall','-O3',' -fPIC']
         }],
         ['OS=="win"', {
           'variables' :

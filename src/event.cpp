@@ -1,5 +1,9 @@
 #include "event.h"
 #include "types.h"
+#include <uv.h>
+#include <chrono>
+#include <thread>
+
 
 namespace opencl {
 
@@ -184,17 +188,35 @@ NAN_METHOD(GetEventProfilingInfo) {
   return Nan::ThrowError(JS_STR(opencl::getExceptionMessage(CL_INVALID_VALUE)));
 }
 
+
+static void WorkAsync(uv_work_t *req);
+static void WorkAsyncComplete(uv_work_t *req,int status);
+
 class NoCLEventWorker : public AsyncWorker
 {
 public:
-  NoCLEventWorker(Callback* callback, const v8::Local<v8::Object> &userData,const v8::Local<v8::Object> &noCLEvent) :
+  uv_work_t _request;
+  uv_sem_t _sem_work;
+  
+  cl_int _event_command_exec_status;
+  
+public:
+  NoCLEventWorker(Callback* callback, const v8::Local<v8::Value> &userData,const v8::Local<v8::Value> &noCLEvent) :
   AsyncWorker(callback)
   {
-    SaveToPersistent(kIndex,  userData);
-    SaveToPersistent(kIndex+1,noCLEvent);
+    SaveToPersistent(kIndex,noCLEvent);
+    SaveToPersistent(kIndex+1,  userData);
+    
+    _request.data = this;
+    uv_sem_init(&_sem_work,0);
+    
+    // kick of the worker/waiter thread
+    uv_queue_work(uv_default_loop(),&_request,WorkAsync,WorkAsyncComplete);
+  
   }
-
-  ~NoCLEventWorker() {}
+  
+  ~NoCLEventWorker() {
+  }
 
   void CallBackIsDone(int status) {
     mCLCallbackStatus = status;
@@ -227,25 +249,57 @@ protected:
    int mCLCallbackStatus = 0;
 };
 
-void CL_CALLBACK notifyCB (cl_event event, cl_int event_command_exec_status, void *user_data) {
-  NoCLEventWorker* asyncCB = static_cast<NoCLEventWorker*>(user_data);
-  asyncCB->CallBackIsDone(event_command_exec_status);
-  AsyncQueueWorker(asyncCB);
+// called by libuv worker in separate thread
+static void WorkAsync(uv_work_t *req)
+{
+    NoCLEventWorker *work = static_cast<NoCLEventWorker *>(req->data);
+    
+    uv_sem_wait(&work->_sem_work);
 }
+
+// called by libuv in event loop when async function completes
+static void WorkAsyncComplete(uv_work_t *req,int status)
+{
+    Isolate * isolate = Isolate::GetCurrent();
+
+    // Fix for Node 4.x - thanks to https://github.com/nwjs/blink/commit/ecda32d117aca108c44f38c8eb2cb2d0810dfdeb
+    v8::HandleScope handleScope(isolate);
+
+    NoCLEventWorker *work = static_cast<NoCLEventWorker *>(req->data);
+  
+    work->CallBackIsDone(work->_event_command_exec_status);
+    AsyncQueueWorker(work);
+}
+
+void CL_CALLBACK notifyCB (cl_event event, cl_int event_command_exec_status, void *user_data) {
+  NoCLEventWorker* work = static_cast<NoCLEventWorker*>(user_data);
+  
+  work->_event_command_exec_status = event_command_exec_status;
+  
+  uv_sem_post(&work->_sem_work);
+}
+
 
 NAN_METHOD(SetEventCallback)
 {
   Nan::HandleScope scope;
   REQ_ARGS(3);
+  
+  Isolate* isolate = info.GetIsolate();
+  
   NOCL_UNWRAP(event, NoCLEvent, info[0]);
   cl_int callbackStatusType = info[1]->Int32Value();
   Nan::Callback *callback = new Nan::Callback(info[2].As<v8::Function>());
-  Local<Object> userData = info[3].As<Object>();
-
-  NoCLEventWorker* asyncCB = new NoCLEventWorker(callback,userData,info[0].As<Object>());
-
-  CHECK_ERR(clSetEventCallback(event->getRaw(),callbackStatusType,notifyCB,asyncCB));
-
+  
+  Local<Value> userData = v8::Undefined(isolate);
+  if(info.Length() >= 4 && !info[3]->IsUndefined() && !info[3]->IsNull()) {
+    userData = info[3].As<Value>();
+  }
+  
+  NoCLEventWorker* work = new NoCLEventWorker(callback,userData,info[0].As<Value>());
+  
+  CHECK_ERR(clSetEventCallback(event->getRaw(),callbackStatusType,notifyCB,work));
+  
   info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
 }
 

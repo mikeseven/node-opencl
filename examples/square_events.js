@@ -1,6 +1,8 @@
 var cl = require("../lib/opencl");
 var fs = require("fs");
 
+var bcallback = false;
+
 var Square = function() {
 
   var ctx = cl.createContextFromType(
@@ -46,14 +48,19 @@ var Square = function() {
   // here we use the returned user event to associate a callback that will be called from OpenCL
   // once read buffer is complete.
   var ev = cl.enqueueReadBuffer(cq, outputsMem, true, 0, NVALUES * 4, outputs, [], true);
+  console.log('have event');
+  console.log(ev);
 
-  cl.setEventCallback(ev, cl.COMPLETE, function(){
+  cl.setEventCallback(ev, cl.COMPLETE, function(ev2,estat,userData){
+    console.log('event handler');
     console.log("\nLast value is : " + outputs.readUInt32LE(4*(NVALUES-1)));
+    
+    console.log({event: ev2,error_status: estat,userData});
 
     // now the program can end
     console.log("== CL callback thread terminated ==");
-    process.exit();
-  });
+    bcallback = true;
+  },{data:"hello"});
 
 };
 
@@ -62,4 +69,13 @@ Square();
 
 // Main thread will always finish before CL callbacks are finished.
 // Calling process.exit() in the main thread would skip CL callbacks from executing
-console.log("\n== Main thread terminated ==");
+
+(function wait () {
+   if (!bcallback) {
+     setTimeout(wait, 1000);
+   }
+   else {
+    console.log("\n== Main thread terminated ==");
+   }
+})();
+
