@@ -1,6 +1,7 @@
 #include "pipe.h"
 #include "types.h"
 #include "common.h"
+#include <uv.h>
 #include <node_buffer.h>
 #include "map"
 #include "nanextension.h"
@@ -65,14 +66,27 @@ NAN_METHOD(SVMFree) {
   info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
 }
 
+static void WorkAsync(uv_work_t *req);
+static void WorkAsyncComplete(uv_work_t *req,int status);
+
 class NoCLSVMWorker : public AsyncWorker
 {
+public:
+  uv_work_t _request;
+  uv_sem_t _sem_work;
+  
 public:
   NoCLSVMWorker(Callback* callback, const v8::Local<v8::Object> &userData,const v8::Local<v8::Object> &noCLCommandQueue) :
   AsyncWorker(callback)
   {
-    SaveToPersistent(kIndex,  userData);
-    SaveToPersistent(kIndex+1,noCLCommandQueue);
+    SaveToPersistent(kIndex,noCLCommandQueue);
+    SaveToPersistent(kIndex+1,  userData);
+    
+    _request.data = this;
+    uv_sem_init(&_sem_work,0);
+    
+    // kick of the worker/waiter thread
+    uv_queue_work(uv_default_loop(),&_request,WorkAsync,WorkAsyncComplete);
   }
 
   ~NoCLSVMWorker() {}
@@ -102,9 +116,30 @@ protected:
 
 // TODO should we return the svm_pointers to JS callback?
 void CL_CALLBACK notifySVMCB ( cl_command_queue queue, cl_uint num_svm_pointers, void *svm_pointers[], void *user_data) {
-  NoCLSVMWorker* asyncCB = static_cast<NoCLSVMWorker*>(user_data);
-  AsyncQueueWorker(asyncCB);
+  NoCLSVMWorker* work = static_cast<NoCLSVMWorker*>(user_data);
+  uv_sem_post(&work->_sem_work);
 }
+
+// called by libuv worker in separate thread
+static void WorkAsync(uv_work_t *req)
+{
+    NoCLSVMWorker *work = static_cast<NoCLSVMWorker *>(req->data);
+    uv_sem_wait(&work->_sem_work);
+}
+
+// called by libuv in event loop when async function completes
+static void WorkAsyncComplete(uv_work_t *req,int status)
+{
+    Isolate * isolate = Isolate::GetCurrent();
+
+    // Fix for Node 4.x - thanks to https://github.com/nwjs/blink/commit/ecda32d117aca108c44f38c8eb2cb2d0810dfdeb
+    v8::HandleScope handleScope(isolate);
+
+    NoCLSVMWorker *work = static_cast<NoCLSVMWorker *>(req->data);
+  
+    AsyncQueueWorker(work);
+}
+
 
 NAN_METHOD(enqueueSVMFree) {
   Nan::HandleScope scope;
