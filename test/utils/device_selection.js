@@ -6,6 +6,7 @@ if (global.MAIN_DEVICE_ID !== null && global.MAIN_DEVICE_ID !== undefined) {
 }
 
 var devices = [];
+var deviceTypes = [];
 var devicesDisplayName = [];
 var platforms = [];
 
@@ -16,6 +17,9 @@ cl.getPlatformIDs().reverse().forEach(function (p) {
       return info + " : " + cl.getDeviceInfo(d, cl.DEVICE_NAME);
   }));
   devices = devices.concat(pDevices);
+  deviceTypes = deviceTypes.concat(pDevices.map(function (device) {
+    return cl.getDeviceInfo(device, cl.DEVICE_TYPE);
+  }))
   platforms = platforms.concat(pDevices.map(function () {
     return p;
   }));
@@ -33,6 +37,7 @@ for (var index in process.argv) {
 
 global.MAIN_DEVICE_ID = devices[deviceIdx];
 global.MAIN_PLATFORM_ID = platforms[deviceIdx];
+global.MAIN_DEVICE_TYPE = deviceTypes[deviceIdx];
 
 console.log("\n-----------------------------");
 console.log("AVAILABLE DEVICES :");

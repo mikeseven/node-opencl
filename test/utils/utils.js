@@ -11,7 +11,12 @@ var Utils = {
     ];
     var device=global.MAIN_DEVICE_ID;
 
-    var ctx=cl.createContext(properties, [device], null, null);
+    var ctx;
+    if (Utils.checkVersion("1.x")) {
+      ctx = cl.createContext(properties, [device], null, null);
+    } else {
+      ctx = cl.createContextFromType(properties, [global.MAIN_DEVICE_TYPE], null, null);
+    }
     exec(ctx, device, platform);
 
     cl.releaseContext(ctx);
@@ -25,7 +30,13 @@ var Utils = {
     ];
     var device=global.MAIN_DEVICE_ID;
 
-    var ctx=cl.createContext(properties, [device], null, null);
+    var ctx;
+    if (Utils.checkVersion("1.x")) {
+      ctx = cl.createContext(properties, [device], null, null);
+    } else {
+      ctx = cl.createContextFromType(properties, [global.MAIN_DEVICE_TYPE], null, null);
+    }
+
     exec(ctx, device, platform, function(){
       cl.releaseContext(ctx);
     });
