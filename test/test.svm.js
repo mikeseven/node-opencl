@@ -16,7 +16,7 @@ versions(["2.0"]).describe("SVM", function() {
       U.withContext(function (ctx) {
         var buf = cl.SVMAlloc(ctx, 0, 200, null);
 
-        assert.isObject(buf);
+        assert.ok(buf);
       });
     });
 
@@ -38,7 +38,7 @@ versions(["2.0"]).describe("SVM", function() {
 
     it("should do nothing  when freeing a buffer which is not a SVM", function() {
       U.withContext(function (ctx) {
-        U.bind(cl.SVMFree,ctx,new Buffer(200)).should.throw(cl.INVALID_ARG_VALUE.message);
+        U.bind(cl.SVMFree,ctx,new Buffer(200)).should.not.throw(cl.INVALID_ARG_VALUE.message);
       });
     });
 
@@ -46,7 +46,7 @@ versions(["2.0"]).describe("SVM", function() {
       U.withContext(function (ctx) {
         var buf = cl.SVMAlloc(ctx, 0, 200, null);
         cl.SVMFree(ctx,buf);
-        U.bind(cl.SVMFree,ctx,buf).should.throw(cl.INVALID_ARG_VALUE.message);
+        U.bind(cl.SVMFree,ctx,buf).should.not.throw(cl.INVALID_ARG_VALUE.message);
       });
     });
   });
@@ -98,7 +98,7 @@ versions(["2.0"]).describe("SVM", function() {
     it("should execute successfully when mapping a SVM buffer", function() {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          var buf = cl.SVMAlloc(ctx, 0, 200, null);
+          var buf = cl.SVMAlloc(ctx, 0, 200, 0);
           cl.enqueueSVMMap(cq, true, cl.MAP_READ, buf, 200);
 
         });
@@ -108,7 +108,7 @@ versions(["2.0"]).describe("SVM", function() {
     it("should fail as buffer is null", function() {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
-          U.bind(cl.enqueueSVMMap, cq, true, 0, null, 200).should.throw(cl.INVALID_VALUE.message);
+          U.bind(cl.enqueueSVMMap, cq, true, 0, null, 200).should.throw("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
         });
       });      
     });
@@ -144,15 +144,16 @@ versions(["2.0"]).describe("SVM", function() {
         U.withCQ(ctx, device, function (cq) {
           var buf = cl.SVMAlloc(ctx, 0, 200, null);
           var ovv = new Buffer([0, 1, 2, 3, 4]);
-          
-          cl.enqueueSVMMemcpy(cq, true, buf, ovv,5);
-          cl.finish(cq);
 
-          assert(buf[0] == ovv[0]);
-          assert(buf[1] == ovv[1]);
-          assert(buf[2] == ovv[2]);
-          assert(buf[3] == ovv[3]);
-          assert(buf[4] == ovv[4]);
+          cl.enqueueSVMMemcpy(cq, true, buf, ovv, 5);
+          cl.finish(cq);
+          
+          buf = Buffer.from(buf);
+          assert.equal(buf[0], ovv[0], 'buf[0]');
+          assert.equal(buf[1], ovv[1], 'buf[1]');
+          assert.equal(buf[2], ovv[2], 'buf[2]');
+          assert.equal(buf[3], ovv[3], 'buf[3]');
+          assert.equal(buf[4], ovv[4], 'buf[4]');
         });
       });
     });
@@ -172,10 +173,11 @@ versions(["2.0"]).describe("SVM", function() {
           cl.enqueueSVMMap(cq,true,cl.MAP_READ,buf,200);
           cl.finish(cq);
           
-          assert(buf[0] == 0);
-          assert(buf[1] == 1);
-          assert(buf[2] == 2);
-          assert(buf[3] == 3);
+          buf = Buffer.from(buf);
+          assert.equal(buf[0], 0, 'buf[0]');
+          assert.equal(buf[1], 1, 'buf[1]');
+          assert.equal(buf[2], 2, 'buf[2]');
+          assert.equal(buf[3], 3, 'buf[3]');
 
           cl.enqueueSVMUnmap(cq,buf);
           cl.finish(cq);
