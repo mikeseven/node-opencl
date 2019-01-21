@@ -107,9 +107,9 @@ describe("Kernel", function () {
           var mem = cl.createBuffer(ctx, 0, 8, null);
 
           if (cl.VERSION_1_2) {
-            assert(cl.setKernelArg(k, 0, mem) == cl.SUCCESS);
+            assert.equal(cl.setKernelArg(k, 0, null, mem), cl.SUCCESS, `setKernelArg should succeed`);
           }
-          assert(cl.setKernelArg(k, 0, mem, "float*") == cl.SUCCESS);
+          assert.equal(cl.setKernelArg(k, 0, "float*", mem), cl.SUCCESS, `setKernelArg should succeed`);
 
           cl.releaseKernel(k);
         });
@@ -122,10 +122,10 @@ describe("Kernel", function () {
           var k = cl.createKernel(prg, "square");
 
           if (cl.VERSION_1_2) {
-            U.bind(cl.setKernelArg, k, 0, 5)
+            U.bind(cl.setKernelArg, k, 0, null, 5)
               .should.throw(cl.INVALID_MEM_OBJECT.message);
           }
-          U.bind(cl.setKernelArg, k, 0, 5, "float*")
+          U.bind(cl.setKernelArg, k, 0, "float*", 5)
           .should.throw(cl.INVALID_MEM_OBJECT.message);
 
           cl.releaseKernel(k);
@@ -139,10 +139,10 @@ describe("Kernel", function () {
           var k = cl.createKernel(prg, "square");
 
           if (cl.VERSION_1_2) {
-            U.bind(cl.setKernelArg, k, 0, [5, 10, 15])
+            U.bind(cl.setKernelArg, k, 0, null, [5, 10, 15])
               .should.throw(cl.INVALID_MEM_OBJECT.message);
           }
-          U.bind(cl.setKernelArg, k, 0, [5, 10, 15], "float*")
+          U.bind(cl.setKernelArg, k, 0, "float*", [5, 10, 15])
           .should.throw(cl.INVALID_MEM_OBJECT.message);
 
           cl.releaseKernel(k);
@@ -156,9 +156,9 @@ describe("Kernel", function () {
           var k = cl.createKernel(prg, "square");
 
           if (cl.VERSION_1_2) {
-            assert(cl.setKernelArg(k, 2, 5) == cl.SUCCESS);
+            assert(cl.setKernelArg(k, 2, null, 5) == cl.SUCCESS);
           }
-          assert(cl.setKernelArg(k, 2, 5, "uint") == cl.SUCCESS);
+          assert(cl.setKernelArg(k, 2, "uint", 5) == cl.SUCCESS);
 
           cl.releaseKernel(k);
         });
@@ -171,10 +171,10 @@ describe("Kernel", function () {
           var k = cl.createKernel(prg, "square");
 
           if (cl.VERSION_1_2) {
-            U.bind(cl.setKernelArg, k, 2, "a")
+            U.bind(cl.setKernelArg, k, 2, null, "a")
               .should.throw(cl.INVALID_ARG_VALUE.message);
           }
-          U.bind(cl.setKernelArg, k, 2, "a", "char")
+          U.bind(cl.setKernelArg, k, 2, "char", "a")
             .should.throw(cl.INVALID_ARG_VALUE.message);
 
           cl.releaseKernel(k);
@@ -188,10 +188,10 @@ describe("Kernel", function () {
           var k = cl.createKernel(prg, "square");
 
           if (cl.VERSION_1_2) {
-            U.bind(cl.setKernelArg, k, 2, [5, 10, 15])
+            U.bind(cl.setKernelArg, k, 2, null, [5, 10, 15])
               .should.throw(cl.INVALID_ARG_VALUE.message);
           }
-          U.bind(cl.setKernelArg, k, 2, [5, 10, 15], "int")
+          U.bind(cl.setKernelArg, k, 2, "int", [5, 10, 15])
             .should.throw(cl.INVALID_ARG_VALUE.message);
 
           cl.releaseKernel(k);
@@ -207,10 +207,10 @@ describe("Kernel", function () {
           var mem = cl.createBuffer(ctx, 0, 8, null);
 
           if (cl.VERSION_1_2) {
-            U.bind(cl.setKernelArg, k, 2, mem)
+            U.bind(cl.setKernelArg, k, 2, null, mem)
               .should.throw(cl.INVALID_ARG_VALUE.message);
           }
-          U.bind(cl.setKernelArg, k, 2, mem, "int")
+          U.bind(cl.setKernelArg, k, 2, "int", mem)
           .should.throw(cl.INVALID_ARG_VALUE.message);
 
           cl.releaseKernel(k);
@@ -226,10 +226,10 @@ describe("Kernel", function () {
           var k = cl.createKernel(prg, "square");
 
           if (cl.VERSION_1_2) {
-            U.bind(cl.setKernelArg, k, 3, 5)
-              .should.throw(cl.INVALID_ARG_INDEX.message);
+            U.bind(cl.setKernelArg, k, 3, null, 5)
+              .should.throw(cl.INVALID_VALUE.message);
           }
-          U.bind(cl.setKernelArg, k, 3, 5, "int")
+          U.bind(cl.setKernelArg, k, 3, "int", 5)
             .should.throw(cl.INVALID_ARG_INDEX.message);
 
           cl.releaseKernel(k);
@@ -289,24 +289,24 @@ describe("Kernel", function () {
       });
     });
 
-    it("should return the corresponding context", function () {
+    it.skip("should return the corresponding context", function () {
       U.withContext(function (ctx) {
         U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
           var c = cl.getKernelInfo(k, cl.KERNEL_CONTEXT);
 
-          assert(c.equals(ctx));
+          assert(c === ctx, 'c === ctx');
         });
       });
     });
 
-    it("should return the corresponding program", function () {
+    it.skip("should return the corresponding program", function () {
       U.withContext(function (ctx) {
         U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
           var p = cl.getKernelInfo(k, cl.KERNEL_PROGRAM);
 
-          assert(p.equals(prg));
+          assert(p === prg, 'p === prg');
         });
       });
     });
@@ -384,8 +384,8 @@ describe("Kernel", function () {
     testForType("KERNEL_COMPILE_WORK_GROUP_SIZE", assert.isArray.bind(assert));
     testForType("KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE", assert.isNumber.bind(assert));
     testForType("KERNEL_WORK_GROUP_SIZE", assert.isNumber.bind(assert));
-    testForType("KERNEL_LOCAL_MEM_SIZE", assert.isNumber.bind(assert));
-    testForType("KERNEL_PRIVATE_MEM_SIZE", assert.isNumber.bind(assert));
+    testForType("KERNEL_LOCAL_MEM_SIZE", assert.isArray.bind(assert));
+    testForType("KERNEL_PRIVATE_MEM_SIZE", assert.isArray.bind(assert));
 
 
     it("should throw INVALID_VALUE when looking for KERNEL_GLOBAL_WORK_SIZE", function(){

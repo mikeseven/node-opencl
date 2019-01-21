@@ -7,7 +7,9 @@ var vendors = {
   "Apple" : "Apple",
   "Intel" : "Intel",
   "Intel Inc." : "Intel",
-  "nVidia": "nVidia"
+  "Intel(R) Corporation": "Intel",
+  "nVidia": "nVidia",
+  "NVIDIA Corporation": "nVidia"
 };
 
 module.exports = function() {

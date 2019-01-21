@@ -57,7 +57,7 @@ describe("Program", function () {
 
     it("should build and call the callback using a valid program", function (done) {
       U.withAsyncContext(function (ctx,device,platform,ctxDone) {
-        var mCB = function(prg,userData){
+        var mCB = function(userData, prg){
           assert.isNotNull(prg);
           assert.isDefined(prg);
           cl.releaseProgram(prg);
@@ -221,7 +221,7 @@ describe("Program", function () {
 
     it("should build and call the callback with no input header", function (done) {
       U.withAsyncContext(function (ctx,device,platform,ctxDone) {
-        var mCB = function(prg,userData){
+        var mCB = function(userData, prg){
           assert.isNotNull(prg);
           assert.isDefined(prg);
           cl.releaseProgram(prg);
@@ -309,7 +309,7 @@ describe("Program", function () {
     
     it("should success in linking one program and call the callback", function (done) {
       U.withAsyncContext(function (ctx,device,platform,ctxDone) {
-        var mCB = function(prg,userData){
+        var mCB = function(userData, ctx){
           assert.isNotNull(prg);
           assert.isDefined(prg);
           cl.releaseProgram(prg);

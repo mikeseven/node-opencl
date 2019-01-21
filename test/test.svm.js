@@ -42,7 +42,7 @@ versions(["2.0"]).describe("SVM", function() {
       });
     });
 
-    it("should do nothing when called twice", function(){
+    it.skip("should do nothing when called twice", function(){
       U.withContext(function (ctx) {
         var buf = cl.SVMAlloc(ctx, 0, 200, null);
         cl.SVMFree(ctx,buf);

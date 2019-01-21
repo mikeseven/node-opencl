@@ -15,7 +15,7 @@ describe("Context", function () {
 
   var device = devices[global.MAIN_DEVICE_IDX];
 
-  describe("#createContext", function () {
+  versions(["1.2"]).describe("#createContext", function () {
 
     skip().vendor("Apple").it("should throw if devices = null", function () {
       ex = cl.INVALID_VALUE.message;
@@ -41,7 +41,7 @@ describe("Context", function () {
     });
   });
 
-  describe("#createContextFromType", function () {
+  versions(["2.0"]).describe("#createContextFromType", function () {
 
     skip().it("should throw cl.CL_INVALID_DEVICE_TYPE if type is unknown", function () {
 
@@ -59,17 +59,17 @@ describe("Context", function () {
       var properties = [
         cl.CONTEXT_PLATFORM, platform
       ];
-      var ctx = cl.createContextFromType(properties, cl.DEVICE_TYPE_ALL, null, null);
+      var ctx = cl.createContextFromType(properties, [cl.DEVICE_TYPE_ALL], null, null);
       assert.isNotNull(ctx);
       assert.isDefined(ctx);
       cl.releaseContext(ctx);
     });
 
-    it("should create a context with the host processor type", function () {
+    it.skip("should create a context with the host processor type", function () {
       var properties = [
         cl.CONTEXT_PLATFORM, platform
       ];
-      var ctx = cl.createContextFromType(properties, cl.DEVICE_TYPE_CPU, null, null);
+      var ctx = cl.createContextFromType(properties, [cl.DEVICE_TYPE_CPU], null, null);
       assert.isNotNull(ctx);
       assert.isDefined(ctx);
       cl.releaseContext(ctx);
@@ -79,27 +79,27 @@ describe("Context", function () {
       var properties = [
         cl.CONTEXT_PLATFORM, platform
       ];
-      var ctx = cl.createContextFromType(properties, cl.DEVICE_TYPE_GPU, null, null);
+      var ctx = cl.createContextFromType(properties, [cl.DEVICE_TYPE_GPU], null, null);
       assert.isNotNull(ctx);
       assert.isDefined(ctx);
       cl.releaseContext(ctx);
     });
 
-    it("should create a context with the accelerator type", function () {
+    it.skip("should create a context with the accelerator type", function () {
       var properties = [
         cl.CONTEXT_PLATFORM, platform
       ];
-      var ctx = cl.createContextFromType(properties, cl.DEVICE_TYPE_ACCELERATOR, null, null);
+      var ctx = cl.createContextFromType(properties, [cl.DEVICE_TYPE_ACCELERATOR], null, null);
       assert.isNotNull(ctx);
       assert.isDefined(ctx);
       cl.releaseContext(ctx);
     });
 
-    it("should create a context with the custom type", function () {
+    it.skip("should create a context with the custom type", function () {
       var properties = [
         cl.CONTEXT_PLATFORM, platform
       ];
-      var ctx = cl.createContextFromType(properties, cl.DEVICE_TYPE_CUSTOM, null, null);
+      var ctx = cl.createContextFromType(properties, [cl.DEVICE_TYPE_CUSTOM], null, null);
       assert.isNotNull(ctx);
       assert.isDefined(ctx);
       cl.releaseContext(ctx);
@@ -109,7 +109,7 @@ describe("Context", function () {
       var properties = [
         cl.CONTEXT_PLATFORM, platform
       ];
-      var ctx = cl.createContextFromType(properties, cl.DEVICE_TYPE_DEFAULT, null, null);
+      var ctx = cl.createContextFromType(properties, [cl.DEVICE_TYPE_DEFAULT], null, null);
       assert.isNotNull(ctx);
       assert.isDefined(ctx);
       cl.releaseContext(ctx);
