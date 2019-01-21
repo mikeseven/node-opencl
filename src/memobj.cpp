@@ -137,7 +137,7 @@ NAN_METHOD(CreateImage) {
   // Arg 4
   if(ARG_EXISTS(4)) {
     size_t len = 0;
-    getPtrAndLen(info[3], host_ptr, len);
+    getPtrAndLen(info[4], host_ptr, len);
 
     if(!host_ptr || !len)
       return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
