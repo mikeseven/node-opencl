@@ -95,7 +95,7 @@ versions(["2.0"]).describe("SVM", function() {
 
   
   describe("# enqueueSVMMap", function() {
-    it("should execute successfully when mapping a SVM buffer", function() {
+    skip().vendor("nVidia").it("should execute successfully when mapping a SVM buffer", function() {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           var buf = cl.SVMAlloc(ctx, 0, 200, 0);
@@ -105,7 +105,7 @@ versions(["2.0"]).describe("SVM", function() {
       });
     });
 
-    it("should fail as buffer is null", function() {
+    skip().vendor("nVidia").it("should fail as buffer is null", function() {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           U.bind(cl.enqueueSVMMap, cq, true, 0, null, 200).should.throw("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
@@ -116,7 +116,7 @@ versions(["2.0"]).describe("SVM", function() {
 
   
   describe("# enqueueSVMUnmap", function() {
-    it("should execute successfully when unmapping a mapped SVM buffer", function() {
+    skip().vendor("nVidia").it("should execute successfully when unmapping a mapped SVM buffer", function() {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           var buf = cl.SVMAlloc(ctx, 0, 200, null);
@@ -127,7 +127,7 @@ versions(["2.0"]).describe("SVM", function() {
       });
     });
 
-    it("should fail as buffer is null", function() {
+    skip().vendor("nVidia").it("should fail as buffer is null", function() {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           U.bind(cl.enqueueSVMUnmap, cq, null).should.throw(/*..*/);

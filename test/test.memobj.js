@@ -472,7 +472,7 @@ describe("MemObj", function() {
       });
     });
 
-    skip().vendor("Intel").it("should return CL_MEM_FLAGS", function () {
+    skip().vendor("Intel").vendor("nVidia").it("should return CL_MEM_FLAGS", function () {
       U.withContext(function (context, device, platform) {
         var buffer = cl.createBuffer(context, 0, 8, null);
         var ret = f(buffer, cl.MEM_FLAGS);
