@@ -19,7 +19,7 @@ NAN_METHOD(GetPlatformIDs) {
 
   Local<Array> platformArray = Nan::New<Array>(num_entries);
   for (uint32_t i=0; i<num_entries; i++) {
-    platformArray->Set(i, NOCL_WRAP(NoCLPlatformId, platforms[i]));
+    Nan::Set(platformArray, i, NOCL_WRAP(NoCLPlatformId, platforms[i]));
   }
 
   info.GetReturnValue().Set(platformArray);

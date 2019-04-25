@@ -31,7 +31,7 @@ NAN_METHOD(GetDeviceIDs) {
   for (uint32_t i=0; i<n; i++) {
     // This is a noop for root-level devices but properly retains sub-devices.
     CHECK_ERR(::clRetainDevice(devices[i]));
-    deviceArray->Set(i, NOCL_WRAP(NoCLDeviceId, devices[i]));
+    Nan::Set(deviceArray, i, NOCL_WRAP(NoCLDeviceId, devices[i]));
   }
 
   info.GetReturnValue().Set(deviceArray);
@@ -131,7 +131,7 @@ NAN_METHOD(GetDeviceInfo) {
 
     Local<Array> arr = Nan::New<Array>(max_work_item_dimensions);
     for(cl_uint i=0;i<max_work_item_dimensions;i++)
-      arr->Set(i,JS_INT(uint32_t(param_value[i])));
+      Nan::Set(arr, i,JS_INT(uint32_t(param_value[i])));
 
     info.GetReturnValue().Set(arr);
     return;
@@ -223,8 +223,8 @@ NAN_METHOD(GetDeviceInfo) {
         input_value = ((int64_t) output_values[0]) << 32) | output_values[1];
     */
     Local<Array> arr = Nan::New<Array>(2);
-    arr->Set(0, JS_INT((uint32_t) (param_value>>32))); // hi
-    arr->Set(1, JS_INT((uint32_t) (param_value & 0xffffffff))); // lo
+    Nan::Set(arr, 0, JS_INT((uint32_t) (param_value>>32))); // hi
+    Nan::Set(arr, 1, JS_INT((uint32_t) (param_value & 0xffffffff))); // lo
     info.GetReturnValue().Set(arr);
 
     return;
@@ -279,7 +279,7 @@ NAN_METHOD(CreateSubDevices) {
   std::vector<cl_device_partition_property> cl_properties;
   REQ_ARRAY_ARG(1, js_properties);
   for (unsigned int i = 0; i < js_properties->Length(); ++ i) {
-    cl_properties.push_back(Nan::To<int32_t>(js_properties->Get(i)).ToChecked());
+    cl_properties.push_back(Nan::To<int32_t>(Nan::Get(js_properties, i).ToLocalChecked()).ToChecked());
   }
 
   cl_uint capacity = 0;
@@ -293,7 +293,7 @@ NAN_METHOD(CreateSubDevices) {
 
   Local<Array> subDevicesArray = Nan::New<Array>(capacity);
   for (uint32_t i=0; i<capacity; i++) {
-    subDevicesArray->Set(i, NOCL_WRAP(NoCLDeviceId, subDevices[i]));
+    Nan::Set(subDevicesArray, i, NOCL_WRAP(NoCLDeviceId, subDevices[i]));
   }
 
   info.GetReturnValue().Set(subDevicesArray);

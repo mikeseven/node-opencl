@@ -78,7 +78,7 @@ public:
   template <typename A>
   static bool fromJSArray(std::vector<A> & outArr, Local<Array> &arr) {
     for (unsigned int i = 0; i < arr->Length(); ++i) {
-      A v = Unwrap(arr->Get(i));
+      A v = Unwrap(Nan::Get(arr, i).ToLocalChecked());
       if (v == nullptr) {
 	     return false;
       }

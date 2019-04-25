@@ -55,7 +55,7 @@ NAN_METHOD(CreateProgramWithBinary) {
   unique_ptr<size_t[]> lengths(new size_t[n]);
 
   for (unsigned int i = 0; i < sizes->Length(); ++ i) {
-    lengths[i] = Nan::To<int32_t>(sizes->Get(0)).ToChecked();
+    lengths[i] = Nan::To<int32_t>(Nan::Get(sizes, 0).ToLocalChecked()).ToChecked();
   }
 
   std::vector<NoCLProgramBinary *> cl_binaries;
@@ -113,7 +113,7 @@ NAN_METHOD(CreateProgramWithBuiltInKernels) {
     if (!js_names->IsString()) {
       THROW_ERR(CL_INVALID_VALUE);
     }
-    names.push_back(*Nan::Utf8String(js_names->Get(i)));
+    names.push_back(*Nan::Utf8String(Nan::Get(js_names, i).ToLocalChecked()));
   }
 
   if (names.size() == 0) {
@@ -184,7 +184,7 @@ public:
       GetFromPersistent(kIndex),  // event
       GetFromPersistent(kIndex+1) // userdata
     };
-    callback->Call(2,argv);
+    Nan::Call(*callback, 2, argv);
   }
 
 protected:
@@ -303,7 +303,7 @@ NAN_METHOD(CompileProgram) {
   if (ARG_EXISTS(4)){
     Local<Array> arr = Local<Array>::Cast(info[4]);
     for (unsigned int i = 0; i < arr->Length(); ++ i) {
-      Nan::Utf8String str(arr->Get(i));
+      Nan::Utf8String str(Nan::Get(arr, i).ToLocalChecked());
       names.push_back(str.operator*());
     }
   }
@@ -492,7 +492,7 @@ NAN_METHOD(GetProgramInfo) {
       Local<Array> arr = Nan::New<Array>((int)n);
       for(uint32_t i=0;i<n;i++) {
         CHECK_ERR(::clRetainDevice(devices[i]))
-        arr->Set(i, NOCL_WRAP(NoCLDeviceId, devices[i]));
+        Nan::Set(arr, i, NOCL_WRAP(NoCLDeviceId, devices[i]));
       }
 
       info.GetReturnValue().Set(arr);
@@ -514,7 +514,7 @@ NAN_METHOD(GetProgramInfo) {
 
       Local<Array> arr = Nan::New<Array>(nsizes);
       for(cl_uint i=0;i<nsizes;i++)
-        arr->Set(i,JS_INT(uint32_t(sizes[i])));
+        Nan::Set(arr, i,JS_INT(uint32_t(sizes[i])));
 
       info.GetReturnValue().Set(arr);
       return;
@@ -559,7 +559,7 @@ NAN_METHOD(GetProgramInfo) {
       Local<Array> arr = Nan::New<Array>(nsizes);
 
       for (cl_uint i = 0; i < nsizes; ++ i) {
-        arr->Set(i, NOCL_WRAP(NoCLProgramBinary, bn[i]));
+        Nan::Set(arr, i, NOCL_WRAP(NoCLProgramBinary, bn[i]));
       }
 
       info.GetReturnValue().Set(arr);

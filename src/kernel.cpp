@@ -58,7 +58,7 @@ NAN_METHOD(CreateKernelsInProgram) {
     // This should not be needed. clCreateKernelsInProgram implicitly does clRetainKernel
     // on each kernel
     // CHECK_ERR(::clRetainKernel(kernels[i]))
-    karr->Set(i,NOCL_WRAP(NoCLKernel, kernels[i]));
+    Nan::Set(karr, i,NOCL_WRAP(NoCLKernel, kernels[i]));
   }
 
   delete[] kernels;
@@ -141,33 +141,33 @@ public:
 
     /* convert vector types (e.g. float4, int16, etc) */
 
-    #define CONVERT_VECT(NAME, TYPE, I, PRED, COND)                             \
-      {                                                                         \
-       func_t f = [](const Local<Value>& val)                                   \
-          -> std::tuple<size_t, void*, cl_int> {                                \
-        if (!val->IsArray()) {                                                  \
-          /*THROW_ERR(CL_INVALID_ARG_VALUE);  */                                \
-          return std::tuple<size_t,void*,cl_int>(0, NULL, CL_INVALID_ARG_VALUE);\
-        }                                                                       \
-        Local<Array> arr = Local<Array>::Cast(val);                             \
-        if (arr->Length() != I) {                                               \
-          /*THROW_ERR(CL_INVALID_ARG_SIZE);*/                                   \
-          return std::tuple<size_t,void*,cl_int>(0, NULL, CL_INVALID_ARG_SIZE); \
-        }                                                                       \
-        TYPE * vvc = new TYPE[I];                                               \
-        size_t ptr_size = sizeof(TYPE) * I;                                     \
-        void* ptr_data = vvc;                                                   \
-        for (unsigned int i = 0; i < I; ++ i) {                                 \
-          if (!arr->Get(i)->PRED()) {                                           \
-            /*THROW_ERR(CL_INVALID_ARG_VALUE);*/                                \
-            /*THROW_ERR(CL_INVALID_ARG_VALUE);*/                                \
-          return std::tuple<size_t,void*,cl_int>(0, NULL, CL_INVALID_ARG_VALUE);\
-          }                                                                     \
-          vvc[i] = (TYPE) Nan::To<COND>(arr->Get(i)).ToChecked();               \
-        }                                                                       \
-        return std::tuple<size_t,void*,cl_int>(ptr_size, ptr_data, 0);          \
-      };                                                                        \
-      m_converters[NAME #I ] = f;                                            \
+    #define CONVERT_VECT(NAME, TYPE, I, PRED, COND)                                     \
+      {                                                                                 \
+       func_t f = [](const Local<Value>& val)                                           \
+          -> std::tuple<size_t, void*, cl_int> {                                        \
+        if (!val->IsArray()) {                                                          \
+          /*THROW_ERR(CL_INVALID_ARG_VALUE);  */                                        \
+          return std::tuple<size_t,void*,cl_int>(0, NULL, CL_INVALID_ARG_VALUE);        \
+        }                                                                               \
+        Local<Array> arr = Local<Array>::Cast(val);                                     \
+        if (arr->Length() != I) {                                                       \
+          /*THROW_ERR(CL_INVALID_ARG_SIZE);*/                                           \
+          return std::tuple<size_t,void*,cl_int>(0, NULL, CL_INVALID_ARG_SIZE);         \
+        }                                                                               \
+        TYPE * vvc = new TYPE[I];                                                       \
+        size_t ptr_size = sizeof(TYPE) * I;                                             \
+        void* ptr_data = vvc;                                                           \
+        for (unsigned int i = 0; i < I; ++ i) {                                         \
+          if (!Nan::Get(arr, i).ToLocalChecked()->PRED()) {                             \
+            /*THROW_ERR(CL_INVALID_ARG_VALUE);*/                                        \
+            /*THROW_ERR(CL_INVALID_ARG_VALUE);*/                                        \
+          return std::tuple<size_t,void*,cl_int>(0, NULL, CL_INVALID_ARG_VALUE);        \
+          }                                                                             \
+          vvc[i] = (TYPE) Nan::To<COND>(Nan::Get(arr, i).ToLocalChecked()).ToChecked(); \
+        }                                                                               \
+        return std::tuple<size_t,void*,cl_int>(ptr_size, ptr_data, 0);                  \
+      };                                                                                \
+      m_converters[NAME #I ] = f;                                                       \
       }
 
     #define CONVERT_VECTS(NAME, TYPE, PRED, COND) \
@@ -460,9 +460,9 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
       size_t sz[3] = {0,0,0};
       CHECK_ERR(::clGetKernelWorkGroupInfo(k->getRaw(),d->getRaw(),param_name,3*sizeof(size_t),sz, NULL));
       Local<Array> szarr = Nan::New<Array>();
-      szarr->Set(0,JS_INT(sz[0]));
-      szarr->Set(1,JS_INT(sz[1]));
-      szarr->Set(2,JS_INT(sz[2]));
+      Nan::Set(szarr, 0,JS_INT(sz[0]));
+      Nan::Set(szarr, 1,JS_INT(sz[1]));
+      Nan::Set(szarr, 2,JS_INT(sz[2]));
       info.GetReturnValue().Set(szarr);
       return;
     }
@@ -488,8 +488,8 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
           input_value = ((int64_t) output_values[0]) << 32) | output_values[1];
       */
       Local<Array> arr = Nan::New<Array>(2);
-      arr->Set(0, JS_INT((uint32_t) (sz>>32))); // hi
-      arr->Set(1, JS_INT((uint32_t) (sz & 0xffffffff))); // lo
+      Nan::Set(arr, 0, JS_INT((uint32_t) (sz>>32))); // hi
+      Nan::Set(arr, 1, JS_INT((uint32_t) (sz & 0xffffffff))); // lo
       info.GetReturnValue().Set(arr);
       return;
     }

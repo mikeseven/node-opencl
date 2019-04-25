@@ -30,10 +30,10 @@ NAN_METHOD(CreateContext) {
   if(ARG_EXISTS(0)) {
     REQ_ARRAY_ARG(0, properties);
     for (uint32_t i=0; i < properties->Length(); i++) {
-      cl_uint prop_id = Nan::To<uint32_t>(properties->Get(i)).ToChecked();
+      cl_uint prop_id = Nan::To<uint32_t>(Nan::Get(properties, i).ToLocalChecked()).ToChecked();
       cl_properties.push_back(prop_id);
       if(prop_id == CL_CONTEXT_PLATFORM) {
-        NOCL_UNWRAP(platform, NoCLPlatformId, properties->Get(++i));
+        NOCL_UNWRAP(platform, NoCLPlatformId, Nan::Get(properties, ++i).ToLocalChecked());
         cl_properties.push_back((cl_context_properties) platform->getRaw());
       }
     }
@@ -44,7 +44,7 @@ NAN_METHOD(CreateContext) {
   if(ARG_EXISTS(1)) {
     REQ_ARRAY_ARG(1, devices);
     for (uint32_t i=0; i<devices->Length(); i++) {
-      NOCL_UNWRAP(device, NoCLDeviceId, devices->Get(i));
+      NOCL_UNWRAP(device, NoCLDeviceId, Nan::Get(devices, i).ToLocalChecked());
       cl_devices.push_back(device->getRaw());
         // printf("Adding device %p\n",device);
     }
@@ -89,10 +89,10 @@ NAN_METHOD(CreateContextFromType) {
   if(!info[0]->IsNull() && !info[0]->IsUndefined()) {
     REQ_ARRAY_ARG(0, properties);
     for (uint32_t i=0; i < properties->Length(); i++) {
-      cl_uint prop_id = Nan::To<uint32_t>(properties->Get(i)).ToChecked();
+      cl_uint prop_id = Nan::To<uint32_t>(Nan::Get(properties, i).ToLocalChecked()).ToChecked();
       cl_properties.push_back(prop_id);
       if(prop_id == CL_CONTEXT_PLATFORM) {
-        NOCL_UNWRAP(platform, NoCLPlatformId, properties->Get(++i));
+        NOCL_UNWRAP(platform, NoCLPlatformId, Nan::Get(properties, ++i).ToLocalChecked());
         cl_properties.push_back((cl_context_properties) platform->getRaw());
         // printf("Adding platform %p\n",platform);
       }
@@ -175,7 +175,7 @@ NAN_METHOD(GetContextInfo) {
     Local<Array> arr = Nan::New<Array>((int)n);
     for(uint32_t i=0;i<n;i++) {
       CHECK_ERR(::clRetainDevice(devices[i]))
-      arr->Set(i, NOCL_WRAP(NoCLDeviceId, devices[i]));
+      Nan::Set(arr, i, NOCL_WRAP(NoCLDeviceId, devices[i]));
     }
     info.GetReturnValue().Set(arr);
     return;
@@ -188,7 +188,7 @@ NAN_METHOD(GetContextInfo) {
 
     Local<Array> arr = Nan::New<Array>((int)n);
     for(uint32_t i=0;i<n;i++) {
-      arr->Set(i,JS_INT((int32_t)ctx[i]));
+      Nan::Set(arr, i,JS_INT((int32_t)ctx[i]));
     }
 
     info.GetReturnValue().Set(arr);

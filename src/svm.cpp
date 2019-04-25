@@ -93,7 +93,7 @@ public:
       GetFromPersistent(kIndex),  // CommandQueue
       GetFromPersistent(kIndex+1) // userData
     };
-    callback->Call(2,argv);
+    Nan::Call(*callback, 2, argv);
   }
 
 protected:
@@ -121,7 +121,7 @@ NAN_METHOD(enqueueSVMFree) {
   for(cl_uint i=0;i<length;++i){
     size_t len=0;
     void* ptr=nullptr;
-    getPtrAndLen(arr->Get(i),ptr,len);
+    getPtrAndLen(Nan::Get(arr, i).ToLocalChecked(),ptr,len);
     if(!ptr || !len) {
       return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
     }

@@ -175,8 +175,8 @@ NAN_METHOD(GetEventProfilingInfo) {
       CHECK_ERR(::clGetEventProfilingInfo(ev->getRaw(),param_name,sizeof(cl_ulong), &val, NULL))
 
       Local<Array> arr = Nan::New<Array>(2);
-      arr->Set(0, JS_INT((uint32_t) (val>>32))); // hi
-      arr->Set(1, JS_INT((uint32_t) (val & 0xffffffff))); // lo
+      Nan::Set(arr, 0, JS_INT((uint32_t) (val>>32))); // hi
+      Nan::Set(arr, 1, JS_INT((uint32_t) (val & 0xffffffff))); // lo
       info.GetReturnValue().Set(arr);
       return;
     }
