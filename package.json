@@ -39,6 +39,7 @@
   "scripts": {
     "install": "node-gyp rebuild --msvs_version=auto",
     "build": "npm run clean && npm install",
+    "build:dev": "node-gyp build --debug",
     "clean": "rm -rf build node_modules",
     "lint": "eslint lib test",
     "test": "mocha -gc test"

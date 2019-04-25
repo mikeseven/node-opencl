@@ -5,6 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug C++",
+            "program": "/home/ptaylor/.nvm/versions/node/v12.0.0/bin/node",
+            "preLaunchTask": "npm: build:dev",
+            "args": [
+                "/home/ptaylor/dev/node-opencl/node_modules/mocha/bin/_mocha"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
             "type": "node",
             "request": "launch",
             "name": "Debug tests",
@@ -17,7 +28,8 @@
                 "--colors",
                 "${workspaceFolder}/test",
                 // "${workspaceFolder}/test/test.svm.js",
-                "--device=0",
+                // "${workspaceFolder}/test/test.program.js",
+                "--device=1",
             ],
             "internalConsoleOptions": "openOnSessionStart"
         }
