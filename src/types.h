@@ -8,6 +8,7 @@
 #include <v8.h>
 #include <iostream>
 #include <sstream>
+#include "common.h"
 
 #if defined (__APPLE__) || defined(MACOSX)
 #ifdef __ECLIPSE__
@@ -54,7 +55,6 @@ public:
     tpl->InstanceTemplate()->SetInternalFieldCount(1);
     Nan::SetPrototypeMethod(tpl, "toString", toString);
     prototype(id).Reset(tpl);
-    // constructor(id).Reset(tpl->GetFunction());
     constructor(id).Reset(Nan::GetFunction(tpl).ToLocalChecked());
   }
 
@@ -66,10 +66,17 @@ public:
   }
 
   static NoCLWrapper<T, id, err, cl_release, cl_acquire> *Unwrap(Local<Value> value) {
-    if (!value->IsObject())
+    void *buf = NULL;
+    size_t length = 0;
+    Local<Object> obj;
+    getPtrAndLen(value, buf, length);
+    if (buf && length) {
+      obj = NewInstance(reinterpret_cast<T>(buf));
+    } else if (value->IsObject()) {
+      obj = Nan::To<Object>(value).ToLocalChecked();
+    } else {
       return nullptr;
-    // Local<Object> obj = value->ToObject();
-    Local<Object> obj = Nan::To<Object>(value).ToLocalChecked();
+    }
     if (!Nan::New(prototype(id))->HasInstance(obj))
       return nullptr;
     return ObjectWrap::Unwrap<NoCLWrapper<T, id, err, cl_release, cl_acquire> >(obj);
@@ -173,7 +180,7 @@ NOCL_WRAPPER(NoCLMem, cl_mem, 5, CL_INVALID_MEM_OBJECT, clReleaseMemObject, clRe
 NOCL_WRAPPER(NoCLSampler, cl_sampler, 6, CL_INVALID_SAMPLER, clReleaseSampler, clRetainSampler);
 NOCL_WRAPPER(NoCLCommandQueue, cl_command_queue, 7, CL_INVALID_COMMAND_QUEUE, clReleaseCommandQueue, clRetainCommandQueue);
 NOCL_WRAPPER(NoCLEvent, cl_event, 8, CL_INVALID_EVENT, clReleaseEvent, clRetainEvent);
-NOCL_WRAPPER(NoCLProgramBinary, cl_program_binary, 9, CL_INVALID_VALUE, noop, noop);
+NOCL_WRAPPER(NoCLProgramBinary, cl_program_binary, 9, CL_INVALID_PROGRAM_EXECUTABLE, noop, noop);
 NOCL_WRAPPER(NoCLMappedPtr, cl_mapped_ptr, 10, CL_INVALID_VALUE, noop, noop);
 
 #define NOCL_WRAP(T, V) \
