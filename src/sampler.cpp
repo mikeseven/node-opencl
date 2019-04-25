@@ -56,25 +56,25 @@ NAN_METHOD(CreateSamplerWithProperties) {
   vector<cl_sampler_properties> cl_properties;
 
   for (uint32_t i=0; i < properties->Length(); i+=2) {
-    cl_uint prop_id = properties->Get(i)->Int32Value();
+    cl_uint prop_id = Nan::To<int32_t>(properties->Get(i)).ToChecked();
     cl_properties.push_back(prop_id);
     if(prop_id == CL_SAMPLER_NORMALIZED_COORDS) {
       if (!properties->Get(i+1)->IsBoolean()) {
         THROW_ERR(CL_INVALID_VALUE);
       }
-      cl_bool norm = properties->Get(i+1)->BooleanValue() ? 1 : 0;
+      cl_bool norm = Nan::To<bool>(properties->Get(i+1)).ToChecked() ? 1 : 0;
       cl_properties.push_back(norm);
     } else if (prop_id == CL_SAMPLER_ADDRESSING_MODE) {
       if (!properties->Get(i+1)->IsNumber()) {
         THROW_ERR(CL_INVALID_VALUE);
       }
-      cl_addressing_mode addr = properties->Get(i+1)->Int32Value();
+      cl_addressing_mode addr = Nan::To<int32_t>(properties->Get(i+1)).ToChecked();
       cl_properties.push_back(addr);
     } else if (prop_id == CL_SAMPLER_FILTER_MODE) {
       if (!properties->Get(i+1)->IsNumber()) {
         THROW_ERR(CL_INVALID_VALUE);
       }
-      cl_filter_mode fil = properties->Get(i+1)->Int32Value();
+      cl_filter_mode fil = Nan::To<int32_t>(properties->Get(i+1)).ToChecked();
       cl_properties.push_back(fil);
     } else {
       THROW_ERR(CL_INVALID_VALUE)
@@ -137,7 +137,7 @@ NAN_METHOD(GetSamplerInfo) {
 
   NOCL_UNWRAP(sampler, NoCLSampler, info[0]);
 
-  cl_sampler_info param_name = info[1]->Uint32Value();
+  cl_sampler_info param_name = Nan::To<uint32_t>(info[1]).ToChecked();
 
   switch(param_name) {
     case CL_SAMPLER_REFERENCE_COUNT:

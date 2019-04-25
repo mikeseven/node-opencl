@@ -12,13 +12,13 @@
 #include "types.h"
 #include "svm.h"
 
-#define JS_CL_CONSTANT(name) target->Set(JS_STR( #name ), JS_INT(CL_ ## name))
-#define JS_CL_ERROR(name) target->Set(JS_STR( #name ), Nan::Error(JS_STR(opencl::getExceptionMessage(CL_ ## name))) )
+#define JS_CL_CONSTANT(name) Nan::Set(target, JS_STR( #name ), JS_INT(CL_ ## name))
+#define JS_CL_ERROR(name) Nan::Set(target, JS_STR( #name ), Nan::Error(JS_STR(opencl::getExceptionMessage(CL_ ## name))) )
 
 
-#define NODE_DEFINE_CONSTANT_VALUE(target, name, value)       \
-  (target)->Set(Nan::New<v8::String>(name).ToLocalChecked(),  \
-                Nan::New<v8::Integer>((unsigned int)value))
+#define NODE_DEFINE_CONSTANT_VALUE(target, name, value)          \
+  Nan::Set(target, Nan::New<v8::String>(name).ToLocalChecked(),  \
+                   Nan::New<v8::Integer>((unsigned int)value))
 
 #ifdef _WIN32
 /*-
@@ -81,14 +81,14 @@ extern "C" {
 NAN_MODULE_INIT(init)
 {
 #ifdef CL_VERSION_1_2
-  target->Set(JS_STR("CL_VERSION_1_2" ), Nan::True());
+  Nan::Set(target, JS_STR("CL_VERSION_1_2" ), Nan::True());
 #else
-  target->Set(JS_STR("CL_VERSION_1_2" ), Nan::False());
+  Nan::Set(target, JS_STR("CL_VERSION_1_2" ), Nan::False());
 #endif
 #ifdef CL_VERSION_2_0
-  target->Set(JS_STR("CL_VERSION_2_0" ), Nan::True());
+  Nan::Set(target, JS_STR("CL_VERSION_2_0" ), Nan::True());
 #else
-  target->Set(JS_STR("CL_VERSION_2_0" ), Nan::False());
+  Nan::Set(target, JS_STR("CL_VERSION_2_0" ), Nan::False());
 #endif
 
   // OpenCL methods

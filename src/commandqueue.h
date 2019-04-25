@@ -6,7 +6,7 @@
 namespace opencl {
 
 namespace CommandQueue {
-void init(Handle<Object> exports);
+NAN_MODULE_INIT(init);
 } // namespace CommandQueue
 
 } // namespace opencl

@@ -3,7 +3,7 @@
   "version": "0.5.0",
   "description": "A binding to OpenCL for Node.JS",
   "main": "lib/opencl.js",
-  "author": [
+  "authors": [
     "Mikael Bourges-Sevenier <mikeseven@gmail.com>",
     "Ioweb <context@ioweb.fr>"
   ],
@@ -38,6 +38,7 @@
   },
   "scripts": {
     "install": "node-gyp rebuild --msvs_version=auto",
+    "build": "npm run clean && npm install",
     "clean": "rm -rf build node_modules",
     "lint": "eslint lib test",
     "test": "mocha -gc test"
@@ -49,7 +50,9 @@
   "devDependencies": {
     "chai": ">=2.0.0",
     "chalk": ">=0.5.1",
-    "mocha": "5.2.0",
+    "mocha": "5.2.0"
+  },
+  "peerDependencies": {
     "node-memwatch": "1.0.1"
   },
   "gypfile": true,

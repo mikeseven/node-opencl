@@ -6,3 +6,5 @@ docker/amd-app-sdk.tar.bz2
 docker/nodejs-0.10/amd-app-sdk.tar.bz2
 *~
 *.swp
+!.vscode/launch.json
+.vscode

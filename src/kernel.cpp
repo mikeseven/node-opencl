@@ -119,26 +119,25 @@ public:
         }                                                                       \
         void* ptr_data = new TYPE;                                              \
         size_t ptr_size = sizeof(TYPE);                                         \
-        *((TYPE *)ptr_data) = (TYPE) val->CONV();                                      \
+        *((TYPE *)ptr_data) = (TYPE) Nan::To<CONV>(val).ToChecked();            \
         return std::tuple<size_t, void*,cl_int>(ptr_size, ptr_data, 0);         \
       };                                                                        \
       m_converters[NAME] = f;                                                   \
      }
 
-    CONVERT_NUMBER("char", cl_char, IsInt32, Int32Value);
-    CONVERT_NUMBER("uchar", cl_uchar, IsInt32, Uint32Value);
-    CONVERT_NUMBER("short", cl_short, IsInt32, Int32Value);
-    CONVERT_NUMBER("ushort", cl_ushort, IsInt32, Uint32Value);
-    CONVERT_NUMBER("int", cl_int , IsInt32, Int32Value);
-    CONVERT_NUMBER("uint", cl_uint, IsUint32, Uint32Value);
-    CONVERT_NUMBER("long", cl_long, IsNumber, IntegerValue);
-    CONVERT_NUMBER("ulong", cl_ulong, IsNumber, IntegerValue);
-    CONVERT_NUMBER("float", cl_float, IsNumber, NumberValue);
-    CONVERT_NUMBER("double", cl_double, IsNumber, NumberValue);
-    CONVERT_NUMBER("half", cl_half, IsNumber, NumberValue);
+    CONVERT_NUMBER("char", cl_char, IsInt32, int32_t);
+    CONVERT_NUMBER("uchar", cl_uchar, IsInt32, uint32_t);
+    CONVERT_NUMBER("short", cl_short, IsInt32, int32_t);
+    CONVERT_NUMBER("ushort", cl_ushort, IsInt32, uint32_t);
+    CONVERT_NUMBER("int", cl_int , IsInt32, int32_t);
+    CONVERT_NUMBER("uint", cl_uint, IsUint32, uint32_t);
+    CONVERT_NUMBER("long", cl_long, IsNumber, int64_t);
+    CONVERT_NUMBER("ulong", cl_ulong, IsNumber, int64_t);
+    CONVERT_NUMBER("float", cl_float, IsNumber, double);
+    CONVERT_NUMBER("double", cl_double, IsNumber, double);
+    CONVERT_NUMBER("half", cl_half, IsNumber, double);
 
     #undef CONVERT_NUMBER
-
 
     /* convert vector types (e.g. float4, int16, etc) */
 
@@ -164,7 +163,7 @@ public:
             /*THROW_ERR(CL_INVALID_ARG_VALUE);*/                                \
           return std::tuple<size_t,void*,cl_int>(0, NULL, CL_INVALID_ARG_VALUE);\
           }                                                                     \
-          vvc[i] = (TYPE) arr->Get(i)->COND();                                  \
+          vvc[i] = (TYPE) Nan::To<COND>(arr->Get(i)).ToChecked();               \
         }                                                                       \
         return std::tuple<size_t,void*,cl_int>(ptr_size, ptr_data, 0);          \
       };                                                                        \
@@ -178,17 +177,17 @@ public:
       CONVERT_VECT(NAME, TYPE, 8, PRED, COND);\
       CONVERT_VECT(NAME, TYPE, 16, PRED, COND);
 
-    CONVERT_VECTS("char", cl_char, IsInt32, Int32Value);
-    CONVERT_VECTS("uchar", cl_uchar, IsInt32, Int32Value);
-    CONVERT_VECTS("short", cl_short, IsInt32, Int32Value);
-    CONVERT_VECTS("ushort", cl_ushort, IsInt32, Int32Value);
-    CONVERT_VECTS("int", cl_int, IsInt32, Int32Value);
-    CONVERT_VECTS("uint", cl_uint, IsUint32, Uint32Value);
-    CONVERT_VECTS("long", cl_long, IsNumber, IntegerValue);
-    CONVERT_VECTS("ulong", cl_ulong, IsNumber, IntegerValue);
-    CONVERT_VECTS("float", cl_float, IsNumber, NumberValue);
-    CONVERT_VECTS("double", cl_double, IsNumber, NumberValue);
-    CONVERT_VECTS("half", cl_half, IsNumber, NumberValue);
+    CONVERT_VECTS("char", cl_char, IsInt32, int32_t);
+    CONVERT_VECTS("uchar", cl_uchar, IsInt32, int32_t);
+    CONVERT_VECTS("short", cl_short, IsInt32, int32_t);
+    CONVERT_VECTS("ushort", cl_ushort, IsInt32, int32_t);
+    CONVERT_VECTS("int", cl_int, IsInt32, int32_t);
+    CONVERT_VECTS("uint", cl_uint, IsUint32, uint32_t);
+    CONVERT_VECTS("long", cl_long, IsNumber, int64_t);
+    CONVERT_VECTS("ulong", cl_ulong, IsNumber, int64_t);
+    CONVERT_VECTS("float", cl_float, IsNumber, double);
+    CONVERT_VECTS("double", cl_double, IsNumber, double);
+    CONVERT_VECTS("half", cl_half, IsNumber, double);
 
     #undef CONVERT_VECT
     #undef CONVERT_VECTS
@@ -197,7 +196,7 @@ public:
     m_converters["bool"] = [](const Local<Value>& val) {
         size_t ptr_size = sizeof(cl_bool);
         void* ptr_data = new cl_bool;
-        *((cl_bool *)ptr_data) = val->BooleanValue() ? 1 : 0;
+        *((cl_bool *)ptr_data) = Nan::To<bool>(val).ToChecked() ? 1 : 0;
         return std::tuple<size_t,void*,cl_int>(ptr_size, ptr_data, 0);
     };
   }
@@ -245,7 +244,7 @@ NAN_METHOD(SetKernelArg) {
   NOCL_UNWRAP(k, NoCLKernel, info[0]);
 
   // Arg 1
-  unsigned int arg_idx = info[1]->Uint32Value();
+  unsigned int arg_idx = Nan::To<uint32_t>(info[1]).ToChecked();
 
   // get type and qualifier of kernel parameter with this index
   // using OpenCL, and then try to convert arg[2] to the type the kernel
@@ -278,8 +277,8 @@ NAN_METHOD(SetKernelArg) {
   { // behaviour when type is given
     // read argument 2 as the name of the data type
     if (info[2]->IsString()) {
-      Local<String> s = info[2]->ToString();
-      String::Utf8Value tname(s);
+      Local<String> s = Nan::To<String>(info[2]).ToLocalChecked();
+      Nan::Utf8String tname(s);
       const char* tname_c = *tname;
       // cout<<"setKernelArg[3]="<<tname_c<<endl;
       size_t len = tname.length();
@@ -300,7 +299,7 @@ NAN_METHOD(SetKernelArg) {
     if (!info[3]->IsNumber())
       THROW_ERR(CL_INVALID_ARG_VALUE);
     // local buffers are intialized with their size (data = NULL)
-    size_t local_size = info[3]->ToInteger()->Value();
+    size_t local_size = Nan::To<int32_t>(info[3]).ToChecked();
     err = ::clSetKernelArg(k->getRaw(), arg_idx, local_size, NULL);
   } else if ('*' == type_name[type_name.length() - 1] || type_name == "cl_mem"){
     // type must be a buffer (CLMem object)
@@ -347,7 +346,7 @@ NAN_METHOD(GetKernelInfo) {
   REQ_ARGS(2);
 
   NOCL_UNWRAP(k, NoCLKernel, info[0]);
-  cl_kernel_info param_name = info[1]->Uint32Value();
+  cl_kernel_info param_name = Nan::To<uint32_t>(info[1]).ToChecked();
 
   switch(param_name) {
 #ifdef CL_VERSION_1_2
@@ -400,8 +399,8 @@ NAN_METHOD(GetKernelArgInfo) {
   REQ_ARGS(3);
 
   NOCL_UNWRAP(k, NoCLKernel, info[0]);
-  cl_uint arg_idx = info[1]->Uint32Value();
-  cl_kernel_arg_info param_name = info[2]->Uint32Value();
+  cl_uint arg_idx = Nan::To<uint32_t>(info[1]).ToChecked();
+  cl_kernel_arg_info param_name = Nan::To<uint32_t>(info[2]).ToChecked();
 
   switch(param_name) {
     case CL_KERNEL_ARG_ADDRESS_QUALIFIER: {
@@ -451,7 +450,7 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
   NOCL_UNWRAP(k, NoCLKernel, info[0]);
   NOCL_UNWRAP(d, NoCLDeviceId, info[1]);
 
-  cl_kernel_work_group_info param_name = info[2]->Uint32Value();
+  cl_kernel_work_group_info param_name = Nan::To<uint32_t>(info[2]).ToChecked();
 
   switch(param_name) {
 #ifdef CL_VERSION_1_2
