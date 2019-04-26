@@ -13,6 +13,7 @@ var vendors = {
 };
 
 module.exports = function() {
+  var checks = undefined;
   var _vendors = [];
   var _oss = [];
   var _devices = [];
@@ -37,23 +38,26 @@ module.exports = function() {
   };
 
   var obj = {
-    vendor: function (v) {
-      _vendors.push(v);
+    vendor: function (...xs) {
+      _vendors.push(...xs);
+      checks |= xs.length;
       return obj;
     },
 
-    device: function (v) {
-      _devices.push(v);
+    device: function (...xs) {
+      _devices.push(...xs);
+      checks |= xs.length;
       return obj;
     },
 
-    os : function (o) {
-      _oss.push(o);
+    os : function (...xs) {
+      _oss.push(...xs);
+      checks |= xs.length;
       return obj;
     },
 
     it : function (desc) {
-      if (match()) {
+      if (checks === undefined || (checks > 0 && match())) {
         console.warn("Cancelling " + desc + " because of known driver issue");
         it.skip.apply(it, arguments);
       } else {
@@ -64,3 +68,5 @@ module.exports = function() {
 
   return obj;
 };
+
+module.exports.vendors = vendors;

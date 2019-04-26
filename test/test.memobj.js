@@ -316,7 +316,7 @@ describe("MemObj", function() {
       });
     });
 
-    it("should throw cl.INVALID_IMAGE_FORMAT_DESCRIPTOR if image_format is not valid or null", function () {
+    skip().vendor('nVidia').it("should throw cl.INVALID_IMAGE_FORMAT_DESCRIPTOR if image_format is not valid or null", function () {
       U.withContext(function (context, device, platform) {
         f.bind(f, context, 0, -1, imageDesc, null).should.throw(cl.INVALID_IMAGE_FORMAT_DESCRIPTOR.message);
       });
@@ -404,7 +404,7 @@ describe("MemObj", function() {
       });
     });
 
-    it("should get supported image formats", function () {
+    skip().vendor('nVidia').it("should get supported image formats", function () {
       U.withContext(function (context, device, platform) {
         var formats = f(context, cl.MEM_USE_HOST_PTR, cl.MEM_OBJECT_IMAGE2D);
         assert.isArray(formats);
@@ -412,7 +412,7 @@ describe("MemObj", function() {
       });
     });
 
-    it("should get supported image formats", function () {
+    skip().vendor('nVidia').it("should get supported image formats", function () {
       U.withContext(function (context, device, platform) {
         var formats = f(context, cl.MEM_ALLOC_HOST_PTR, cl.MEM_OBJECT_IMAGE2D);
         assert.isArray(formats);
@@ -420,7 +420,7 @@ describe("MemObj", function() {
       });
     });
 
-    it("should get supported image formats", function () {
+    skip().vendor('nVidia').it("should get supported image formats", function () {
       U.withContext(function (context, device, platform) {
         var formats = f(context, cl.MEM_COPY_HOST_PTR, cl.MEM_OBJECT_IMAGE2D);
         assert.isArray(formats);

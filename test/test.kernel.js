@@ -72,6 +72,7 @@ describe("Kernel", function () {
           var after = cl.getKernelInfo(k, cl.KERNEL_REFERENCE_COUNT);
           assert(before + 1 == after);
           cl.releaseKernel(k);
+          cl.releaseKernel(k);
         });
       });
     });
@@ -111,6 +112,7 @@ describe("Kernel", function () {
           }
           assert.equal(cl.setKernelArg(k, 0, "float*", mem), cl.SUCCESS, `setKernelArg should succeed`);
 
+          cl.releaseMemObject(mem);
           cl.releaseKernel(k);
         });
       });
@@ -246,8 +248,8 @@ describe("Kernel", function () {
         U.withContext(function (ctx) {
           U.withProgram(ctx, squareKern, function (prg) {
             var k = cl.createKernel(prg, "square");
-
             var val = cl.getKernelInfo(k, cl[clKey]);
+            cl.releaseKernel(k);
             _assert(val);
             console.log(clKey + " = " + val);
           });
@@ -268,7 +270,7 @@ describe("Kernel", function () {
         U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
           var nb_args = cl.getKernelInfo(k, cl.KERNEL_NUM_ARGS);
-
+          cl.releaseKernel(k);
           if (nb_args != 3) {
             assert.fail(nb_args, 3);
           }
@@ -281,7 +283,7 @@ describe("Kernel", function () {
         U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
           var name = cl.getKernelInfo(k, cl.KERNEL_FUNCTION_NAME);
-
+          cl.releaseKernel(k);
           if (name != "square") {
             assert.fail(name, "square");
           }
@@ -294,7 +296,7 @@ describe("Kernel", function () {
         U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
           var c = cl.getKernelInfo(k, cl.KERNEL_CONTEXT);
-
+          cl.releaseKernel(k);
           assert(c === ctx, 'c === ctx');
         });
       });
@@ -305,7 +307,7 @@ describe("Kernel", function () {
         U.withProgram(ctx, squareKern, function (prg) {
           var k = cl.createKernel(prg, "square");
           var p = cl.getKernelInfo(k, cl.KERNEL_PROGRAM);
-
+          cl.releaseKernel(k);
           assert(p === prg, 'p === prg');
         });
       });
@@ -319,8 +321,8 @@ describe("Kernel", function () {
         U.withContext(function (ctx) {
           U.withProgram(ctx, squareKern, function (prg) {
             var k = cl.createKernel(prg, "square");
-
             var val = cl.getKernelArgInfo(k, 0, cl[clKey]);
+            cl.releaseKernel(k);
             _assert(val);
             console.log(clKey + " = " + val);
           });
@@ -341,7 +343,7 @@ describe("Kernel", function () {
             var n1 = cl.getKernelArgInfo(k, 0, cl.KERNEL_ARG_NAME);
             var n2 = cl.getKernelArgInfo(k, 1, cl.KERNEL_ARG_NAME);
             var n3 = cl.getKernelArgInfo(k, 2, cl.KERNEL_ARG_NAME);
-
+            cl.releaseKernel(k);
             assert.equal(n1, "input");
             assert.equal(n2, "output");
             assert.equal(n3, "count");
@@ -356,7 +358,7 @@ describe("Kernel", function () {
             var n1 = cl.getKernelArgInfo(k, 0, cl.KERNEL_ARG_TYPE_NAME);
             var n2 = cl.getKernelArgInfo(k, 1, cl.KERNEL_ARG_TYPE_NAME);
             var n3 = cl.getKernelArgInfo(k, 2, cl.KERNEL_ARG_TYPE_NAME);
-
+            cl.releaseKernel(k);
             assert.equal(n1, "float*");
             assert.equal(n2, "float*");
             assert.equal(n3, "uint");
@@ -372,8 +374,8 @@ describe("Kernel", function () {
         U.withContext(function (ctx, device) {
           U.withProgram(ctx, squareKern, function (prg) {
             var k = cl.createKernel(prg, "square");
-
             var val = cl.getKernelWorkGroupInfo(k, device, cl[clKey]);
+            cl.releaseKernel(k);
             _assert(val);
             console.log(clKey + " = " + val);
           });
@@ -394,9 +396,9 @@ describe("Kernel", function () {
           var k = cl.createKernel(prg, "square");
           cl.getKernelWorkGroupInfo.bind(cl.getKernelWorkGroupInfo,k, device, cl.KERNEL_GLOBAL_WORK_SIZE)
             .should.throw(cl.INVALID_VALUE.message);
+          cl.releaseKernel(k);
         });
       });
     })
   });
-
 });

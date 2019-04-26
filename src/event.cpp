@@ -220,9 +220,9 @@ public:
     Nan::HandleScope scope;
 
     Local<Value> argv[] = {
-      GetFromPersistent(kIndex),  // event
+      GetFromPersistent(kIndex),  // userdata
       JS_INT(mCLCallbackStatus),  // error status
-      GetFromPersistent(kIndex+1) // userdata
+      GetFromPersistent(kIndex+1) // event
     };
     callback->Call(3, argv, async_resource);
   }

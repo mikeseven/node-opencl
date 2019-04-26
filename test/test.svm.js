@@ -100,7 +100,7 @@ versions(["2.0"]).describe("SVM", function() {
         U.withCQ(ctx, device, function (cq) {
           var buf = cl.SVMAlloc(ctx, 0, 200, 0);
           cl.enqueueSVMMap(cq, true, cl.MAP_READ, buf, 200);
-
+          cl.SVMFree(ctx, buf);
         });
       });
     });
@@ -123,6 +123,7 @@ versions(["2.0"]).describe("SVM", function() {
           cl.enqueueSVMMap(cq, true, cl.MAP_READ, buf, 200);
           cl.enqueueSVMUnmap(cq, buf);
           cl.finish(cq);
+          cl.SVMFree(ctx, buf);
         });
       });
     });
@@ -154,6 +155,7 @@ versions(["2.0"]).describe("SVM", function() {
           assert.equal(buf[2], ovv[2], 'buf[2]');
           assert.equal(buf[3], ovv[3], 'buf[3]');
           assert.equal(buf[4], ovv[4], 'buf[4]');
+          cl.SVMFree(ctx, buf);
         });
       });
     });
@@ -181,6 +183,7 @@ versions(["2.0"]).describe("SVM", function() {
 
           cl.enqueueSVMUnmap(cq,buf);
           cl.finish(cq);
+          cl.SVMFree(ctx, buf);
         });
       });
     });
@@ -193,6 +196,7 @@ versions(["2.0"]).describe("SVM", function() {
 
           U.bind(cl.enqueueSVMMemFill, cq, buf, ovv, ovv.length)
             .should.throw(cl.INVALID_VALUE.message);
+          cl.SVMFree(ctx, buf);
         });
       });      
     });

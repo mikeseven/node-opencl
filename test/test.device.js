@@ -6,12 +6,10 @@ var log = console.log;
 var skip = require("./utils/diagnostic");
 var U = require("./utils/utils.js");
 var versions = require("./utils/versions");
-var skip = require("./utils/diagnostic");
 
 describe("Device", function() {
-  var platforms=cl.getPlatformIDs();
-  var platform=platforms[0];
-  var devices=cl.getDeviceIDs(platform);
+
+  var platform = global.MAIN_PLATFORM_ID;
 
   describe("#getDeviceIDs()",function() {
     it("should return an array",function() {
@@ -21,43 +19,43 @@ describe("Device", function() {
     })
   });
 
-  function testBoolean(device, name) {
-    it(name+" should return a boolean",function(done) {
+  function testBoolean(device, name, vendorsToSkip = []) {
+    skip().vendor(...vendorsToSkip).it(name+" should return a boolean",function(done) {
       var val=cl.getDeviceInfo(device, cl[name.toUpperCase()]);
       assert.isBoolean(val);
       done(log(name+" = " + val))
     })
   }
-  function testInteger(device, name) {
-    it(name+" should return an integer",function(done) {
+  function testInteger(device, name, vendorsToSkip = []) {
+    skip().vendor(...vendorsToSkip).it(name+" should return an integer",function(done) {
       var val=cl.getDeviceInfo(device, cl[name.toUpperCase()]);
       assert.isNumber(val);
       done(log(name+" = " + val))
     })
   }
-  function testString(device, name) {
-    it(name+" should return a string",function(done) {
+  function testString(device, name, vendorsToSkip = []) {
+    skip().vendor(...vendorsToSkip).it(name+" should return a string",function(done) {
       var val=cl.getDeviceInfo(device, cl[name.toUpperCase()]);
       assert.isString(val);
       done(log(name+" = " + val))
     })
   }
-  function testObject(device, name) {
-    it(name+" should return an object",function() {
+  function testObject(device, name, vendorsToSkip = []) {
+    skip().vendor(...vendorsToSkip).it(name+" should return an object",function() {
       var info = cl.getDeviceInfo(device, cl[name.toUpperCase()]);
       assert.isObject(info);
     })
   }
-  function testArray(device, name) {
-    it(name+" should return an array",function(done) {
+  function testArray(device, name, vendorsToSkip = []) {
+    skip().vendor(...vendorsToSkip).it(name+" should return an array",function(done) {
       var val=cl.getDeviceInfo(device, cl[name.toUpperCase()]);
       assert.isArray(val);
       done(log(name+" = " + val))
     })
   }
 
-  function test64Array(device, name) {
-    it(name+" should return a 2 integers array",function(done) {
+  function test64Array(device, name, vendorsToSkip = []) {
+    skip().vendor(...vendorsToSkip).it(name+" should return a 2 integers array",function(done) {
       var val=cl.getDeviceInfo(device, cl[name.toUpperCase()]);
       assert.isArray(val);
       assert.isNumber(val[0]);
@@ -163,9 +161,9 @@ describe("Device", function() {
       // testInteger(device, "DEVICE_QUEUE_ON_DEVICE_PREFERRED_SIZE");
 
       if (U.checkVersion("2.x")) {
-        testInteger(device, "DEVICE_PIPE_MAX_PACKET_SIZE");
-        testInteger(device, "DEVICE_MAX_PIPE_ARGS");
-        testInteger(device, "DEVICE_PIPE_MAX_ACTIVE_RESERVATIONS");
+        testInteger(device, "DEVICE_PIPE_MAX_PACKET_SIZE", ['nVidia']);
+        testInteger(device, "DEVICE_MAX_PIPE_ARGS", ['nVidia']);
+        testInteger(device, "DEVICE_PIPE_MAX_ACTIVE_RESERVATIONS", ['nVidia']);
       }
 
       if(cl.CL_VERSION_1_2) {

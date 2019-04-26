@@ -138,7 +138,7 @@ describe("Event", function() {
   describe("#setEventCallback",function() {
     skip().vendor("nVidia").it("callback should be called",function(done){
       U.withAsyncContext(function (ctx, device, platform, ctxDone) {
-        var myCallback = function(userData, _status, _mEvent) {
+        var myCallback = function(userData, status, mEvent) {
           // assert(ctx === cl.getEventInfo(mEvent, cl.EVENT_CONTEXT), 'ctx === event ctx');
           cl.releaseEvent(mEvent);
           ctxDone();
