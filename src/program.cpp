@@ -58,7 +58,7 @@ NAN_METHOD(CreateProgramWithBinary) {
   unique_ptr<size_t[]> originalLengths(new size_t[n]);
 
   for (unsigned int i = 0; i < n; ++ i) {
-    int32_t len = Nan::To<int32_t>(Nan::Get(js_sizes, i).ToLocalChecked()).ToChecked();
+    int32_t len = Nan::To<int32_t>(Nan::Get(js_sizes, i).ToLocalChecked()).FromJust();
     originalLengths[i] = len;
     if (len > 0) {
       cl_binary_lengths.push_back(len);
@@ -475,7 +475,7 @@ NAN_METHOD(GetProgramInfo) {
 
   NOCL_UNWRAP(prog, NoCLProgram, info[0]);
 
-  cl_program_info param_name = Nan::To<uint32_t>(info[1]).ToChecked();
+  cl_program_info param_name = Nan::To<uint32_t>(info[1]).FromJust();
 
   switch(param_name) {
     case CL_PROGRAM_REFERENCE_COUNT:
@@ -619,7 +619,7 @@ NAN_METHOD(GetProgramBuildInfo) {
 
   NOCL_UNWRAP(prog, NoCLProgram, info[0]);
   NOCL_UNWRAP(device, NoCLDeviceId, info[1]);
-  cl_program_build_info param_name = Nan::To<uint32_t>(info[2]).ToChecked();
+  cl_program_build_info param_name = Nan::To<uint32_t>(info[2]).FromJust();
 
   switch(param_name) {
     case CL_PROGRAM_BUILD_STATUS:

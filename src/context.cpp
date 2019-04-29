@@ -30,7 +30,7 @@ NAN_METHOD(CreateContext) {
   if(ARG_EXISTS(0)) {
     REQ_ARRAY_ARG(0, properties);
     for (uint32_t i=0; i < properties->Length(); i++) {
-      cl_uint prop_id = Nan::To<uint32_t>(Nan::Get(properties, i).ToLocalChecked()).ToChecked();
+      cl_uint prop_id = Nan::To<uint32_t>(Nan::Get(properties, i).ToLocalChecked()).FromJust();
       cl_properties.push_back(prop_id);
       if(prop_id == CL_CONTEXT_PLATFORM) {
         NOCL_UNWRAP(platform, NoCLPlatformId, Nan::Get(properties, ++i).ToLocalChecked());
@@ -89,7 +89,7 @@ NAN_METHOD(CreateContextFromType) {
   if(!info[0]->IsNull() && !info[0]->IsUndefined()) {
     REQ_ARRAY_ARG(0, properties);
     for (uint32_t i=0; i < properties->Length(); i++) {
-      cl_uint prop_id = Nan::To<uint32_t>(Nan::Get(properties, i).ToLocalChecked()).ToChecked();
+      cl_uint prop_id = Nan::To<uint32_t>(Nan::Get(properties, i).ToLocalChecked()).FromJust();
       cl_properties.push_back(prop_id);
       if(prop_id == CL_CONTEXT_PLATFORM) {
         NOCL_UNWRAP(platform, NoCLPlatformId, Nan::Get(properties, ++i).ToLocalChecked());
@@ -100,7 +100,7 @@ NAN_METHOD(CreateContextFromType) {
     cl_properties.push_back(0);
   }
 
-  cl_device_type device_type=Nan::To<uint32_t>(info[1]).ToChecked();
+  cl_device_type device_type=Nan::To<uint32_t>(info[1]).FromJust();
 
   if(!info[2]->IsNull() && !info[2]->IsUndefined()) {
       callback = Local<Function>::Cast(info[2]);
@@ -154,7 +154,7 @@ NAN_METHOD(GetContextInfo) {
   Nan::HandleScope scope;
 
   NOCL_UNWRAP(context, NoCLContext, info[0]);
-  cl_context_info param_name = Nan::To<uint32_t>(info[1]).ToChecked();
+  cl_context_info param_name = Nan::To<uint32_t>(info[1]).FromJust();
 
   switch (param_name) {
   case CL_CONTEXT_REFERENCE_COUNT:

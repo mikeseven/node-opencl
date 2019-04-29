@@ -56,25 +56,25 @@ NAN_METHOD(CreateSamplerWithProperties) {
   vector<cl_sampler_properties> cl_properties;
 
   for (uint32_t i=0; i < properties->Length(); i+=2) {
-    cl_uint prop_id = Nan::To<int32_t>(Nan::Get(properties, i).ToLocalChecked()).ToChecked();
+    cl_uint prop_id = Nan::To<int32_t>(Nan::Get(properties, i).ToLocalChecked()).FromJust();
     cl_properties.push_back(prop_id);
     if(prop_id == CL_SAMPLER_NORMALIZED_COORDS) {
       if (!Nan::Get(properties, i+1).ToLocalChecked()->IsBoolean()) {
         THROW_ERR(CL_INVALID_VALUE);
       }
-      cl_bool norm = Nan::To<bool>(Nan::Get(properties, i+1).ToLocalChecked()).ToChecked() ? 1 : 0;
+      cl_bool norm = Nan::To<bool>(Nan::Get(properties, i+1).ToLocalChecked()).FromJust() ? 1 : 0;
       cl_properties.push_back(norm);
     } else if (prop_id == CL_SAMPLER_ADDRESSING_MODE) {
       if (!Nan::Get(properties, i+1).ToLocalChecked()->IsNumber()) {
         THROW_ERR(CL_INVALID_VALUE);
       }
-      cl_addressing_mode addr = Nan::To<int32_t>(Nan::Get(properties, i+1).ToLocalChecked()).ToChecked();
+      cl_addressing_mode addr = Nan::To<int32_t>(Nan::Get(properties, i+1).ToLocalChecked()).FromJust();
       cl_properties.push_back(addr);
     } else if (prop_id == CL_SAMPLER_FILTER_MODE) {
       if (!Nan::Get(properties, i+1).ToLocalChecked()->IsNumber()) {
         THROW_ERR(CL_INVALID_VALUE);
       }
-      cl_filter_mode fil = Nan::To<int32_t>(Nan::Get(properties, i+1).ToLocalChecked()).ToChecked();
+      cl_filter_mode fil = Nan::To<int32_t>(Nan::Get(properties, i+1).ToLocalChecked()).FromJust();
       cl_properties.push_back(fil);
     } else {
       THROW_ERR(CL_INVALID_VALUE)
@@ -137,7 +137,7 @@ NAN_METHOD(GetSamplerInfo) {
 
   NOCL_UNWRAP(sampler, NoCLSampler, info[0]);
 
-  cl_sampler_info param_name = Nan::To<uint32_t>(info[1]).ToChecked();
+  cl_sampler_info param_name = Nan::To<uint32_t>(info[1]).FromJust();
 
   switch(param_name) {
     case CL_SAMPLER_REFERENCE_COUNT:

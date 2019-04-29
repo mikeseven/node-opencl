@@ -19,13 +19,13 @@ NAN_METHOD(SVMAlloc) {
   NOCL_UNWRAP(context, NoCLContext, info[0]);
 
   // Arg 2
-  cl_svm_mem_flags flags = Nan::To<uint32_t>(info[1]).ToChecked();
+  cl_svm_mem_flags flags = Nan::To<uint32_t>(info[1]).FromJust();
 
   // Arg 2
-  cl_uint size = Nan::To<uint32_t>(info[2]).ToChecked();
+  cl_uint size = Nan::To<uint32_t>(info[2]).FromJust();
 
   // Arg 3
-  cl_uint alignment = Nan::To<uint32_t>(info[3]).ToChecked();
+  cl_uint alignment = Nan::To<uint32_t>(info[3]).FromJust();
 
   void* mPtr = ::clSVMAlloc (
     context->getRaw(),
@@ -136,7 +136,7 @@ NAN_METHOD(enqueueSVMFree) {
   cl_event* eventPtr = nullptr;
   cl_event event;
 
-  if(ARG_EXISTS(5) && Nan::To<bool>(info[5]).ToChecked())
+  if(ARG_EXISTS(5) && Nan::To<bool>(info[5]).FromJust())
       eventPtr = &event;
 
   if (ARG_EXISTS(2)) {
@@ -177,7 +177,7 @@ NAN_METHOD(enqueueSVMMemcpy) {
   cl_int err;
 
   NOCL_UNWRAP(cq, NoCLCommandQueue, info[0]);
-  cl_bool blocking_copy = Nan::To<bool>(info[1]).ToChecked() ? CL_TRUE : CL_FALSE;
+  cl_bool blocking_copy = Nan::To<bool>(info[1]).FromJust() ? CL_TRUE : CL_FALSE;
 
   void* dst=nullptr;
   size_t len=0;
@@ -193,7 +193,7 @@ NAN_METHOD(enqueueSVMMemcpy) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  size_t size = Nan::To<uint32_t>(info[4]).ToChecked();
+  size_t size = Nan::To<uint32_t>(info[4]).FromJust();
 
   if(size>static_cast<size_t>(len) || size>static_cast<size_t>(len2))
     THROW_ERR(CL_INVALID_VALUE);
@@ -206,7 +206,7 @@ NAN_METHOD(enqueueSVMMemcpy) {
   cl_event* eventPtr = nullptr;
   cl_event event;
 
-  if(ARG_EXISTS(6) && Nan::To<bool>(info[6]).ToChecked())
+  if(ARG_EXISTS(6) && Nan::To<bool>(info[6]).FromJust())
       eventPtr = &event;
 
   err = clEnqueueSVMMemcpy(cq->getRaw(),blocking_copy,
@@ -245,7 +245,7 @@ NAN_METHOD(enqueueSVMMemFill) {
   if(!pattern || !len) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
-  size_t size = Nan::To<uint32_t>(info[3]).ToChecked();
+  size_t size = Nan::To<uint32_t>(info[3]).FromJust();
 
   if(size>static_cast<size_t>(len) ||
      size >static_cast<size_t>(length) ||
@@ -260,7 +260,7 @@ NAN_METHOD(enqueueSVMMemFill) {
   cl_event* eventPtr = nullptr;
   cl_event event;
 
-  if(ARG_EXISTS(5) && Nan::To<bool>(info[5]).ToChecked())
+  if(ARG_EXISTS(5) && Nan::To<bool>(info[5]).FromJust())
       eventPtr = &event;
 
   err =  clEnqueueSVMMemFill(cq->getRaw(),ptr,pattern,static_cast<size_t>(len),size,
@@ -284,8 +284,8 @@ NAN_METHOD(enqueueSVMMap) {
   // Arg 0
   NOCL_UNWRAP(cq, NoCLCommandQueue, info[0]);
 
-  cl_bool blocking_map = Nan::To<bool>(info[1]).ToChecked() ? CL_TRUE : CL_FALSE;
-  cl_map_flags map_flags = Nan::To<uint32_t>(info[2]).ToChecked();
+  cl_bool blocking_map = Nan::To<bool>(info[1]).FromJust() ? CL_TRUE : CL_FALSE;
+  cl_map_flags map_flags = Nan::To<uint32_t>(info[2]).FromJust();
 
   void* ptr=nullptr;
   size_t len=0;
@@ -294,7 +294,7 @@ NAN_METHOD(enqueueSVMMap) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  size_t size = Nan::To<uint32_t>(info[4]).ToChecked();
+  size_t size = Nan::To<uint32_t>(info[4]).FromJust();
 
   std::vector<NoCLEvent*> cl_events;
   if(ARG_EXISTS(5)) {
@@ -304,7 +304,7 @@ NAN_METHOD(enqueueSVMMap) {
   cl_event* eventPtr = nullptr;
   cl_event event;
 
-  if(ARG_EXISTS(6) && Nan::To<bool>(info[6]).ToChecked())
+  if(ARG_EXISTS(6) && Nan::To<bool>(info[6]).FromJust())
       eventPtr = &event;
 
   err = clEnqueueSVMMap(cq->getRaw(),blocking_map,map_flags,
@@ -343,7 +343,7 @@ NAN_METHOD(enqueueSVMUnmap) {
   cl_event* eventPtr = nullptr;
   cl_event event;
 
-  if(ARG_EXISTS(3) && Nan::To<bool>(info[3]).ToChecked())
+  if(ARG_EXISTS(3) && Nan::To<bool>(info[3]).FromJust())
       eventPtr = &event;
 
   err = clEnqueueSVMUnmap(cq->getRaw(),ptr, (cl_uint)cl_events.size(),
@@ -368,7 +368,7 @@ NAN_METHOD(setKernelArgSVMPointer) {
   NOCL_UNWRAP(k, NoCLKernel, info[0]);
 
   // Arg 1
-  unsigned int idx = Nan::To<uint32_t>(info[1]).ToChecked();
+  unsigned int idx = Nan::To<uint32_t>(info[1]).FromJust();
   void* ptr=nullptr;
   size_t len=0;
   getPtrAndLen(info[2], ptr, len);

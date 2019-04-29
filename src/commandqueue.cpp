@@ -18,7 +18,7 @@ namespace opencl {
 #define GET_EVENT_FLAG(n)                                 \
   cl_event event = nullptr;                               \
   cl_event* eventPtr =                                    \
-    (ARG_EXISTS(n) && Nan::To<bool>(info[n]).ToChecked()) \
+    (ARG_EXISTS(n) && Nan::To<bool>(info[n]).FromJust()) \
     ? &event : nullptr;
 
 #define GET_WAIT_LIST_AND_EVENT(n)                        \
@@ -50,7 +50,7 @@ NAN_METHOD(CreateCommandQueue) {
   // Arg 1
   NOCL_UNWRAP(device, NoCLDeviceId, info[1]);
 
-  cl_command_queue_properties properties = Nan::To<uint32_t>(info[2]).ToChecked();
+  cl_command_queue_properties properties = Nan::To<uint32_t>(info[2]).FromJust();
 
   cl_int err;
   cl_command_queue q = ::clCreateCommandQueue(
@@ -85,20 +85,20 @@ NAN_METHOD(CreateCommandQueueWithProperties) {
     if (!Nan::Get(properties, i).ToLocalChecked()->IsNumber()) {
         THROW_ERR(CL_INVALID_VALUE);
     }
-    cl_uint prop_id = Nan::To<uint32_t>(Nan::Get(properties, i).ToLocalChecked()).ToChecked();
+    cl_uint prop_id = Nan::To<uint32_t>(Nan::Get(properties, i).ToLocalChecked()).FromJust();
     cl_properties.push_back(prop_id);
 
     if(prop_id == CL_QUEUE_PROPERTIES) {
       if (!Nan::Get(properties, i+1).ToLocalChecked()->IsNumber()) {
         THROW_ERR(CL_INVALID_VALUE);
       }
-      cl_queue_properties props = Nan::To<int32_t>(Nan::Get(properties, i+1).ToLocalChecked()).ToChecked();
+      cl_queue_properties props = Nan::To<int32_t>(Nan::Get(properties, i+1).ToLocalChecked()).FromJust();
       cl_properties.push_back(props);
     } else if (prop_id == CL_QUEUE_SIZE) {
       if (!Nan::Get(properties, i+1).ToLocalChecked()->IsNumber()) {
         THROW_ERR(CL_INVALID_VALUE);
       }
-      cl_queue_properties size = Nan::To<int32_t>(Nan::Get(properties, i+1).ToLocalChecked()).ToChecked();
+      cl_queue_properties size = Nan::To<int32_t>(Nan::Get(properties, i+1).ToLocalChecked()).FromJust();
       cl_properties.push_back(size);
     } else {
       THROW_ERR(CL_INVALID_QUEUE_PROPERTIES)
@@ -161,7 +161,7 @@ NAN_METHOD(GetCommandQueueInfo) {
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, info[0]);
 
-  cl_command_queue_info param_name = Nan::To<uint32_t>(info[1]).ToChecked();
+  cl_command_queue_info param_name = Nan::To<uint32_t>(info[1]).FromJust();
 
   switch(param_name) {
     case CL_QUEUE_CONTEXT: {
@@ -246,9 +246,9 @@ NAN_METHOD(EnqueueReadBuffer) {
   // Arg 1
   NOCL_UNWRAP(buffer, NoCLMem, info[1]);
 
-  cl_bool blocking_read = Nan::To<bool>(info[2]).ToChecked();
-  size_t offset = Nan::To<uint32_t>(info[3]).ToChecked();
-  size_t size = Nan::To<uint32_t>(info[4]).ToChecked();
+  cl_bool blocking_read = Nan::To<bool>(info[2]).FromJust();
+  size_t offset = Nan::To<uint32_t>(info[3]).FromJust();
+  size_t size = Nan::To<uint32_t>(info[4]).FromJust();
 
   void *ptr=nullptr;
   if(info[5]->IsUndefined() || info[5]->IsNull()) {
@@ -299,7 +299,7 @@ NAN_METHOD(EnqueueReadBufferRect) {
   NOCL_UNWRAP(buffer, NoCLMem, info[1]);
 
   // Arg 2
-  cl_bool blocking_read = Nan::To<bool>(info[2]).ToChecked();
+  cl_bool blocking_read = Nan::To<bool>(info[2]).FromJust();
 
   size_t buffer_offset[]={0,0,0};
   size_t host_offset[]={0,0,0};
@@ -307,18 +307,18 @@ NAN_METHOD(EnqueueReadBufferRect) {
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
   for(i=0;i<max(arr->Length(),2u);i++)
-      buffer_offset[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+      buffer_offset[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
   arr= Local<Array>::Cast(info[4]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      host_offset[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+      host_offset[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
   arr= Local<Array>::Cast(info[5]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      region[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+      region[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
 
-  size_t buffer_row_pitch = Nan::To<uint32_t>(info[6]).ToChecked();
-  size_t buffer_slice_pitch = Nan::To<uint32_t>(info[7]).ToChecked();
-  size_t host_row_pitch = Nan::To<uint32_t>(info[8]).ToChecked();
-  size_t host_slice_pitch = Nan::To<uint32_t>(info[9]).ToChecked();
+  size_t buffer_row_pitch = Nan::To<uint32_t>(info[6]).FromJust();
+  size_t buffer_slice_pitch = Nan::To<uint32_t>(info[7]).FromJust();
+  size_t host_row_pitch = Nan::To<uint32_t>(info[8]).FromJust();
+  size_t host_slice_pitch = Nan::To<uint32_t>(info[9]).FromJust();
 
   void *ptr=nullptr;
   size_t len=0;
@@ -363,9 +363,9 @@ NAN_METHOD(EnqueueWriteBuffer) {
   // Arg 1
   NOCL_UNWRAP(buffer, NoCLMem, info[1]);
 
-  cl_bool blocking_write = Nan::To<bool>(info[2]).ToChecked();
-  size_t offset = Nan::To<uint32_t>(info[3]).ToChecked();
-  size_t size = Nan::To<uint32_t>(info[4]).ToChecked();
+  cl_bool blocking_write = Nan::To<bool>(info[2]).FromJust();
+  size_t offset = Nan::To<uint32_t>(info[3]).FromJust();
+  size_t size = Nan::To<uint32_t>(info[4]).FromJust();
 
   void *ptr=nullptr;
   if(info[5]->IsUndefined() || info[5]->IsNull()) {
@@ -415,7 +415,7 @@ NAN_METHOD(EnqueueWriteBufferRect) {
   NOCL_UNWRAP(buffer, NoCLMem, info[1]);
 
   // Arg 2
-  cl_bool blocking_write = Nan::To<bool>(info[2]).ToChecked();
+  cl_bool blocking_write = Nan::To<bool>(info[2]).FromJust();
 
   size_t buffer_offset[]={0,0,0};
   size_t host_offset[]={0,0,0};
@@ -423,18 +423,18 @@ NAN_METHOD(EnqueueWriteBufferRect) {
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
   for(i=0;i<max(arr->Length(),2u);i++)
-      buffer_offset[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+      buffer_offset[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
   arr= Local<Array>::Cast(info[4]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      host_offset[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+      host_offset[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
   arr= Local<Array>::Cast(info[5]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      region[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+      region[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
 
-  size_t buffer_row_pitch = Nan::To<uint32_t>(info[6]).ToChecked();
-  size_t buffer_slice_pitch = Nan::To<uint32_t>(info[7]).ToChecked();
-  size_t host_row_pitch = Nan::To<uint32_t>(info[8]).ToChecked();
-  size_t host_slice_pitch = Nan::To<uint32_t>(info[9]).ToChecked();
+  size_t buffer_row_pitch = Nan::To<uint32_t>(info[6]).FromJust();
+  size_t buffer_slice_pitch = Nan::To<uint32_t>(info[7]).FromJust();
+  size_t host_row_pitch = Nan::To<uint32_t>(info[8]).FromJust();
+  size_t host_slice_pitch = Nan::To<uint32_t>(info[9]).FromJust();
 
   void *ptr=nullptr;
   size_t len=0;
@@ -485,12 +485,12 @@ NAN_METHOD(EnqueueFillBuffer) {
     THROW_ERR(CL_INVALID_VALUE);
   }
   else if (info[2]->IsInt32()) {
-    scalar_pattern_int = Nan::To<int32_t>(info[2]).ToChecked();
+    scalar_pattern_int = Nan::To<int32_t>(info[2]).FromJust();
     pattern = &scalar_pattern_int;
     len = sizeof(cl_uint);
   }
   else if (info[2]->IsNumber()) {
-    scalar_pattern_double = Nan::To<double>(info[2]).ToChecked();
+    scalar_pattern_double = Nan::To<double>(info[2]).FromJust();
     pattern = &scalar_pattern_double;
     len = sizeof(cl_double);
   }
@@ -501,8 +501,8 @@ NAN_METHOD(EnqueueFillBuffer) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  size_t offset=Nan::To<uint32_t>(info[3]).ToChecked();
-  size_t size=Nan::To<uint32_t>(info[4]).ToChecked();
+  size_t offset=Nan::To<uint32_t>(info[3]).FromJust();
+  size_t size=Nan::To<uint32_t>(info[4]).FromJust();
 
   GET_WAIT_LIST_AND_EVENT(5)
 
@@ -538,9 +538,9 @@ NAN_METHOD(EnqueueCopyBuffer) {
   NOCL_UNWRAP(dst_buffer, NoCLMem, info[2]);
 
 
-  size_t src_offset=Nan::To<uint32_t>(info[3]).ToChecked();
-  size_t dst_offset=Nan::To<uint32_t>(info[4]).ToChecked();
-  size_t size=Nan::To<uint32_t>(info[5]).ToChecked();
+  size_t src_offset=Nan::To<uint32_t>(info[3]).FromJust();
+  size_t dst_offset=Nan::To<uint32_t>(info[4]).FromJust();
+  size_t size=Nan::To<uint32_t>(info[5]).FromJust();
 
   GET_WAIT_LIST_AND_EVENT(6)
 
@@ -585,17 +585,17 @@ NAN_METHOD(EnqueueCopyBufferRect) {
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
   for(i=0;i<max(arr->Length(),2u);i++)
-      src_origin[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+      src_origin[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
   arr= Local<Array>::Cast(info[4]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      dst_origin[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+      dst_origin[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
   arr= Local<Array>::Cast(info[5]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      region[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
-  size_t src_row_pitch = Nan::To<uint32_t>(info[6]).ToChecked();
-  size_t src_slice_pitch = Nan::To<uint32_t>(info[7]).ToChecked();
-  size_t dst_row_pitch = Nan::To<uint32_t>(info[8]).ToChecked();
-  size_t dst_slice_pitch = Nan::To<uint32_t>(info[9]).ToChecked();
+      region[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
+  size_t src_row_pitch = Nan::To<uint32_t>(info[6]).FromJust();
+  size_t src_slice_pitch = Nan::To<uint32_t>(info[7]).FromJust();
+  size_t dst_row_pitch = Nan::To<uint32_t>(info[8]).FromJust();
+  size_t dst_slice_pitch = Nan::To<uint32_t>(info[9]).FromJust();
 
   GET_WAIT_LIST_AND_EVENT(10)
 
@@ -631,20 +631,20 @@ NAN_METHOD(EnqueueReadImage) {
   // Arg 1
   NOCL_UNWRAP(image, NoCLMem, info[1]);
 
-  cl_bool blocking_read = Nan::To<bool>(info[2]).ToChecked();
+  cl_bool blocking_read = Nan::To<bool>(info[2]).FromJust();
 
   size_t origin[]={0,0,0};
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
   for(i=0;i<max(arr->Length(),2u);i++)
-      origin[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+      origin[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
   arr= Local<Array>::Cast(info[4]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      region[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+      region[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
 
-  size_t row_pitch = Nan::To<uint32_t>(info[5]).ToChecked();
-  size_t slice_pitch = Nan::To<uint32_t>(info[6]).ToChecked();
+  size_t row_pitch = Nan::To<uint32_t>(info[5]).FromJust();
+  size_t slice_pitch = Nan::To<uint32_t>(info[6]).FromJust();
 
   void *ptr=nullptr;
   size_t len=0;
@@ -691,20 +691,20 @@ NAN_METHOD(EnqueueWriteImage) {
   NOCL_UNWRAP(image, NoCLMem, info[1]);
 
   // Arg 2
-  cl_bool blocking_write = Nan::To<bool>(info[2]).ToChecked();
+  cl_bool blocking_write = Nan::To<bool>(info[2]).FromJust();
 
   size_t origin[]={0,0,0};
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
   for(i=0;i<max(arr->Length(),2u);i++)
-      origin[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+      origin[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
   arr= Local<Array>::Cast(info[4]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      region[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+      region[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
 
-  size_t row_pitch = Nan::To<uint32_t>(info[5]).ToChecked();
-  size_t slice_pitch = Nan::To<uint32_t>(info[6]).ToChecked();
+  size_t row_pitch = Nan::To<uint32_t>(info[5]).FromJust();
+  size_t slice_pitch = Nan::To<uint32_t>(info[6]).FromJust();
 
   void *ptr=nullptr;
   size_t len=0;
@@ -761,10 +761,10 @@ NAN_METHOD(EnqueueFillImage) {
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
   for(i=0;i<max(arr->Length(),2u);i++)
-      origin[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+      origin[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
   arr= Local<Array>::Cast(info[4]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      region[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+      region[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
 
   GET_WAIT_LIST_AND_EVENT(5)
 
@@ -806,13 +806,13 @@ NAN_METHOD(EnqueueCopyImage) {
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
   for(i=0;i<max(arr->Length(),2u);i++)
-      src_origin[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+      src_origin[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
   arr= Local<Array>::Cast(info[4]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      dst_origin[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+      dst_origin[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
   arr= Local<Array>::Cast(info[5]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      region[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+      region[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
 
   GET_WAIT_LIST_AND_EVENT(6)
 
@@ -853,12 +853,12 @@ NAN_METHOD(EnqueueCopyImageToBuffer) {
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
   for(i=0;i<max(arr->Length(),2u);i++)
-      src_origin[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+      src_origin[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
   arr= Local<Array>::Cast(info[4]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      region[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+      region[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
 
-  size_t dst_offset = Nan::To<uint32_t>(info[5]).ToChecked();
+  size_t dst_offset = Nan::To<uint32_t>(info[5]).FromJust();
 
   GET_WAIT_LIST_AND_EVENT(6)
 
@@ -894,7 +894,7 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
   // Arg 2
   NOCL_UNWRAP(dst_image, NoCLMem, info[2]);
 
-  size_t src_offset = Nan::To<uint32_t>(info[3]).ToChecked();
+  size_t src_offset = Nan::To<uint32_t>(info[3]).FromJust();
 
   size_t dst_origin[]={0,0,0};
   size_t region[]={1,1,1};
@@ -902,10 +902,10 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
   uint32_t i;
 
   for(i=0;i<max(arr->Length(),2u);i++)
-      dst_origin[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+      dst_origin[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
   arr= Local<Array>::Cast(info[5]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      region[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+      region[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
 
   GET_WAIT_LIST_AND_EVENT(6)
 
@@ -948,10 +948,10 @@ NAN_METHOD(EnqueueMapBuffer) {
   // Arg 1
   NOCL_UNWRAP(mem, NoCLMem, info[1]);
 
-  cl_bool blocking_map = Nan::To<bool>(info[2]).ToChecked() ? CL_TRUE : CL_FALSE;
-  cl_map_flags map_flags = Nan::To<uint32_t>(info[3]).ToChecked();
-  size_t offset = Nan::To<uint32_t>(info[4]).ToChecked();
-  size_t size = Nan::To<uint32_t>(info[5]).ToChecked();
+  cl_bool blocking_map = Nan::To<bool>(info[2]).FromJust() ? CL_TRUE : CL_FALSE;
+  cl_map_flags map_flags = Nan::To<uint32_t>(info[3]).FromJust();
+  size_t offset = Nan::To<uint32_t>(info[4]).FromJust();
+  size_t size = Nan::To<uint32_t>(info[5]).FromJust();
 
   GET_WAIT_LIST_AND_EVENT(6)
 
@@ -1004,17 +1004,17 @@ NAN_METHOD(EnqueueMapImage) {
   // Arg 1
   NOCL_UNWRAP(mem, NoCLMem, info[1]);
 
-  cl_bool blocking_map = Nan::To<bool>(info[2]).ToChecked();
-  cl_map_flags map_flags = Nan::To<uint32_t>(info[3]).ToChecked();
+  cl_bool blocking_map = Nan::To<bool>(info[2]).FromJust();
+  cl_map_flags map_flags = Nan::To<uint32_t>(info[3]).FromJust();
   size_t origin[]={0,0,0};
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(info[4]);
   uint32_t i;
   for(i=0;i<max(arr->Length(),2u);i++)
-    origin[i]=Nan::To<int32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+    origin[i]=Nan::To<int32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
   arr= Local<Array>::Cast(info[5]);
   for(i=0;i<max(arr->Length(),2u);i++)
-    region[i]=Nan::To<int32_t>(Nan::Get(arr, i).ToLocalChecked()).ToChecked();
+    region[i]=Nan::To<int32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
 
   size_t image_row_pitch;
   size_t image_slice_pitch;
@@ -1141,7 +1141,7 @@ NAN_METHOD(EnqueueMigrateMemObjects) {
     mem_objects[i]=obj->getRaw();
   }
 
-  cl_mem_migration_flags flags=Nan::To<uint32_t>(info[2]).ToChecked();
+  cl_mem_migration_flags flags=Nan::To<uint32_t>(info[2]).FromJust();
 
   GET_WAIT_LIST_AND_EVENT(3)
 
@@ -1175,7 +1175,7 @@ NAN_METHOD(EnqueueNDRangeKernel) {
   NOCL_UNWRAP(k, NoCLKernel, info[1]);
 
 
-  cl_uint work_dim=Nan::To<uint32_t>(info[2]).ToChecked();
+  cl_uint work_dim=Nan::To<uint32_t>(info[2]).FromJust();
 
   std::vector<size_t> cl_work_offset;
   std::vector<size_t> cl_work_global;
@@ -1190,7 +1190,7 @@ NAN_METHOD(EnqueueNDRangeKernel) {
     }
 
     for (unsigned int i = 0; i < work_dim; ++ i) {
-      cl_work_offset.push_back(Nan::To<uint32_t>(Nan::Get(js_work_offset, i).ToLocalChecked()).ToChecked());
+      cl_work_offset.push_back(Nan::To<uint32_t>(Nan::Get(js_work_offset, i).ToLocalChecked()).FromJust());
     }
   }
 
@@ -1202,7 +1202,7 @@ NAN_METHOD(EnqueueNDRangeKernel) {
     }
 
     for (unsigned int i = 0; i < work_dim; ++ i) {
-      cl_work_global.push_back(Nan::To<uint32_t>(Nan::Get(js_work_global, i).ToLocalChecked()).ToChecked());
+      cl_work_global.push_back(Nan::To<uint32_t>(Nan::Get(js_work_global, i).ToLocalChecked()).FromJust());
     }
   }
 
@@ -1215,7 +1215,7 @@ NAN_METHOD(EnqueueNDRangeKernel) {
     }
 
     for (unsigned int i = 0; i < work_dim; ++ i) {
-      cl_work_local.push_back(Nan::To<uint32_t>(Nan::Get(js_work_local, i).ToLocalChecked()).ToChecked());
+      cl_work_local.push_back(Nan::To<uint32_t>(Nan::Get(js_work_local, i).ToLocalChecked()).FromJust());
     }
   }
 

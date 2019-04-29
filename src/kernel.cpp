@@ -119,7 +119,7 @@ public:
         }                                                                       \
         void* ptr_data = new TYPE;                                              \
         size_t ptr_size = sizeof(TYPE);                                         \
-        *((TYPE *)ptr_data) = (TYPE) Nan::To<CONV>(val).ToChecked();            \
+        *((TYPE *)ptr_data) = (TYPE) Nan::To<CONV>(val).FromJust();            \
         return std::tuple<size_t, void*,cl_int>(ptr_size, ptr_data, 0);         \
       };                                                                        \
       m_converters[NAME] = f;                                                   \
@@ -163,7 +163,7 @@ public:
             /*THROW_ERR(CL_INVALID_ARG_VALUE);*/                                        \
           return std::tuple<size_t,void*,cl_int>(0, NULL, CL_INVALID_ARG_VALUE);        \
           }                                                                             \
-          vvc[i] = (TYPE) Nan::To<COND>(Nan::Get(arr, i).ToLocalChecked()).ToChecked(); \
+          vvc[i] = (TYPE) Nan::To<COND>(Nan::Get(arr, i).ToLocalChecked()).FromJust(); \
         }                                                                               \
         return std::tuple<size_t,void*,cl_int>(ptr_size, ptr_data, 0);                  \
       };                                                                                \
@@ -196,7 +196,7 @@ public:
     m_converters["bool"] = [](const Local<Value>& val) {
         size_t ptr_size = sizeof(cl_bool);
         void* ptr_data = new cl_bool;
-        *((cl_bool *)ptr_data) = Nan::To<bool>(val).ToChecked() ? 1 : 0;
+        *((cl_bool *)ptr_data) = Nan::To<bool>(val).FromJust() ? 1 : 0;
         return std::tuple<size_t,void*,cl_int>(ptr_size, ptr_data, 0);
     };
   }
@@ -244,7 +244,7 @@ NAN_METHOD(SetKernelArg) {
   NOCL_UNWRAP(k, NoCLKernel, info[0]);
 
   // Arg 1
-  unsigned int arg_idx = Nan::To<uint32_t>(info[1]).ToChecked();
+  unsigned int arg_idx = Nan::To<uint32_t>(info[1]).FromJust();
 
   // get type and qualifier of kernel parameter with this index
   // using OpenCL, and then try to convert arg[2] to the type the kernel
@@ -299,7 +299,7 @@ NAN_METHOD(SetKernelArg) {
     if (!info[3]->IsNumber())
       THROW_ERR(CL_INVALID_ARG_VALUE);
     // local buffers are intialized with their size (data = NULL)
-    size_t local_size = Nan::To<int32_t>(info[3]).ToChecked();
+    size_t local_size = Nan::To<int32_t>(info[3]).FromJust();
     err = ::clSetKernelArg(k->getRaw(), arg_idx, local_size, NULL);
   } else if ('*' == type_name[type_name.length() - 1] || type_name == "cl_mem"){
     // type must be a buffer (CLMem object)
@@ -346,7 +346,7 @@ NAN_METHOD(GetKernelInfo) {
   REQ_ARGS(2);
 
   NOCL_UNWRAP(k, NoCLKernel, info[0]);
-  cl_kernel_info param_name = Nan::To<uint32_t>(info[1]).ToChecked();
+  cl_kernel_info param_name = Nan::To<uint32_t>(info[1]).FromJust();
 
   switch(param_name) {
 #ifdef CL_VERSION_1_2
@@ -399,8 +399,8 @@ NAN_METHOD(GetKernelArgInfo) {
   REQ_ARGS(3);
 
   NOCL_UNWRAP(k, NoCLKernel, info[0]);
-  cl_uint arg_idx = Nan::To<uint32_t>(info[1]).ToChecked();
-  cl_kernel_arg_info param_name = Nan::To<uint32_t>(info[2]).ToChecked();
+  cl_uint arg_idx = Nan::To<uint32_t>(info[1]).FromJust();
+  cl_kernel_arg_info param_name = Nan::To<uint32_t>(info[2]).FromJust();
 
   switch(param_name) {
     case CL_KERNEL_ARG_ADDRESS_QUALIFIER: {
@@ -450,7 +450,7 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
   NOCL_UNWRAP(k, NoCLKernel, info[0]);
   NOCL_UNWRAP(d, NoCLDeviceId, info[1]);
 
-  cl_kernel_work_group_info param_name = Nan::To<uint32_t>(info[2]).ToChecked();
+  cl_kernel_work_group_info param_name = Nan::To<uint32_t>(info[2]).FromJust();
 
   switch(param_name) {
 #ifdef CL_VERSION_1_2

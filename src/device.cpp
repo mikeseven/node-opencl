@@ -19,7 +19,7 @@ NAN_METHOD(GetDeviceIDs) {
 
   cl_device_type type = CL_DEVICE_TYPE_ALL;
   if(!info[1]->IsUndefined() && !info[1]->IsNull())
-    type=Nan::To<uint32_t>(info[1]).ToChecked();
+    type=Nan::To<uint32_t>(info[1]).FromJust();
 
   cl_uint n = 0;
   CHECK_ERR(::clGetDeviceIDs(platform_id->getRaw(), type, 0, NULL, &n));
@@ -51,7 +51,7 @@ NAN_METHOD(GetDeviceInfo) {
   NOCL_UNWRAP(deviceId, NoCLDeviceId, info[0]);
 
   cl_device_id device_id = deviceId->getRaw();
-  cl_device_info param_name = Nan::To<uint32_t>(info[1]).ToChecked();
+  cl_device_info param_name = Nan::To<uint32_t>(info[1]).FromJust();
 
   switch (param_name) {
   case CL_DEVICE_NAME:
@@ -279,7 +279,7 @@ NAN_METHOD(CreateSubDevices) {
   std::vector<cl_device_partition_property> cl_properties;
   REQ_ARRAY_ARG(1, js_properties);
   for (unsigned int i = 0; i < js_properties->Length(); ++ i) {
-    cl_properties.push_back(Nan::To<int32_t>(Nan::Get(js_properties, i).ToLocalChecked()).ToChecked());
+    cl_properties.push_back(Nan::To<int32_t>(Nan::Get(js_properties, i).ToLocalChecked()).FromJust());
   }
 
   cl_uint capacity = 0;
