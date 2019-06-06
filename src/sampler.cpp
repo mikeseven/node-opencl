@@ -19,13 +19,13 @@ NAN_METHOD(CreateSampler) {
   NOCL_UNWRAP(context, NoCLContext, info[0]);
 
   // Arg 1
-  cl_bool normalized_coords = info[1]->BooleanValue() ? CL_TRUE : CL_FALSE;
+  cl_bool normalized_coords = Nan::To<bool>(info[1]).FromJust() ? CL_TRUE : CL_FALSE;
 
   // Arg 2
-  cl_addressing_mode addressing_mode = info[2]->Uint32Value();
+  cl_addressing_mode addressing_mode = Nan::To<uint32_t>(info[2]).FromJust();
 
   // Arg 3
-  cl_filter_mode filter_mode = info[3]->Uint32Value();
+  cl_filter_mode filter_mode = Nan::To<uint32_t>(info[3]).FromJust();
 
   cl_int ret=CL_SUCCESS;
   cl_sampler sw = ::clCreateSampler(
