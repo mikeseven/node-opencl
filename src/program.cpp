@@ -516,6 +516,7 @@ NAN_METHOD(GetProgramInfo) {
     {
       cl_uint nsizes;
 
+      // TODO: Validate https://youtu.be/iQu9yG1dlrM?t=839
       // DRIVER ISSUE :  This part segfaults if program has not been compiled
 
       CHECK_ERR(::clGetProgramInfo(
@@ -534,6 +535,7 @@ NAN_METHOD(GetProgramInfo) {
       return;
     }
 
+    // TODO: Validate https://youtu.be/iQu9yG1dlrM?t=839
     /*
      err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeof(size_t)*nb_devices, np, &nbread);//Load in np the size of my binary
 
@@ -552,6 +554,7 @@ NAN_METHOD(GetProgramInfo) {
     {
       cl_uint nsizes;
 
+      // TODO: Validate https://youtu.be/iQu9yG1dlrM?t=839
       // DRIVER ISSUE :  This part segfaults if program has not been compiled
 
       CHECK_ERR(::clGetProgramInfo(
@@ -688,9 +691,8 @@ NAN_MODULE_INIT(init)
   Nan::SetMethod(target, "compileProgram", CompileProgram);
   Nan::SetMethod(target, "linkProgram", LinkProgram);
   Nan::SetMethod(target, "unloadPlatformCompiler", UnloadPlatformCompiler);
-#else
-  Nan::SetMethod(target, "unloadCompiler", UnloadPlatformCompiler);
 #endif
+  Nan::SetMethod(target, "unloadCompiler", UnloadPlatformCompiler);
   Nan::SetMethod(target, "getProgramInfo", GetProgramInfo);
   Nan::SetMethod(target, "getProgramBuildInfo", GetProgramBuildInfo);
 #ifdef CL_VERSION_2_1

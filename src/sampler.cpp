@@ -3,7 +3,6 @@
 
 namespace opencl {
 
-#ifndef CL_VERSION_2_0
 // /* Sampler APIs */
 // extern CL_API_ENTRY cl_sampler CL_API_CALL
 // clCreateSampler(cl_context          /* context */,
@@ -38,8 +37,7 @@ NAN_METHOD(CreateSampler) {
   info.GetReturnValue().Set(NOCL_WRAP(NoCLSampler, sw));
 }
 
-#else
-
+#ifdef CL_VERSION_2_0
 // extern CL_API_ENTRY cl_sampler CL_API_CALL
 // clCreateSamplerWithProperties(cl_context                     /* context */,
 //                               const cl_sampler_properties *  /* normalized_coords */,
@@ -151,6 +149,7 @@ NAN_METHOD(GetSamplerInfo) {
     {
       cl_context val;
       CHECK_ERR(::clGetSamplerInfo(sampler->getRaw(),param_name,sizeof(cl_context), &val, NULL))
+      info.GetReturnValue().Set(NOCL_WRAP(NoCLContext, val));
       return;
     }
     case CL_SAMPLER_NORMALIZED_COORDS:
@@ -184,9 +183,8 @@ NAN_MODULE_INIT(init)
   Nan::SetMethod(target, "retainSampler", RetainSampler);
   Nan::SetMethod(target, "releaseSampler", ReleaseSampler);
   Nan::SetMethod(target, "getSamplerInfo", GetSamplerInfo);
-#ifndef CL_VERSION_2_0
   Nan::SetMethod(target, "createSampler", CreateSampler);
-#else
+#ifdef CL_VERSION_2_0
   Nan::SetMethod(target, "createSamplerWithProperties", CreateSamplerWithProperties);
 #endif
 }

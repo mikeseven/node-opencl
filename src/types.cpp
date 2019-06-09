@@ -36,6 +36,7 @@ NAN_METHOD(releaseAll){
   static const int idle_time_in_ms = 5;
   Nan::IdleNotification(idle_time_in_ms);
 
+// TODO: Validate https://youtu.be/iQu9yG1dlrM?t=839
   // be careful with the order of the releases: could segfault if the order is not good
   // on some drivers
   // NoCLEvent::releaseAll();

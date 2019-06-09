@@ -1,0 +1,25 @@
+{
+    "extends": [
+        "tslint:latest",
+        "tslint-config-prettier"
+    ],
+    "rules": {
+        "interface-name": [
+            true,
+            "never-prefix"
+        ],
+        "no-implicit-dependencies": [
+            true,
+            "dev"
+        ],
+        "no-debugger": false,
+        "no-console": false,
+        "no-bitwise": false,
+        "ordered-imports": false,
+        "object-literal-sort-keys": false,
+        "prefer-const": false,
+        "member-ordering": false,
+        "prefer-for-of": false,
+        "variable-name": false
+    }
+}

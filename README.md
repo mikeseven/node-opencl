@@ -1,3 +1,43 @@
+# Node OpenCL (TypeScript)
+
+This is a fork of mikeseven's node-opencl project from:
+https://github.com/mikeseven/node-opencl (by https://github.com/mikeseven)
+
+I've taken the initiative to renovate the existing code for my own purposes and now I'm sharing the result in hope that it will be useful for anyone else who is lacking typescript support with `node-opencl`. 
+
+This project contains full typings coverage of OpenCL 1.0-2.0 (and OpenCL 2.1, 2.2 ready to be implemented) specification (based on Khronos specification) with node-opencl specifics taken into account. The package also contains couple of minor bugfixes suggested by community PRs in original repo and couple of mine aesthetic interface changes / additions and changes related to management of deprecated OpenCL apis (basically I enabled the use of deprecated APIs if they were still supported by OpenCL implementation). Which I think may block mikeseven from merging current changes into `node-opencl`. Nevertheless in order to not partition the community with redundant library versions I'm open to kill this repo in event of merge with `node-opencl`.
+
+One more thing, the typings are handcrafted, I've attempted to make the typings as verbose and type-safe as possible, this means that there is still room for improvement for both typings and the OpenCL bindings implementation itself (I'm open for both issues and PRs).
+
+Currently there are just couple of v1.0-v2.0 functions that are not implemented (most of them are deprecated in OpenCL 1.2 - 2.0 or not needed at all due to the way `node-opencl` was implemented). OpenCL v2.1 and v2.2 are not implemented at all so again issues and PRs are welcome.
+
+And the last thing I wanted to mention. Due to hardware nature of OpenCL segfaults, BSODs, freezes and computer restarts are a normal thing in OpenCL world. So in order to compensate the risk I've implemented extra measures for type-safety. Basically I've used nominal types everywhere where possible (search for type discrimination). I.e. types which basically allow to distinguish two similar atomic (or non-atomic) type, example:
+
+```typescript
+export type Kilos<T> = T & { readonly discriminator: unique symbol };
+export type Pounds<T> = T & { readonly discriminator: unique symbol };
+
+export interface MetricWeight {
+    value: Kilos<number>
+}
+
+export interface ImperialWeight {
+    value: Pounds<number>
+}
+
+const wm: MetricWeight = { value: 0 as Kilos<number> }
+const wi: ImperialWeight = { value: 0 as Pounds<number> }
+
+wm.value = wi.value;                  // Gives compiler error
+wi.value = wi.value * 2;              // Gives compiler error
+wm.value = wi.value * 2;              // Gives compiler error
+const we: MetricWeight = { value: 0 } // Gives compiler error
+```
+
+It improves the TypeSafety keeps notion of original type but comes with additional strain of casting `as Kilos<number>` here and there, though it shouldn't be a problem due to risk compensation (I guess).
+
+--------------------
+
 # Node OpenCL
 
 [![Build Status](http://pub-ci.ioweb.fr/api/badge/github.com/ioweb-fr/node-opencl/status.svg?branch=master)](http://pub-ci.ioweb.fr/github.com/ioweb-fr/node-opencl)
@@ -85,9 +125,7 @@ those behaviours so you can run them to check if it is a known issue.
 
 ## Int 64
 
-Javascript does not support 64 bits integers. OpenCL returns some int64, mainly in getInfo functions. To resolve this, we return 64-bit values as an array of 2 32-bit integers [hi, lo] such that
-
-value = (hi << 32) | lo
+Javascript does not support 64 bits integers however OpenCL returns Int64 values for mem-size related functions like `getDeviceInfo`, `getKernelWorkGroupInfo` and time-related function  `getEventProfilingInfo`. In order to deal with the limitation for `getDeviceInfo`, `getKernelWorkGroupInfo` would return the amounts in kilobytes. For `getEventProfilingInfo` we return an array of two 32 bit integers that form the resulting Int64 value, if necessary the resulting value can be gathered together using formula `value = (hi << 32) | lo` however in absolute majority of cases only lower 32 bits of 64 bit integer are required.
 
 ## Differences between Node-OpenCL and WebCL
 

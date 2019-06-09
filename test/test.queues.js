@@ -700,7 +700,7 @@ describe("CommandQueue", function() {
   });
 
   var createImageWrapper = function (ctx,flags, imageFormat, imageDesc, hostmem) {
-    if(!cl.VERSION_1_2) { // ~=cl.VERSION_1_1 && !cl.VERSION_1_2
+    if(!cl.v12) { // ~=cl.v11 && !cl.v12
       return cl.createImage2D(ctx, flags, imageFormat, imageDesc.width, imageDesc.height, 0, hostmem);
     }
     else {

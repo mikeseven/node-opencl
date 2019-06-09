@@ -161,7 +161,7 @@ NAN_METHOD(GetDeviceInfo) {
   case CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS:
   case CL_DEVICE_MAX_WRITE_IMAGE_ARGS:
   case CL_DEVICE_MEM_BASE_ADDR_ALIGN:
-  case CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE:
+  case CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE: // TODO: Check this field, specs say this will be deprecated starting from v1.2
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR:
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT:
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_INT:
@@ -204,28 +204,21 @@ NAN_METHOD(GetDeviceInfo) {
     return;
   }
   // cl_ulong params
-  case CL_DEVICE_GLOBAL_MEM_CACHE_SIZE:
-  case CL_DEVICE_GLOBAL_MEM_SIZE:
   case CL_DEVICE_LOCAL_MEM_SIZE:
+  case CL_DEVICE_GLOBAL_MEM_SIZE:
+  case CL_DEVICE_MAX_MEM_ALLOC_SIZE:
+  case CL_DEVICE_GLOBAL_MEM_CACHE_SIZE:
   case CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE:
-  case CL_DEVICE_MAX_MEM_ALLOC_SIZE: {
+  {
     cl_ulong param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_ulong), &param_value, NULL));
 
     /**
       JS Compatibility
 
-      As JS does not support 64 bits integer, we return a 2-integer array with
-        output_values[0] = (input_value >> 32) & 0xffffffff;
-        output_values[1] = input_value & 0xffffffff;
-
-      and reconstruction as
-        input_value = ((int64_t) output_values[0]) << 32) | output_values[1];
+      As JS does not support 64 bits integer, we return the amount as a 32 bit value containing the amount in kilobytes, it should be enough for couple of generations of GPUs, in future the value can be returned in megabytes / gigabytes / etc. with library's major version bump.
     */
-    Local<Array> arr = Nan::New<Array>(2);
-    Nan::Set(arr, 0, JS_INT((uint32_t) (param_value>>32))); // hi
-    Nan::Set(arr, 1, JS_INT((uint32_t) (param_value & 0xffffffff))); // lo
-    info.GetReturnValue().Set(arr);
+    info.GetReturnValue().Set(JS_INT((uint32_t) (param_value >> 10)));
 
     return;
   }

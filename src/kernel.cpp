@@ -480,17 +480,9 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
       /**
         JS Compatibility
 
-        As JS does not support 64 bits integer, we return a 2-integer array with
-          output_values[0] = (input_value >> 32) & 0xffffffff;
-          output_values[1] = input_value & 0xffffffff;
-
-        and reconstruction as
-          input_value = ((int64_t) output_values[0]) << 32) | output_values[1];
+        As JS does not support 64 bits integer, therefore we return the values in kilobytes
       */
-      Local<Array> arr = Nan::New<Array>(2);
-      Nan::Set(arr, 0, JS_INT((uint32_t) (sz>>32))); // hi
-      Nan::Set(arr, 1, JS_INT((uint32_t) (sz & 0xffffffff))); // lo
-      info.GetReturnValue().Set(arr);
+      info.GetReturnValue().Set(JS_INT((uint32_t) (sz >> 10)));
       return;
     }
   }

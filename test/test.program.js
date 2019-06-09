@@ -400,7 +400,7 @@ describe("Program", function () {
     testForType("PROGRAM_DEVICES", assert.isArray.bind(assert));
     testForType("PROGRAM_BINARY_SIZES", assert.isArray.bind(assert));
     testForType("PROGRAM_SOURCE", assert.isString.bind(assert));
-    if(cl.VERSION_1_2) {
+    if(cl.v12) {
       testForType("PROGRAM_KERNEL_NAMES", assert.isString.bind(assert));
     }
 
@@ -434,7 +434,7 @@ describe("Program", function () {
     testForType("PROGRAM_BUILD_STATUS", assert.isNumber.bind(assert));
     testForType("PROGRAM_BUILD_OPTIONS", assert.isString.bind(assert));
     testForType("PROGRAM_BUILD_LOG", assert.isString.bind(assert));
-    if(cl.VERSION_1_2) {
+    if(cl.v12) {
       testForType("PROGRAM_BINARY_TYPE", assert.isNumber.bind(assert));
     }
 

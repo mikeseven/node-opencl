@@ -7,11 +7,29 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug C++",
-            "program": "/home/ptaylor/.nvm/versions/node/v12.0.0/bin/node",
-            "preLaunchTask": "npm: build:dev",
+            "name": "Debug C++ (Wait for JavaScript)",
+            "program": "node",
             "args": [
-                "/home/ptaylor/dev/node-opencl/node_modules/mocha/bin/_mocha"
+                // Allow current instance to use up to 10 gigs of RAM, because why not? :)
+                "--max_old_space_size=10240",
+                "--inspect-brk=7777",
+                "--require",
+                "ts-node/register",
+                "${file}"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug C++",
+            "program": "node",
+            "args": [
+                // Allow current instance to use up to 10 gigs of RAM, because why not? :)
+                "--max_old_space_size=10240",
+                "--require",
+                "ts-node/register",
+                "${file}"
             ],
             "cwd": "${workspaceFolder}"
         },

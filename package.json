@@ -1,11 +1,13 @@
 {
-  "name": "node-opencl",
+  "name": "node-opencl-ts",
   "version": "0.5.0",
   "description": "A binding to OpenCL for Node.JS",
-  "main": "lib/opencl.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "authors": [
     "Mikael Bourges-Sevenier <mikeseven@gmail.com>",
-    "Ioweb <context@ioweb.fr>"
+    "Ioweb <context@ioweb.fr>",
+    "Denis Yaremov <denis.yaremov@gmail.com>"
   ],
   "keywords": [
     "opencl",
@@ -15,20 +17,17 @@
     "computing"
   ],
   "maintainers": [
-    "Mikael Bourges-Sevenier <mikeseven@gmail.com>",
-    "Fabien Cellier <fabien.cellier@gmail.com>",
-    "Frédéric Langlade <fred@ioweb.fr>",
-    "Adrien Plagnol <adrien@ioweb.fr>"
+    "Denis Yaremov <denis.yaremov@gmail.com>"
   ],
   "license": "BSD-3-Clause",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mikeseven/node-opencl.git"
+    "url": "https://github.com/lu4/node-opencl-ts.git"
   },
   "bugs": {
-    "url": "https://github.com/mikeseven/node-opencl/issues"
+    "url": "https://github.com/lu4/node-opencl-ts/issues"
   },
-  "homepage": "https://github.com/mikeseven/node-opencl#readme",
+  "homepage": "https://github.com/lu4/node-opencl-ts",
   "directories": {
     "docker": "docker",
     "src": "src",
@@ -38,8 +37,9 @@
   },
   "scripts": {
     "install": "node-gyp rebuild --msvs_version=auto",
-    "build": "npm run clean && npm install",
+    "build": "npm run clean && npm install && tsc -p tsconfig.prod.json",
     "build:dev": "node-gyp build --debug",
+    "rebuild:dev": "npm run build && npm run build:dev",
     "clean": "rm -rf build node_modules",
     "lint": "eslint lib test",
     "test": "mocha -gc test"
@@ -49,9 +49,15 @@
     "nan": "^2.13.2"
   },
   "devDependencies": {
+    "@types/bindings": "^1.3.0",
+    "@types/node": "^12.0.5",
     "chai": ">=2.0.0",
     "chalk": ">=0.5.1",
-    "mocha": "5.2.0"
+    "mocha": "5.2.0",
+    "ts-node": "^8.2.0",
+    "typescript": "^3.5.1",
+    "tslint": "^5.11.0",
+    "tslint-config-prettier": "^1.17.0"
   },
   "peerDependencies": {
     "node-memwatch": "1.0.1"

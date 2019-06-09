@@ -79,7 +79,7 @@ NAN_METHOD(CreateContext) {
 //                         cl_int *                /* errcode_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(CreateContextFromType) {
   Nan::EscapableHandleScope scope;
-  REQ_ARGS(4)
+  REQ_ARGS(2) // Callbacks are not currently supported, neither user_data argument
 
   Local<Array> properties;
   vector<cl_context_properties> cl_properties;
@@ -204,7 +204,7 @@ NAN_METHOD(GetContextInfo) {
 }
 
 // // Deprecated OpenCL 1.1 APIs
-// extern CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED cl_mem CL_API_CALL
+// extern CL_API_ENTRY CL_EXT_PREFIX__v11_DEPRECATED cl_mem CL_API_CALL
 // clCreateImage2D(cl_context              /* context */,
 //                 cl_mem_flags            /* flags */,
 //                 const cl_image_format * /* image_format */,
@@ -212,9 +212,9 @@ NAN_METHOD(GetContextInfo) {
 //                 size_t                  /* image_height */,
 //                 size_t                  /* image_row_pitch */,
 //                 void *                  /* host_ptr */,
-//                 cl_int *                /* errcode_ret */) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+//                 cl_int *                /* errcode_ret */) CL_EXT_SUFFIX__v11_DEPRECATED;
 
-// extern CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED cl_mem CL_API_CALL
+// extern CL_API_ENTRY CL_EXT_PREFIX__v11_DEPRECATED cl_mem CL_API_CALL
 // clCreateImage3D(cl_context              /* context */,
 //                 cl_mem_flags            /* flags */,
 //                 const cl_image_format * /* image_format */,
@@ -224,10 +224,10 @@ NAN_METHOD(GetContextInfo) {
 //                 size_t                  /* image_row_pitch */,
 //                 size_t                  /* image_slice_pitch */,
 //                 void *                  /* host_ptr */,
-//                 cl_int *                /* errcode_ret */) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+//                 cl_int *                /* errcode_ret */) CL_EXT_SUFFIX__v11_DEPRECATED;
 
-// extern CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED cl_int CL_API_CALL
-// clUnloadCompiler(void) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+// extern CL_API_ENTRY CL_EXT_PREFIX__v11_DEPRECATED cl_int CL_API_CALL
+// clUnloadCompiler(void) CL_EXT_SUFFIX__v11_DEPRECATED;
 
 #ifdef CL_VERSION_2_1
 // extern CL_API_ENTRY cl_int CL_API_CALL
@@ -239,10 +239,9 @@ NAN_METHOD(GetContextInfo) {
 namespace Context {
 NAN_MODULE_INIT(init)
 {
+  Nan::SetMethod(target, "createContext", CreateContext);
 #ifdef CL_VERSION_2_0
   Nan::SetMethod(target, "createContextFromType", CreateContextFromType);
-#else
-  Nan::SetMethod(target, "createContext", CreateContext);
 #endif
   Nan::SetMethod(target, "retainContext", RetainContext);
   Nan::SetMethod(target, "releaseContext", ReleaseContext);

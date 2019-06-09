@@ -17,22 +17,14 @@ namespace opencl {
 
 #define GET_EVENT_FLAG(n)                                 \
   cl_event event = nullptr;                               \
-  cl_event* eventPtr =                                    \
-    (ARG_EXISTS(n) && Nan::To<bool>(info[n]).FromJust()) \
-    ? &event : nullptr;
+  cl_event* eventPtr = &event;                            \
 
 #define GET_WAIT_LIST_AND_EVENT(n)                        \
   GET_WAIT_LIST(n)                                        \
-  GET_EVENT_FLAG(n+1)
+  GET_EVENT_FLAG()
 
 #define RETURN_EVENT                                        \
-  if (eventPtr) {                                           \
     info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event)); \
-  } else {                                                  \
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));          \
-  }
-
-#ifndef CL_VERSION_2_0
 
 // /* Command Queue APIs */
 // extern CL_API_ENTRY cl_command_queue CL_API_CALL
@@ -42,7 +34,7 @@ namespace opencl {
 //                      cl_int *                       /* errcode_ret */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(CreateCommandQueue) {
   Nan::HandleScope scope;
-  REQ_ARGS(3);
+  REQ_ARGS(2);
 
   // Arg 0
   NOCL_UNWRAP(context, NoCLContext, info[0]);
@@ -50,7 +42,11 @@ NAN_METHOD(CreateCommandQueue) {
   // Arg 1
   NOCL_UNWRAP(device, NoCLDeviceId, info[1]);
 
-  cl_command_queue_properties properties = Nan::To<uint32_t>(info[2]).FromJust();
+  cl_command_queue_properties properties = 0;
+  
+  if (ARG_EXISTS(2)) {
+    properties = Nan::To<uint32_t>(info[2]).FromJust();
+  }
 
   cl_int err;
   cl_command_queue q = ::clCreateCommandQueue(
@@ -60,8 +56,7 @@ NAN_METHOD(CreateCommandQueue) {
   info.GetReturnValue().Set(NOCL_WRAP(NoCLCommandQueue, q));
 }
 
-#else
-
+#ifdef CL_VERSION_2_0
 // extern CL_API_ENTRY cl_command_queue CL_API_CALL
 // clCreateCommandQueueWithProperties(cl_context               /* context */,
 //                                    cl_device_id              /* device */,
@@ -304,15 +299,16 @@ NAN_METHOD(EnqueueReadBufferRect) {
   size_t buffer_offset[]={0,0,0};
   size_t host_offset[]={0,0,0};
   size_t region[]={1,1,1};
+
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       buffer_offset[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
   arr= Local<Array>::Cast(info[4]);
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       host_offset[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
   arr= Local<Array>::Cast(info[5]);
-  for(i=0;i<max(arr->Length(),2u);i++)
+  for(i=0;i<max(arr->Length(),3u);i++)
       region[i]=Nan::To<uint32_t>(Nan::Get(arr, i).ToLocalChecked()).FromJust();
 
   size_t buffer_row_pitch = Nan::To<uint32_t>(info[6]).FromJust();
@@ -325,7 +321,7 @@ NAN_METHOD(EnqueueReadBufferRect) {
 
   if(info[10]->IsUndefined() || info[10]->IsNull()) {
     CHECK_ERR(CL_INVALID_VALUE);
-  }
+}
   else
     getPtrAndLen(info[10],ptr,len);
   if(!ptr || !len) {
@@ -497,7 +493,7 @@ NAN_METHOD(EnqueueFillBuffer) {
   else {
     getPtrAndLen(info[2], pattern, len);
   }
-  if(!pattern || !len) {
+    if(!pattern || !len) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
@@ -968,9 +964,7 @@ NAN_METHOD(EnqueueMapBuffer) {
 
   Local<v8::ArrayBuffer> obj = v8::ArrayBuffer::New(v8::Isolate::GetCurrent(), mPtr, size);
 
-  if(eventPtr) {
-    Nan::Set(obj, JS_STR("event"), NOCL_WRAP(NoCLEvent,event));
-  }
+  Nan::Set(obj, JS_STR("event"), NOCL_WRAP(NoCLEvent,event));
 
   if(!blocking_map) {
     // TODO? buf->SetIndexedPropertiesToExternalArrayData(NULL, buf->GetIndexedPropertiesExternalArrayDataType(), 0);
@@ -1039,14 +1033,12 @@ NAN_METHOD(EnqueueMapImage) {
   if (image_slice_pitch) {
     size = image_slice_pitch * region[2];
   }
+
   Local<v8::ArrayBuffer> obj = v8::ArrayBuffer::New(v8::Isolate::GetCurrent(), mPtr, size);
 
+  Nan::Set(obj, JS_STR("event"), NOCL_WRAP(NoCLEvent,event));
   Nan::Set(obj, JS_STR("image_row_pitch"), Nan::New(static_cast<int>(image_row_pitch)));
   Nan::Set(obj, JS_STR("image_slice_pitch"), Nan::New(static_cast<int>(image_slice_pitch)));
-
-  if(eventPtr) {
-    Nan::Set(obj, JS_STR("event"), NOCL_WRAP(NoCLEvent,event));
-  }
 
   if(!blocking_map) {
     //TODO? buf->SetIndexedPropertiesToExternalArrayData(NULL, buf->GetIndexedPropertiesExternalArrayDataType(), 0);
@@ -1166,7 +1158,7 @@ NAN_METHOD(EnqueueMigrateMemObjects) {
 //                        cl_event *       /* event */) CL_API_SUFFIX__VERSION_1_0;
 NAN_METHOD(EnqueueNDRangeKernel) {
   Nan::HandleScope scope;
-  REQ_ARGS(6);
+  REQ_ARGS(5);
 
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, info[0]);
@@ -1180,7 +1172,6 @@ NAN_METHOD(EnqueueNDRangeKernel) {
   std::vector<size_t> cl_work_offset;
   std::vector<size_t> cl_work_global;
   std::vector<size_t> cl_work_local;
-
 
   if (ARG_EXISTS(3)) {
     Local<Array> js_work_offset = Local<Array>::Cast(info[3]);
@@ -1235,7 +1226,6 @@ NAN_METHOD(EnqueueNDRangeKernel) {
   RETURN_EVENT
 }
 
-#ifndef CL_VERSION_2_0
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clEnqueueTask(cl_command_queue  /* command_queue */,
 //               cl_kernel         /* kernel */,
@@ -1262,8 +1252,6 @@ NAN_METHOD(EnqueueTask) {
 
   RETURN_EVENT
 }
-#endif
-
 
 // extern CL_API_ENTRY cl_int CL_API_CALL
 // clEnqueueNativeKernel(cl_command_queue  /* command_queue */,
@@ -1329,12 +1317,13 @@ NAN_METHOD(EnqueueBarrierWithWaitList) {
 
   RETURN_EVENT
 }
+#endif
 
 // // Deprecated OpenCL 1.1 APIs
-#elif defined(CL_VERSION_1_1)
-// extern CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED cl_int CL_API_CALL
+#ifdef CL_VERSION_1_1
+// extern CL_API_ENTRY CL_EXT_PREFIX__v11_DEPRECATED cl_int CL_API_CALL
 // clEnqueueMarker(cl_command_queue    /* command_queue */,
-//                 cl_event *          /* event */) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+//                 cl_event *          /* event */) CL_EXT_SUFFIX__v11_DEPRECATED;
 NAN_METHOD(EnqueueMarker) {
   Nan::HandleScope scope;
   REQ_ARGS(1);
@@ -1349,10 +1338,10 @@ NAN_METHOD(EnqueueMarker) {
   RETURN_EVENT
 }
 
-// extern CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED cl_int CL_API_CALL
+// extern CL_API_ENTRY CL_EXT_PREFIX__v11_DEPRECATED cl_int CL_API_CALL
 // clEnqueueWaitForEvents(cl_command_queue /* command_queue */,
 //                         cl_uint          /* num_events */,
-//                         const cl_event * /* event_list */) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+//                         const cl_event * /* event_list */) CL_EXT_SUFFIX__v11_DEPRECATED;
 NAN_METHOD(EnqueueWaitForEvents) {
   Nan::HandleScope scope;
   REQ_ARGS(2);
@@ -1363,7 +1352,7 @@ NAN_METHOD(EnqueueWaitForEvents) {
   GET_WAIT_LIST(1)
 
   CHECK_ERR(::clEnqueueWaitForEvents(q->getRaw(),
-        cl_events.size(),cl_events.size() ?  events.data(): nullptr));
+        cl_events.size(),cl_events.size() ? NOCL_TO_CL_ARRAY(cl_events, NoCLEvent): nullptr));
 
 
   info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
@@ -1454,9 +1443,8 @@ NAN_METHOD(EnqueueBarrier) {
 namespace CommandQueue {
 NAN_MODULE_INIT(init)
 {
-#ifndef CL_VERSION_2_0
   Nan::SetMethod(target, "createCommandQueue", CreateCommandQueue);
-#else
+#ifdef CL_VERSION_2_0
   Nan::SetMethod(target, "createCommandQueueWithProperties", CreateCommandQueueWithProperties);
 #endif
   Nan::SetMethod(target, "retainCommandQueue", RetainCommandQueue);
@@ -1479,9 +1467,7 @@ NAN_MODULE_INIT(init)
   Nan::SetMethod(target, "enqueueMapImage", EnqueueMapImage);
   Nan::SetMethod(target, "enqueueUnmapMemObject", EnqueueUnmapMemObject);
   Nan::SetMethod(target, "enqueueNDRangeKernel", EnqueueNDRangeKernel);
-#ifndef CL_VERSION_2_0
   Nan::SetMethod(target, "enqueueTask", EnqueueTask); // removed in 2.0
-#endif
   Nan::SetMethod(target, "enqueueNativeKernel", EnqueueNativeKernel);
 #ifdef CL_VERSION_1_2
   Nan::SetMethod(target, "enqueueMarkerWithWaitList", EnqueueMarkerWithWaitList);
@@ -1489,7 +1475,8 @@ NAN_MODULE_INIT(init)
   Nan::SetMethod(target, "enqueueFillBuffer", EnqueueFillBuffer);
   Nan::SetMethod(target, "enqueueFillImage", EnqueueFillImage);
   Nan::SetMethod(target, "enqueueMigrateMemObjects", EnqueueMigrateMemObjects);
-#elif defined(CL_VERSION_1_1)
+#endif
+#ifdef CL_VERSION_1_1
   Nan::SetMethod(target, "enqueueWaitForEvents", EnqueueWaitForEvents);
   Nan::SetMethod(target, "enqueueMarker", EnqueueMarker);
   Nan::SetMethod(target, "enqueueBarrier", EnqueueBarrier);
