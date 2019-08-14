@@ -61,7 +61,6 @@ function saxpy() {
     let device = cl.getContextInfo(context, cl.CONTEXT_DEVICES)[0];
     log('Using device: ' + cl.getDeviceInfo(device, cl.DEVICE_NAME));
 
-    debugger;
     // Create command queue
     let queue = cl.v20
         ? cl.createCommandQueueWithProperties(context, device, [cl.QUEUE_PROPERTIES, cl.QUEUE_PROFILING_ENABLE]) // OpenCL 2
