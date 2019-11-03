@@ -229,7 +229,7 @@ describe("Kernel", function () {
 
           if (cl.VERSION_1_2) {
             U.bind(cl.setKernelArg, k, 3, null, 5)
-              .should.throw(cl.INVALID_VALUE.message);
+              .should.throw(cl.INVALID_ARG_INDEX.message);
           }
           U.bind(cl.setKernelArg, k, 3, "int", 5)
             .should.throw(cl.INVALID_ARG_INDEX.message);
