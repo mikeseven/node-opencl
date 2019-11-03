@@ -1,15 +1,21 @@
 'use strict';
 
 var cl = require("../lib/opencl");
-var memwatch = require('memwatch-next');
+
+try {
+  var memwatch = require('memwatch-next');
+
+  memwatch.on('stats', function(stats) {
+    console.info("mem: "+stats.estimated_base+" B trend: "+(stats.usage_trend>0 ? '+' : (stats.usage_trend>0 ? '-' : '=')));
+  });
+    
+} catch (e) {
+  console.error('No memwatch support in node12', e);
+}
 
 process.on('exit', function dump() {
   global.gc();
   console.info("Exit.");
-});
-
-memwatch.on('stats', function(stats) {
-  console.info("mem: "+stats.estimated_base+" B trend: "+(stats.usage_trend>0 ? '+' : (stats.usage_trend>0 ? '-' : '=')));
 });
 
 var i=0;
