@@ -47,7 +47,7 @@ describe("MemObj", function() {
     it("should copy memory when passed a Buffer", function () {
       U.withContext(function (context, device, platform) {
 
-        var array = new Buffer(32);
+        var array = new Buffer.alloc(32);
         var buffer = f(context, cl.MEM_COPY_HOST_PTR, 8, array);
         cl.releaseMemObject(buffer);
       });

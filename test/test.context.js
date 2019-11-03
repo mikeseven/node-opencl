@@ -15,7 +15,7 @@ describe("Context", function () {
 
   versions(["1.2"]).describe("#createContext", function () {
 
-    skip().vendor("Apple").it("should throw if devices = null", function () {
+    it("should throw if devices = null", function () {
       ex = cl.INVALID_VALUE.message;
       cl.createContext.bind(cl.createContext, null, null, null, null)
         .should.throw(ex);
