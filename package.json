@@ -40,7 +40,7 @@
     "install": "node-gyp rebuild --msvs_version=auto",
     "clean": "rm -rf build node_modules",
     "lint": "eslint lib test",
-    "test": "mocha -gc test"
+    "test": "mocha -gc --expose_gc test"
   },
   "dependencies": {
     "bindings": "^1.2.1",
