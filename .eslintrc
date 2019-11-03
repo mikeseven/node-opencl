@@ -4,9 +4,9 @@
         "node": true
     },
     "rules": {
-        "brace-style": true,
-        "eol-last": true,
-        "strict": false
+        "brace-style": 1,
+        "eol-last": 2,
+        "strict": 1 
     }
 }
 
