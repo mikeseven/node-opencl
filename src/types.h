@@ -54,7 +54,7 @@ public:
     tpl->InstanceTemplate()->SetInternalFieldCount(1);
     Nan::SetPrototypeMethod(tpl, "toString", toString);
     prototype(id).Reset(tpl);
-    constructor(id).Reset(tpl->GetFunction());
+    constructor(id).Reset(Nan::GetFunction(tpl).ToLocalChecked());
   }
 
   static Local<Object> NewInstance(T raw) {
@@ -67,7 +67,7 @@ public:
   static NoCLWrapper<T, id, err, cl_release, cl_acquire> *Unwrap(Local<Value> value) {
     if (!value->IsObject())
       return nullptr;
-    Local<Object> obj = value->ToObject();
+    Local<Object> obj = value->ToObject(v8::Isolate::GetCurrent());
     if (!Nan::New(prototype(id))->HasInstance(obj))
       return nullptr;
     return ObjectWrap::Unwrap<NoCLWrapper<T, id, err, cl_release, cl_acquire> >(obj);

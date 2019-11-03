@@ -32,7 +32,7 @@ void getPtrAndLen(const Local<Value> value, void* &ptr, size_t &len)
     }
     else if(value->IsArrayBuffer()) {
       // std::cout<<"[getPtrAndLen] ArrayBuffer"<<std::endl;
-      Local<Object> obj=value->ToObject();
+      Local<Object> obj=value->ToObject(v8::Isolate::GetCurrent());
       Local<ArrayBuffer> ta = obj.As<ArrayBuffer>();
       len=ta->ByteLength();
       ptr=ta->GetContents().Data();
@@ -40,7 +40,7 @@ void getPtrAndLen(const Local<Value> value, void* &ptr, size_t &len)
     else if(value->IsUint8Array()) {
       // WARNING node::Buffer is an augmented Uint8Array
       // std::cout<<"[getPtrAndLen] Uint8Array"<<std::endl;
-      Local<Object> obj=value->ToObject();
+      Local<Object> obj=value->ToObject(v8::Isolate::GetCurrent());
       Local<Uint8Array> ui = obj.As<Uint8Array>();
       ArrayBuffer::Contents ab_c = ui->Buffer()->GetContents();
       len=ui->ByteLength();
@@ -48,7 +48,7 @@ void getPtrAndLen(const Local<Value> value, void* &ptr, size_t &len)
     }
     else if(value->IsTypedArray()) {
       // std::cout<<"[getPtrAndLen] TypedArray"<<std::endl;
-      Local<Object> obj=value->ToObject();
+      Local<Object> obj=value->ToObject(v8::Isolate::GetCurrent());
       Local<TypedArray> ta = obj.As<TypedArray>();
       len=ta->ByteLength();
       ptr=static_cast<char*>(ta->Buffer()->GetContents().Data()) + ta->ByteOffset();

@@ -35,7 +35,7 @@ NAN_METHOD(GetEventInfo) {
   NOCL_UNWRAP(ev, NoCLEvent, info[0]);
 
   // Arg 1
-  cl_event_info param_name = info[1]->Uint32Value();
+  cl_event_info param_name = Nan::To<uint32_t>(info[1]).FromJust();
 
   switch(param_name) {
     case CL_EVENT_COMMAND_QUEUE:
@@ -133,7 +133,7 @@ NAN_METHOD(SetUserEventStatus) {
   // Arg 0
   NOCL_UNWRAP(ev, NoCLEvent, info[0]);
 
-  cl_int exec_status=info[1]->Uint32Value();
+  cl_int exec_status=Nan::To<uint32_t>(info[1]).FromJust();
   CHECK_ERR(::clSetUserEventStatus(ev->getRaw(),exec_status));
 
   info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
@@ -153,7 +153,7 @@ NAN_METHOD(GetEventProfilingInfo) {
   // Arg 0
   NOCL_UNWRAP(ev, NoCLEvent, info[0]);
 
-  cl_profiling_info param_name = info[1]->Uint32Value();
+  cl_profiling_info param_name = Nan::To<uint32_t>(info[1]).FromJust();
 
   switch(param_name) {
     case CL_PROFILING_COMMAND_QUEUED:
@@ -238,7 +238,7 @@ NAN_METHOD(SetEventCallback)
   Nan::HandleScope scope;
   REQ_ARGS(3);
   NOCL_UNWRAP(event, NoCLEvent, info[0]);
-  cl_int callbackStatusType = info[1]->Int32Value();
+  cl_int callbackStatusType = Nan::To<int32_t>(info[1]).FromJust();
   Nan::Callback *callback = new Nan::Callback(info[2].As<v8::Function>());
   Local<Object> userData = info[3].As<Object>();
 

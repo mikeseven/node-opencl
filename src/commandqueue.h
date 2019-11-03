@@ -6,7 +6,7 @@
 namespace opencl {
 
 namespace CommandQueue {
-void init(Handle<Object> exports);
+void init(v8::Local<Object> exports);
 } // namespace CommandQueue
 
 } // namespace opencl

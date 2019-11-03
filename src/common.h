@@ -67,8 +67,8 @@ namespace {
   if (info.Length() <= (I) || !info[I]->IsString())  {                  \
     Nan::ThrowTypeError("Argument " #I " must be a string");              \
     return;                                               \
-  }                                                                     \
-  String::Utf8Value VAR(info[I]->ToString());
+  }                                                               \
+  String::Utf8Value VAR(v8::Isolate::GetCurrent(), info[I].As<v8::String>());
 
 #define REQ_ARRAY_ARG(I, VAR) \
   if (!info[I]->IsArray()) { \

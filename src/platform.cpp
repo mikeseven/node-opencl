@@ -36,7 +36,7 @@ NAN_METHOD(GetPlatformInfo) {
   REQ_ARGS(2);
 
   NOCL_UNWRAP(platform_id, NoCLPlatformId, info[0]);
-  cl_platform_info param_name = info[1]->Uint32Value();
+  cl_platform_info param_name = Nan::To<uint32_t>(info[1]).FromJust();
 
   char param_value[1024];
   size_t param_value_size_ret=0;

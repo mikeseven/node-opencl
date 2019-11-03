@@ -17,7 +17,7 @@ namespace opencl {
 #define GET_EVENT_FLAG(n)                                 \
   cl_event event = nullptr;                               \
   cl_event* eventPtr =                                    \
-    (ARG_EXISTS(n) && info[n]->BooleanValue())            \
+    (ARG_EXISTS(n) && Nan::To<bool>(info[n]).FromJust())  \
     ? &event : nullptr;
 
 #define GET_WAIT_LIST_AND_EVENT(n)                        \
@@ -49,7 +49,7 @@ NAN_METHOD(CreateCommandQueue) {
   // Arg 1
   NOCL_UNWRAP(device, NoCLDeviceId, info[1]);
 
-  cl_command_queue_properties properties = info[2]->Uint32Value();
+  cl_command_queue_properties properties = Nan::To<uint32_t>(info[2]).FromJust();
 
   cl_int err;
   cl_command_queue q = ::clCreateCommandQueue(
@@ -84,20 +84,20 @@ NAN_METHOD(CreateCommandQueueWithProperties) {
     if (!properties->Get(i)->IsNumber()) {
         THROW_ERR(CL_INVALID_VALUE);
     }
-    cl_uint prop_id = properties->Get(i)->Uint32Value();
+    cl_uint prop_id = Nan::To<uint32_t>(properties->Get(i)).FromJust();
     cl_properties.push_back(prop_id);
 
     if(prop_id == CL_QUEUE_PROPERTIES) {
       if (!properties->Get(i+1)->IsNumber()) {
         THROW_ERR(CL_INVALID_VALUE);
       }
-      cl_queue_properties props = properties->Get(i+1)->Int32Value();
+      cl_queue_properties props = Nan::To<int32_t>(properties->Get(i+1)).FromJust()
       cl_properties.push_back(props);
     } else if (prop_id == CL_QUEUE_SIZE) {
       if (!properties->Get(i+1)->IsNumber()) {
         THROW_ERR(CL_INVALID_VALUE);
       }
-      cl_queue_properties size = properties->Get(i+1)->Int32Value();
+      cl_queue_properties size = Nan::To<int32_t>(properties->Get(i+1)).FromJust()
       cl_properties.push_back(size);
     } else {
       THROW_ERR(CL_INVALID_QUEUE_PROPERTIES)
@@ -160,7 +160,7 @@ NAN_METHOD(GetCommandQueueInfo) {
   // Arg 0
   NOCL_UNWRAP(q, NoCLCommandQueue, info[0]);
 
-  cl_command_queue_info param_name = info[1]->Uint32Value();
+  cl_command_queue_info param_name = Nan::To<uint32_t>(info[1]).FromJust();
 
   switch(param_name) {
     case CL_QUEUE_CONTEXT: {
@@ -245,9 +245,9 @@ NAN_METHOD(EnqueueReadBuffer) {
   // Arg 1
   NOCL_UNWRAP(buffer, NoCLMem, info[1]);
 
-  cl_bool blocking_read = info[2]->BooleanValue();
-  size_t offset = info[3]->Uint32Value();
-  size_t size = info[4]->Uint32Value();
+  cl_bool blocking_read = Nan::To<bool>(info[2]).FromJust();
+  size_t offset = Nan::To<uint32_t>(info[3]).FromJust();
+  size_t size = Nan::To<uint32_t>(info[4]).FromJust();
 
   void *ptr=nullptr;
   if(info[5]->IsUndefined() || info[5]->IsNull()) {
@@ -298,7 +298,7 @@ NAN_METHOD(EnqueueReadBufferRect) {
   NOCL_UNWRAP(buffer, NoCLMem, info[1]);
 
   // Arg 2
-  cl_bool blocking_read = info[2]->BooleanValue();
+  cl_bool blocking_read = Nan::To<bool>(info[2]).FromJust();
 
   size_t buffer_offset[]={0,0,0};
   size_t host_offset[]={0,0,0};
@@ -306,18 +306,18 @@ NAN_METHOD(EnqueueReadBufferRect) {
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
   for(i=0;i<max(arr->Length(),2u);i++)
-      buffer_offset[i]=arr->Get(i)->Uint32Value();
+      buffer_offset[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
   arr= Local<Array>::Cast(info[4]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      host_offset[i]=arr->Get(i)->Uint32Value();
+      host_offset[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
   arr= Local<Array>::Cast(info[5]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      region[i]=arr->Get(i)->Uint32Value();
+      region[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
 
-  size_t buffer_row_pitch = info[6]->Uint32Value();
-  size_t buffer_slice_pitch = info[7]->Uint32Value();
-  size_t host_row_pitch = info[8]->Uint32Value();
-  size_t host_slice_pitch = info[9]->Uint32Value();
+  size_t buffer_row_pitch = Nan::To<uint32_t>(info[6]).FromJust();
+  size_t buffer_slice_pitch = Nan::To<uint32_t>(info[7]).FromJust();
+  size_t host_row_pitch = Nan::To<uint32_t>(info[8]).FromJust();
+  size_t host_slice_pitch = Nan::To<uint32_t>(info[9]).FromJust();
 
   void *ptr=nullptr;
   size_t len=0;
@@ -362,9 +362,9 @@ NAN_METHOD(EnqueueWriteBuffer) {
   // Arg 1
   NOCL_UNWRAP(buffer, NoCLMem, info[1]);
 
-  cl_bool blocking_write = info[2]->BooleanValue();
-  size_t offset = info[3]->Uint32Value();
-  size_t size = info[4]->Uint32Value();
+  cl_bool blocking_write = Nan::To<bool>(info[2]).FromJust();
+  size_t offset = Nan::To<uint32_t>(info[3]).FromJust();
+  size_t size = Nan::To<uint32_t>(info[4]).FromJust();
 
   void *ptr=nullptr;
   if(info[5]->IsUndefined() || info[5]->IsNull()) {
@@ -414,7 +414,7 @@ NAN_METHOD(EnqueueWriteBufferRect) {
   NOCL_UNWRAP(buffer, NoCLMem, info[1]);
 
   // Arg 2
-  cl_bool blocking_write = info[2]->BooleanValue();
+  cl_bool blocking_write = Nan::To<bool>(info[2]).FromJust();
 
   size_t buffer_offset[]={0,0,0};
   size_t host_offset[]={0,0,0};
@@ -422,18 +422,18 @@ NAN_METHOD(EnqueueWriteBufferRect) {
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
   for(i=0;i<max(arr->Length(),2u);i++)
-      buffer_offset[i]=arr->Get(i)->Uint32Value();
+      buffer_offset[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
   arr= Local<Array>::Cast(info[4]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      host_offset[i]=arr->Get(i)->Uint32Value();
+      host_offset[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
   arr= Local<Array>::Cast(info[5]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      region[i]=arr->Get(i)->Uint32Value();
+      region[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
 
-  size_t buffer_row_pitch = info[6]->Uint32Value();
-  size_t buffer_slice_pitch = info[7]->Uint32Value();
-  size_t host_row_pitch = info[8]->Uint32Value();
-  size_t host_slice_pitch = info[9]->Uint32Value();
+  size_t buffer_row_pitch = Nan::To<uint32_t>(info[6]).FromJust();
+  size_t buffer_slice_pitch = Nan::To<uint32_t>(info[7]).FromJust();
+  size_t host_row_pitch = Nan::To<uint32_t>(info[8]).FromJust();
+  size_t host_slice_pitch = Nan::To<uint32_t>(info[9]).FromJust();
 
   void *ptr=nullptr;
   size_t len=0;
@@ -484,12 +484,12 @@ NAN_METHOD(EnqueueFillBuffer) {
     THROW_ERR(CL_INVALID_VALUE);
   }
   else if (info[2]->IsInt32()) {
-    scalar_pattern_int = info[2]->Int32Value();
+    scalar_pattern_int = Nan::To<int32_t>(info[2]).FromJust();
     pattern = &scalar_pattern_int;
     len = sizeof(cl_uint);
   }
   else if (info[2]->IsNumber()) {
-    scalar_pattern_double = info[2]->NumberValue();
+    scalar_pattern_double = Nan::To<double>(info[2]).FromJust();
     pattern = &scalar_pattern_double;
     len = sizeof(cl_double);
   }
@@ -500,8 +500,8 @@ NAN_METHOD(EnqueueFillBuffer) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  size_t offset=info[3]->Uint32Value();
-  size_t size=info[4]->Uint32Value();
+  size_t offset=Nan::To<uint32_t>(info[3]).FromJust();
+  size_t size=Nan::To<uint32_t>(info[4]).FromJust();
 
   GET_WAIT_LIST_AND_EVENT(5)
 
@@ -537,9 +537,9 @@ NAN_METHOD(EnqueueCopyBuffer) {
   NOCL_UNWRAP(dst_buffer, NoCLMem, info[2]);
 
 
-  size_t src_offset=info[3]->Uint32Value();
-  size_t dst_offset=info[4]->Uint32Value();
-  size_t size=info[5]->Uint32Value();
+  size_t src_offset=Nan::To<uint32_t>(info[3]).FromJust();
+  size_t dst_offset=Nan::To<uint32_t>(info[4]).FromJust();
+  size_t size=Nan::To<uint32_t>(info[5]).FromJust();
 
   GET_WAIT_LIST_AND_EVENT(6)
 
@@ -584,17 +584,17 @@ NAN_METHOD(EnqueueCopyBufferRect) {
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
   for(i=0;i<max(arr->Length(),2u);i++)
-      src_origin[i]=arr->Get(i)->Uint32Value();
+      src_origin[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
   arr= Local<Array>::Cast(info[4]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      dst_origin[i]=arr->Get(i)->Uint32Value();
+      dst_origin[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
   arr= Local<Array>::Cast(info[5]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      region[i]=arr->Get(i)->Uint32Value();
-  size_t src_row_pitch = info[6]->Uint32Value();
-  size_t src_slice_pitch = info[7]->Uint32Value();
-  size_t dst_row_pitch = info[8]->Uint32Value();
-  size_t dst_slice_pitch = info[9]->Uint32Value();
+      region[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
+  size_t src_row_pitch = Nan::To<uint32_t>(info[6]).FromJust();
+  size_t src_slice_pitch = Nan::To<uint32_t>(info[7]).FromJust();
+  size_t dst_row_pitch = Nan::To<uint32_t>(info[8]).FromJust();
+  size_t dst_slice_pitch = Nan::To<uint32_t>(info[9]).FromJust();
 
   GET_WAIT_LIST_AND_EVENT(10)
 
@@ -630,20 +630,20 @@ NAN_METHOD(EnqueueReadImage) {
   // Arg 1
   NOCL_UNWRAP(image, NoCLMem, info[1]);
 
-  cl_bool blocking_read = info[2]->BooleanValue();
+  cl_bool blocking_read = Nan::To<bool>(info[2]).FromJust();
 
   size_t origin[]={0,0,0};
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
   for(i=0;i<max(arr->Length(),2u);i++)
-      origin[i]=arr->Get(i)->Uint32Value();
+      origin[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
   arr= Local<Array>::Cast(info[4]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      region[i]=arr->Get(i)->Uint32Value();
+      region[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
 
-  size_t row_pitch = info[5]->Uint32Value();
-  size_t slice_pitch = info[6]->Uint32Value();
+  size_t row_pitch = Nan::To<uint32_t>(info[5]).FromJust();
+  size_t slice_pitch = Nan::To<uint32_t>(info[5]).FromJust();
 
   void *ptr=nullptr;
   size_t len=0;
@@ -690,20 +690,20 @@ NAN_METHOD(EnqueueWriteImage) {
   NOCL_UNWRAP(image, NoCLMem, info[1]);
 
   // Arg 2
-  cl_bool blocking_write = info[2]->BooleanValue();
+  cl_bool blocking_write = Nan::To<bool>(info[2]).FromJust();
 
   size_t origin[]={0,0,0};
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
   for(i=0;i<max(arr->Length(),2u);i++)
-      origin[i]=arr->Get(i)->Uint32Value();
+      origin[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
   arr= Local<Array>::Cast(info[4]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      region[i]=arr->Get(i)->Uint32Value();
+      region[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
 
-  size_t row_pitch = info[5]->Uint32Value();
-  size_t slice_pitch = info[6]->Uint32Value();
+  size_t row_pitch = Nan::To<uint32_t>(info[5]).FromJust();
+  size_t slice_pitch = Nan::To<uint32_t>(info[6]).FromJust();
 
   void *ptr=nullptr;
   size_t len=0;
@@ -760,10 +760,10 @@ NAN_METHOD(EnqueueFillImage) {
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
   for(i=0;i<max(arr->Length(),2u);i++)
-      origin[i]=arr->Get(i)->Uint32Value();
+      origin[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
   arr= Local<Array>::Cast(info[4]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      region[i]=arr->Get(i)->Uint32Value();
+      region[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
 
   GET_WAIT_LIST_AND_EVENT(5)
 
@@ -805,13 +805,13 @@ NAN_METHOD(EnqueueCopyImage) {
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
   for(i=0;i<max(arr->Length(),2u);i++)
-      src_origin[i]=arr->Get(i)->Uint32Value();
+      src_origin[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
   arr= Local<Array>::Cast(info[4]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      dst_origin[i]=arr->Get(i)->Uint32Value();
+      dst_origin[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
   arr= Local<Array>::Cast(info[5]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      region[i]=arr->Get(i)->Uint32Value();
+      region[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
 
   GET_WAIT_LIST_AND_EVENT(6)
 
@@ -852,12 +852,12 @@ NAN_METHOD(EnqueueCopyImageToBuffer) {
   Local<Array> arr= Local<Array>::Cast(info[3]);
   uint32_t i;
   for(i=0;i<max(arr->Length(),2u);i++)
-      src_origin[i]=arr->Get(i)->Uint32Value();
+      src_origin[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
   arr= Local<Array>::Cast(info[4]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      region[i]=arr->Get(i)->Uint32Value();
+      region[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
 
-  size_t dst_offset = info[5]->Uint32Value();
+  size_t dst_offset = Nan::To<uint32_t>(info[5]).FromJust();
 
   GET_WAIT_LIST_AND_EVENT(6)
 
@@ -893,7 +893,7 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
   // Arg 2
   NOCL_UNWRAP(dst_image, NoCLMem, info[2]);
 
-  size_t src_offset = info[3]->Uint32Value();
+  size_t src_offset = Nan::To<uint32_t>(info[3]).FromJust();
 
   size_t dst_origin[]={0,0,0};
   size_t region[]={1,1,1};
@@ -901,10 +901,10 @@ NAN_METHOD(EnqueueCopyBufferToImage) {
   uint32_t i;
 
   for(i=0;i<max(arr->Length(),2u);i++)
-      dst_origin[i]=arr->Get(i)->Uint32Value();
+      dst_origin[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
   arr= Local<Array>::Cast(info[5]);
   for(i=0;i<max(arr->Length(),2u);i++)
-      region[i]=arr->Get(i)->Uint32Value();
+      region[i]=Nan::To<uint32_t>(arr->Get(i)).FromJust();
 
   GET_WAIT_LIST_AND_EVENT(6)
 
@@ -947,10 +947,10 @@ NAN_METHOD(EnqueueMapBuffer) {
   // Arg 1
   NOCL_UNWRAP(mem, NoCLMem, info[1]);
 
-  cl_bool blocking_map = info[2]->BooleanValue() ? CL_TRUE : CL_FALSE;
-  cl_map_flags map_flags = info[3]->Uint32Value();
-  size_t offset = info[4]->Uint32Value();
-  size_t size = info[5]->Uint32Value();
+  cl_bool blocking_map = Nan::To<bool>(info[2]).FromJust() ? CL_TRUE : CL_FALSE;
+  cl_map_flags map_flags = Nan::To<uint32_t>(info[3]).FromJust();
+  size_t offset = Nan::To<uint32_t>(info[4]).FromJust();
+  size_t size = Nan::To<uint32_t>(info[5]).FromJust();
 
   GET_WAIT_LIST_AND_EVENT(6)
 
@@ -1003,17 +1003,17 @@ NAN_METHOD(EnqueueMapImage) {
   // Arg 1
   NOCL_UNWRAP(mem, NoCLMem, info[1]);
 
-  cl_bool blocking_map = info[2]->BooleanValue();
-  cl_map_flags map_flags = info[3]->Uint32Value();
+  cl_bool blocking_map = Nan::To<bool>(info[2]).FromJust();
+  cl_map_flags map_flags = Nan::To<uint32_t>(info[3]).FromJust();
   size_t origin[]={0,0,0};
   size_t region[]={1,1,1};
   Local<Array> arr= Local<Array>::Cast(info[4]);
-  uint32_t i;
+  uint32_t i; 
   for(i=0;i<max(arr->Length(),2u);i++)
-    origin[i]=arr->Get(i)->Int32Value();
+    origin[i]=Nan::To<int32_t>(arr->Get(i)).FromJust();
   arr= Local<Array>::Cast(info[5]);
   for(i=0;i<max(arr->Length(),2u);i++)
-    region[i]=arr->Get(i)->Int32Value();
+    region[i]=Nan::To<int32_t>(arr->Get(i)).FromJust();
 
   size_t image_row_pitch;
   size_t image_slice_pitch;
@@ -1140,7 +1140,7 @@ NAN_METHOD(EnqueueMigrateMemObjects) {
     mem_objects[i]=obj->getRaw();
   }
 
-  cl_mem_migration_flags flags=info[2]->Uint32Value();
+  cl_mem_migration_flags flags=Nan::To<uint32_t>(info[2]).FromJust();
 
   GET_WAIT_LIST_AND_EVENT(3)
 
@@ -1174,7 +1174,7 @@ NAN_METHOD(EnqueueNDRangeKernel) {
   NOCL_UNWRAP(k, NoCLKernel, info[1]);
 
 
-  cl_uint work_dim=info[2]->Uint32Value();
+  cl_uint work_dim=Nan::To<uint32_t>(info[2]).FromJust();
 
   std::vector<size_t> cl_work_offset;
   std::vector<size_t> cl_work_global;
@@ -1189,7 +1189,7 @@ NAN_METHOD(EnqueueNDRangeKernel) {
     }
 
     for (unsigned int i = 0; i < work_dim; ++ i) {
-      cl_work_offset.push_back(js_work_offset->Get(i)->Uint32Value());
+      cl_work_offset.push_back(Nan::To<uint32_t>(js_work_offset->Get(i)).FromJust());
     }
   }
 
@@ -1201,7 +1201,7 @@ NAN_METHOD(EnqueueNDRangeKernel) {
     }
 
     for (unsigned int i = 0; i < work_dim; ++ i) {
-      cl_work_global.push_back(js_work_global->Get(i)->Uint32Value());
+      cl_work_global.push_back(Nan::To<uint32_t>(js_work_global->Get(i)).FromJust());
     }
   }
 
@@ -1214,7 +1214,7 @@ NAN_METHOD(EnqueueNDRangeKernel) {
     }
 
     for (unsigned int i = 0; i < work_dim; ++ i) {
-      cl_work_local.push_back(js_work_local->Get(i)->Uint32Value());
+      cl_work_local.push_back(Nan::To<uint32_t>(js_work_local->Get(i)).FromJust());
     }
   }
 

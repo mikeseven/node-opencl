@@ -55,7 +55,7 @@ NAN_METHOD(CreateProgramWithBinary) {
   unique_ptr<size_t[]> lengths(new size_t[n]);
 
   for (unsigned int i = 0; i < sizes->Length(); ++ i) {
-    lengths[i] = sizes->Get(0)->Int32Value();
+    lengths[i] = Nan::To<int32_t>(sizes->Get(0)).FromJust();
   }
 
   std::vector<NoCLProgramBinary *> cl_binaries;
@@ -113,7 +113,7 @@ NAN_METHOD(CreateProgramWithBuiltInKernels) {
     if (!js_names->IsString()) {
       THROW_ERR(CL_INVALID_VALUE);
     }
-    names.push_back(*String::Utf8Value(js_names->Get(i)));
+    names.push_back(*String::Utf8Value(v8::Isolate::GetCurrent(), js_names->Get(i)));
   }
 
   if (names.size() == 0) {
@@ -222,7 +222,7 @@ NAN_METHOD(BuildProgram) {
     if (!info[2]->IsString()) {
       THROW_ERR(CL_INVALID_BUILD_OPTIONS)
     }
-    options = new String::Utf8Value(info[2]);
+    options = new String::Utf8Value(v8::Isolate::GetCurrent(), info[2]);
   }
 
   //  callback + userdata
@@ -286,7 +286,7 @@ NAN_METHOD(CompileProgram) {
     if (!info[2]->IsString()) {
       THROW_ERR(CL_INVALID_COMPILER_OPTIONS)
     }
-    options = new String::Utf8Value(info[2]);
+    options = new String::Utf8Value(v8::Isolate::GetCurrent(), info[2]);
   }
 
   // Arg 4 : programs included
@@ -303,7 +303,7 @@ NAN_METHOD(CompileProgram) {
   if (ARG_EXISTS(4)){
     Local<Array> arr = Local<Array>::Cast(info[4]);
     for (unsigned int i = 0; i < arr->Length(); ++ i) {
-      String::Utf8Value str(arr->Get(i));
+      String::Utf8Value str(v8::Isolate::GetCurrent(), arr->Get(i));
       names.push_back(str.operator*());
     }
   }
@@ -382,7 +382,7 @@ NAN_METHOD(LinkProgram) {
     if (!info[2]->IsString()) {
       THROW_ERR(CL_INVALID_COMPILER_OPTIONS)
     }
-    options = new String::Utf8Value(info[2]);
+    options = new String::Utf8Value(v8::Isolate::GetCurrent(), info[2]);
   }
 
   //Arg 3
@@ -461,7 +461,7 @@ NAN_METHOD(GetProgramInfo) {
 
   NOCL_UNWRAP(prog, NoCLProgram, info[0]);
 
-  cl_program_info param_name = info[1]->Uint32Value();
+  cl_program_info param_name = Nan::To<uint32_t>(info[1]).FromJust();
 
   switch(param_name) {
     case CL_PROGRAM_REFERENCE_COUNT:
@@ -601,7 +601,7 @@ NAN_METHOD(GetProgramBuildInfo) {
 
   NOCL_UNWRAP(prog, NoCLProgram, info[0]);
   NOCL_UNWRAP(device, NoCLDeviceId, info[1]);
-  cl_program_build_info param_name = info[2]->Uint32Value();
+  cl_program_build_info param_name = Nan::To<uint32_t>(info[2]).FromJust();
 
   switch(param_name) {
     case CL_PROGRAM_BUILD_STATUS:
