@@ -1287,9 +1287,7 @@ describe("CommandQueue", function() {
           });
         });
       });
-
     });
-
   });
 
   describe("# enqueueMapImage", function() {

@@ -16,8 +16,8 @@ var Square = function() {
   }
 
   var NVALUES = 100;
-  var inputs = new Buffer(NVALUES * 4);
-  var outputs = new Buffer(NVALUES * 4);
+  var inputs = new Buffer.alloc(NVALUES * 4);
+  var outputs = new Buffer.alloc(NVALUES * 4);
 
   for (var i = 0; i < NVALUES; ++ i) {
     inputs.writeUInt32LE(i, i * 4);

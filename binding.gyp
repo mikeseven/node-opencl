@@ -44,14 +44,22 @@
         ['OS in "linux freebsd openbsd solaris android"', {
           'variables' : {
             # AMD APP SDK
-            'OPENCL_SDK' : '<!(echo $AMDAPPSDKROOT)',
-            'OPENCL_SDK_INCLUDE' : '<(OPENCL_SDK)/include',
-            'OPENCL_SDK_LIB' : '<(OPENCL_SDK)/lib/x86_64',
+            'AMD_OPENCL_SDK' : '<!(echo $AMDAPPSDKROOT)',
+            'AMD_OPENCL_SDK_INCLUDE' : '<(AMD_OPENCL_SDK)/include',
+            'AMD_OPENCL_SDK_LIB' : '<(AMD_OPENCL_SDK)/lib/x86_64',
+
+            # NVIDA CUDA SDK
+            'NVIDA_CUDA_SDK' : '<!(echo ${CUDA_PATH:-/usr/local/cuda})',
+            'NVIDA_CUDA_SDK_INCLUDE' : '<(NVIDA_CUDA_SDK)/include',
+            'NVIDA_CUDA_SDK_LIB' : '<(NVIDA_CUDA_SDK)/lib64',
           },
           'include_dirs' : [
-            "<(OPENCL_SDK_INCLUDE)",
+            "<(AMD_OPENCL_SDK_INCLUDE)", "<(NVIDA_CUDA_SDK_INCLUDE)"
           ],
-          'libraries': ['-L<(OPENCL_SDK_LIB)','-lOpenCL'],
+          'library_dirs' : [
+            "<(AMD_OPENCL_SDK_LIB)", "<(NVIDA_CUDA_SDK_LIB)"
+          ],
+          'libraries': ['-lOpenCL'],
           'cflags_cc': ['-std=c++11', '-Wall', '-O3', '-Wno-ignored-attributes']
         }],
         ['OS=="win"', {

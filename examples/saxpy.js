@@ -8,13 +8,13 @@
 'use strict';
 
 var cl = require('../lib/opencl');
-var log=console.log;
+var log = console.log;
 
 saxpy();
 
 function get_event_exec_time(event)
 {
-  // times are 64-bit values in naniseconds. They are returned as [hi,lo] a 2-integer array
+  // times are 64-bit values in nanoseconds. They are returned as [hi,lo] a 2-integer array
   // here we use the lo parts since this example is unlikely to go beyond 2^31 nanseconds per event.
   var start_time = cl.getEventProfilingInfo (event, cl.PROFILING_COMMAND_START);
   var end_time=cl.getEventProfilingInfo (event, cl.PROFILING_COMMAND_END);

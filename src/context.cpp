@@ -48,6 +48,9 @@ NAN_METHOD(CreateContext) {
       cl_devices.push_back(device->getRaw());
         // printf("Adding device %p\n",device);
     }
+  } else {
+    THROW_ERR(CL_INVALID_VALUE);
+    return;
   }
 
   // Arg 2 -- Callback
