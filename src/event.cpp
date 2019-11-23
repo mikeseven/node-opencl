@@ -35,7 +35,7 @@ NAN_METHOD(GetEventInfo) {
   NOCL_UNWRAP(ev, NoCLEvent, info[0]);
 
   // Arg 1
-  cl_event_info param_name = info[1]->Uint32Value();
+  cl_event_info param_name = Nan::To<uint32_t>(info[1]).FromJust();
 
   switch(param_name) {
     case CL_EVENT_COMMAND_QUEUE:
@@ -133,7 +133,7 @@ NAN_METHOD(SetUserEventStatus) {
   // Arg 0
   NOCL_UNWRAP(ev, NoCLEvent, info[0]);
 
-  cl_int exec_status=info[1]->Uint32Value();
+  cl_int exec_status=Nan::To<uint32_t>(info[1]).FromJust();
   CHECK_ERR(::clSetUserEventStatus(ev->getRaw(),exec_status));
 
   info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
@@ -153,7 +153,7 @@ NAN_METHOD(GetEventProfilingInfo) {
   // Arg 0
   NOCL_UNWRAP(ev, NoCLEvent, info[0]);
 
-  cl_profiling_info param_name = info[1]->Uint32Value();
+  cl_profiling_info param_name = Nan::To<uint32_t>(info[1]).FromJust();
 
   switch(param_name) {
     case CL_PROFILING_COMMAND_QUEUED:
@@ -175,8 +175,8 @@ NAN_METHOD(GetEventProfilingInfo) {
       CHECK_ERR(::clGetEventProfilingInfo(ev->getRaw(),param_name,sizeof(cl_ulong), &val, NULL))
 
       Local<Array> arr = Nan::New<Array>(2);
-      arr->Set(0, JS_INT((uint32_t) (val>>32))); // hi
-      arr->Set(1, JS_INT((uint32_t) (val & 0xffffffff))); // lo
+      Nan::Set(arr, 0, JS_INT((uint32_t) (val>>32))); // hi
+      Nan::Set(arr, 1, JS_INT((uint32_t) (val & 0xffffffff))); // lo
       info.GetReturnValue().Set(arr);
       return;
     }
@@ -192,9 +192,16 @@ public:
   {
     SaveToPersistent(kIndex,  userData);
     SaveToPersistent(kIndex+1,noCLEvent);
+    this->async = new uv_async_t;
+    this->async->data = (void*) this;
+    uv_async_init(uv_default_loop(), this->async, (uv_async_cb) dispatched_async_uv_callback);
   }
 
-  ~NoCLEventWorker() {}
+  ~NoCLEventWorker() {
+    uv_close((uv_handle_t*)this->async, &delete_async_handle);
+  }
+
+  uv_async_t *async;
 
   void CallBackIsDone(int status) {
     mCLCallbackStatus = status;
@@ -210,27 +217,42 @@ public:
   // this function will be run inside the main event loop
   // so it is safe to use V8 again
   void HandleOKCallback () {
-    Nan::EscapableHandleScope  scope;
+    Nan::HandleScope scope;
 
     Local<Value> argv[] = {
-      GetFromPersistent(kIndex),  // event
+      GetFromPersistent(kIndex),  // userdata
       JS_INT(mCLCallbackStatus),  // error status
-      GetFromPersistent(kIndex+1) // userdata
+      GetFromPersistent(kIndex+1) // event
     };
-    callback->Call(3,argv);
+    callback->Call(3, argv, async_resource);
   }
 
 protected:
   static const uint32_t kIndex = 0;
+  static void delete_async_handle(uv_handle_t *handle);
+  // The callback invoked by the call to uv_async_send() in notifyCB.
+  // Invoked on the main thread, so it's safe to call AsyncQueueWorker.
+  static void dispatched_async_uv_callback(uv_async_t*);
 
- private:
-   int mCLCallbackStatus = 0;
+private:
+  int mCLCallbackStatus = 0;
 };
 
+void NoCLEventWorker::delete_async_handle(uv_handle_t *handle) {
+  delete (uv_async_t *) handle;
+}
+
+void NoCLEventWorker::dispatched_async_uv_callback(uv_async_t *req) {
+  NoCLEventWorker* asyncCB = static_cast<NoCLEventWorker*>(req->data);
+  AsyncQueueWorker(asyncCB);
+}
+
+// callback invoked off the main thread by clSetEventCallback
 void CL_CALLBACK notifyCB (cl_event event, cl_int event_command_exec_status, void *user_data) {
   NoCLEventWorker* asyncCB = static_cast<NoCLEventWorker*>(user_data);
   asyncCB->CallBackIsDone(event_command_exec_status);
-  AsyncQueueWorker(asyncCB);
+  // send a message to the main thread to safely invoke the JS callback
+  uv_async_send(asyncCB->async);
 }
 
 NAN_METHOD(SetEventCallback)
@@ -238,7 +260,7 @@ NAN_METHOD(SetEventCallback)
   Nan::HandleScope scope;
   REQ_ARGS(3);
   NOCL_UNWRAP(event, NoCLEvent, info[0]);
-  cl_int callbackStatusType = info[1]->Int32Value();
+  cl_int callbackStatusType = Nan::To<int32_t>(info[1]).FromJust();
   Nan::Callback *callback = new Nan::Callback(info[2].As<v8::Function>());
   Local<Object> userData = info[3].As<Object>();
 

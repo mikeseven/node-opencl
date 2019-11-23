@@ -47,15 +47,26 @@ NAN_METHOD(CreateProgramWithBinary) {
   REQ_ARRAY_ARG(1, devices);
   NOCL_TO_ARRAY(cl_devices, devices, NoCLDeviceId);
 
-  Local<Array> sizes = Local<Array>::Cast(info[2]);
-  if (sizes->Length() == 0) {
+  Local<Array> js_sizes = Local<Array>::Cast(info[2]);
+  if (js_sizes->Length() == 0) {
     THROW_ERR(CL_INVALID_VALUE)
   }
-  const size_t n = sizes->Length();
-  unique_ptr<size_t[]> lengths(new size_t[n]);
+  
+  const size_t n = js_sizes->Length();
 
-  for (unsigned int i = 0; i < sizes->Length(); ++ i) {
-    lengths[i] = sizes->Get(0)->Int32Value();
+  std::vector<size_t> cl_binary_lengths;
+  unique_ptr<size_t[]> originalLengths(new size_t[n]);
+
+  for (unsigned int i = 0; i < n; ++ i) {
+    int32_t len = Nan::To<int32_t>(Nan::Get(js_sizes, i).ToLocalChecked()).FromJust();
+    originalLengths[i] = len;
+    if (len > 0) {
+      cl_binary_lengths.push_back(len);
+    }
+  }
+
+  if (cl_binary_lengths.size() == 0) {
+    THROW_ERR(CL_INVALID_PROGRAM_EXECUTABLE)
   }
 
   std::vector<NoCLProgramBinary *> cl_binaries;
@@ -64,12 +75,15 @@ NAN_METHOD(CreateProgramWithBinary) {
   REQ_ARRAY_ARG(3, js_binaries);
   NOCL_TO_ARRAY(cl_binaries, js_binaries, NoCLProgramBinary);
 
-  if (sizes->Length() != js_binaries->Length()) {
+  if (js_sizes->Length() != js_binaries->Length()) {
     THROW_ERR(CL_INVALID_VALUE)
   }
 
-  for (unsigned int i = 0; i < cl_binaries.size(); ++ i){
-    cl_binaries_str.push_back(cl_binaries[i]->getRaw());
+  for (unsigned int i = 0; i < n; ++ i) {
+    int32_t len = originalLengths[i];
+    if (len > 0) {
+      cl_binaries_str.push_back(cl_binaries[i]->getRaw());
+    }
   }
 
   cl_int ret=CL_SUCCESS;
@@ -77,7 +91,7 @@ NAN_METHOD(CreateProgramWithBinary) {
     context->getRaw(),
     (cl_uint) cl_devices.size(),
     NOCL_TO_CL_ARRAY(cl_devices, NoCLDeviceId),
-    lengths.get(),
+    &cl_binary_lengths[0],
     &cl_binaries_str[0],
     NULL,
     &ret);
@@ -113,7 +127,7 @@ NAN_METHOD(CreateProgramWithBuiltInKernels) {
     if (!js_names->IsString()) {
       THROW_ERR(CL_INVALID_VALUE);
     }
-    names.push_back(*String::Utf8Value(js_names->Get(i)));
+    names.push_back(*Nan::Utf8String(Nan::Get(js_names, i).ToLocalChecked()));
   }
 
   if (names.size() == 0) {
@@ -184,7 +198,7 @@ public:
       GetFromPersistent(kIndex),  // event
       GetFromPersistent(kIndex+1) // userdata
     };
-    callback->Call(2,argv);
+    Nan::Call(*callback, 2, argv);
   }
 
 protected:
@@ -216,13 +230,13 @@ NAN_METHOD(BuildProgram) {
     NOCL_TO_ARRAY(devices, cl_devices, NoCLDeviceId);
   }
 
-  String::Utf8Value * options = nullptr;
+  Nan::Utf8String * options = nullptr;
 
   if (ARG_EXISTS(2)){
     if (!info[2]->IsString()) {
       THROW_ERR(CL_INVALID_BUILD_OPTIONS)
     }
-    options = new String::Utf8Value(info[2]);
+    options = new Nan::Utf8String(info[2]);
   }
 
   //  callback + userdata
@@ -280,13 +294,13 @@ NAN_METHOD(CompileProgram) {
   }
 
   // Arg 3 : Options
-  String::Utf8Value * options = nullptr;
+  Nan::Utf8String * options = nullptr;
 
   if (ARG_EXISTS(2)){
     if (!info[2]->IsString()) {
       THROW_ERR(CL_INVALID_COMPILER_OPTIONS)
     }
-    options = new String::Utf8Value(info[2]);
+    options = new Nan::Utf8String(info[2]);
   }
 
   // Arg 4 : programs included
@@ -303,7 +317,7 @@ NAN_METHOD(CompileProgram) {
   if (ARG_EXISTS(4)){
     Local<Array> arr = Local<Array>::Cast(info[4]);
     for (unsigned int i = 0; i < arr->Length(); ++ i) {
-      String::Utf8Value str(arr->Get(i));
+      Nan::Utf8String str(Nan::Get(arr, i).ToLocalChecked());
       names.push_back(str.operator*());
     }
   }
@@ -376,13 +390,13 @@ NAN_METHOD(LinkProgram) {
   }
 
   //Arg 2
-  String::Utf8Value * options = nullptr;
+  Nan::Utf8String * options = nullptr;
 
   if (ARG_EXISTS(2)){
     if (!info[2]->IsString()) {
       THROW_ERR(CL_INVALID_COMPILER_OPTIONS)
     }
-    options = new String::Utf8Value(info[2]);
+    options = new Nan::Utf8String(info[2]);
   }
 
   //Arg 3
@@ -461,7 +475,7 @@ NAN_METHOD(GetProgramInfo) {
 
   NOCL_UNWRAP(prog, NoCLProgram, info[0]);
 
-  cl_program_info param_name = info[1]->Uint32Value();
+  cl_program_info param_name = Nan::To<uint32_t>(info[1]).FromJust();
 
   switch(param_name) {
     case CL_PROGRAM_REFERENCE_COUNT:
@@ -492,7 +506,7 @@ NAN_METHOD(GetProgramInfo) {
       Local<Array> arr = Nan::New<Array>((int)n);
       for(uint32_t i=0;i<n;i++) {
         CHECK_ERR(::clRetainDevice(devices[i]))
-        arr->Set(i, NOCL_WRAP(NoCLDeviceId, devices[i]));
+        Nan::Set(arr, i, NOCL_WRAP(NoCLDeviceId, devices[i]));
       }
 
       info.GetReturnValue().Set(arr);
@@ -514,7 +528,7 @@ NAN_METHOD(GetProgramInfo) {
 
       Local<Array> arr = Nan::New<Array>(nsizes);
       for(cl_uint i=0;i<nsizes;i++)
-        arr->Set(i,JS_INT(uint32_t(sizes[i])));
+        Nan::Set(arr, i,JS_INT(uint32_t(sizes[i])));
 
       info.GetReturnValue().Set(arr);
       return;
@@ -554,12 +568,16 @@ NAN_METHOD(GetProgramInfo) {
       }
 
       CHECK_ERR(::clGetProgramInfo(
-        prog->getRaw(), param_name, sizeof(unsigned char*)*nsizes, bn, NULL));
+        prog->getRaw(), CL_PROGRAM_BINARIES, sizeof(unsigned char*)*nsizes, bn, sizes.get()));
 
       Local<Array> arr = Nan::New<Array>(nsizes);
 
       for (cl_uint i = 0; i < nsizes; ++ i) {
-        arr->Set(i, NOCL_WRAP(NoCLProgramBinary, bn[i]));
+        Local<Object> bin = NOCL_WRAP(NoCLProgramBinary, bn[i]);
+        const char* data = reinterpret_cast<const char*>(bn[i]);
+        Local<Object> buf = Nan::CopyBuffer(data, sizes[i]).ToLocalChecked();
+        Nan::Set(bin, JS_STR("buffer"), buf);
+        Nan::Set(arr, i, bin);
       }
 
       info.GetReturnValue().Set(arr);
@@ -601,7 +619,7 @@ NAN_METHOD(GetProgramBuildInfo) {
 
   NOCL_UNWRAP(prog, NoCLProgram, info[0]);
   NOCL_UNWRAP(device, NoCLDeviceId, info[1]);
-  cl_program_build_info param_name = info[2]->Uint32Value();
+  cl_program_build_info param_name = Nan::To<uint32_t>(info[2]).FromJust();
 
   switch(param_name) {
     case CL_PROGRAM_BUILD_STATUS:
@@ -634,6 +652,27 @@ NAN_METHOD(GetProgramBuildInfo) {
   THROW_ERR(CL_INVALID_VALUE);
 }
 
+#ifdef CL_VERSION_2_1
+// extern CL_API_ENTRY cl_program CL_API_CALL
+// clCreateProgramWithIL(cl_context    /* context */,
+//                      const void*    /* il */,
+//                      size_t         /* length */,
+//                      cl_int*        /* errcode_ret */) CL_API_SUFFIX__VERSION_2_1;
+#endif
+
+#ifdef CL_VERSION_2_2
+// extern CL_API_ENTRY cl_int CL_API_CALL
+// clSetProgramReleaseCallback(cl_program          /* program */,
+//                             void (CL_CALLBACK * /* pfn_notify */)(cl_program /* program */, void * /* user_data */),
+//                             void *              /* user_data */) CL_API_SUFFIX__VERSION_2_2;
+
+// extern CL_API_ENTRY cl_int CL_API_CALL
+// clSetProgramSpecializationConstant(cl_program  /* program */,
+//                                    cl_uint     /* spec_id */,
+//                                    size_t      /* spec_size */,
+//                                    const void* /* spec_value */) CL_API_SUFFIX__VERSION_2_2;
+#endif
+
 namespace Program {
 NAN_MODULE_INIT(init)
 {
@@ -654,6 +693,13 @@ NAN_MODULE_INIT(init)
 #endif
   Nan::SetMethod(target, "getProgramInfo", GetProgramInfo);
   Nan::SetMethod(target, "getProgramBuildInfo", GetProgramBuildInfo);
+#ifdef CL_VERSION_2_1
+  // @TODO Nan::SetMethod(target, "createProgramWithIL", CreateProgramWithIL);
+#endif
+#ifdef CL_VERSION_2_2
+  // @TODO Nan::SetMethod(target, "setProgramReleaseCallback", SetProgramReleaseCallback);
+  // @TODO Nan::SetMethod(target, "setProgramSpecializationConstant", SetProgramSpecializationConstant);
+#endif
 }
 } // namespace Program
 

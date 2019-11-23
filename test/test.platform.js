@@ -3,15 +3,18 @@ var should = require('chai').should();
 var assert = require('chai').assert;
 var util = require('util');
 var log = console.log;
+var U = require("./utils/utils");
 
 describe("Platform", function() {
-  var platforms=cl.getPlatformIDs();
+
+  // var platforms = cl.getPlatformIDs();
+  var platforms = [global.MAIN_PLATFORM_ID];
 
   describe("#getPlatformIDs()",function() {
     it("should return an array",function() {
-      var devices = cl.getPlatformIDs();
-      assert.isArray(devices);
-      assert.isAbove(devices.length, 0);
+      var platforms = cl.getPlatformIDs();
+      assert.isArray(platforms);
+      assert.isAbove(platforms.length, 0);
     })
   });
 

@@ -57,7 +57,7 @@ describe("Program", function () {
 
     it("should build and call the callback using a valid program", function (done) {
       U.withAsyncContext(function (ctx,device,platform,ctxDone) {
-        var mCB = function(prg,userData){
+        var mCB = function(userData, prg){
           assert.isNotNull(prg);
           assert.isDefined(prg);
           cl.releaseProgram(prg);
@@ -104,7 +104,7 @@ describe("Program", function () {
 
       U.withContext(function (ctx, device) {
         var prg = cl.createProgramWithSource(ctx, squareKern);
-        cl.buildProgram(prg);
+        var ret = cl.buildProgram(prg, [device]);
         var bin = cl.getProgramInfo(prg, cl.PROGRAM_BINARIES);
         var sizes = cl.getProgramInfo(prg, cl.PROGRAM_BINARY_SIZES);
         //
@@ -114,6 +114,25 @@ describe("Program", function () {
         assert.isDefined(prg2);
 
         cl.releaseProgram(prg);
+        cl.releaseProgram(prg2);
+      });
+    });
+
+    skip().vendor('Intel').it("should create a valid program from a buffer", function () {
+
+      U.withContext(function (ctx, device) {
+        var prg = cl.createProgramWithSource(ctx, squareKern);
+        var ret = cl.buildProgram(prg, [device]);
+        var bin = cl.getProgramInfo(prg, cl.PROGRAM_BINARIES).map(({ buffer }) => buffer);
+        var sizes = cl.getProgramInfo(prg, cl.PROGRAM_BINARY_SIZES);
+        //
+        var prg2 = cl.createProgramWithBinary(ctx, [device], sizes, bin);
+
+        assert.isNotNull(prg2);
+        assert.isDefined(prg2);
+
+        cl.releaseProgram(prg);
+        cl.releaseProgram(prg2);
       });
     });
 
@@ -221,7 +240,7 @@ describe("Program", function () {
 
     it("should build and call the callback with no input header", function (done) {
       U.withAsyncContext(function (ctx,device,platform,ctxDone) {
-        var mCB = function(prg,userData){
+        var mCB = function(userData, prg){
           assert.isNotNull(prg);
           assert.isDefined(prg);
           cl.releaseProgram(prg);
@@ -309,7 +328,7 @@ describe("Program", function () {
     
     it("should success in linking one program and call the callback", function (done) {
       U.withAsyncContext(function (ctx,device,platform,ctxDone) {
-        var mCB = function(prg,userData){
+        var mCB = function(userData, ctx){
           assert.isNotNull(prg);
           assert.isDefined(prg);
           cl.releaseProgram(prg);

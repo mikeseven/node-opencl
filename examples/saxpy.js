@@ -1,20 +1,20 @@
 /*
 * @Author: mikael
 * @Date:   2015-09-22 21:13:24
-* @Last Modified by:   mikael
-* @Last Modified time: 2015-09-23 00:21:04
+* @Last Modified by:   Mikael Bourges-Sevenier
+* @Last Modified time: 2018-02-24 19:30:06
 */
 
 'use strict';
 
 var cl = require('../lib/opencl');
-var log=console.log;
+var log = console.log;
 
 saxpy();
 
 function get_event_exec_time(event)
 {
-  // times are 64-bit values in naniseconds. They are returned as [hi,lo] a 2-integer array
+  // times are 64-bit values in nanoseconds. They are returned as [hi,lo] a 2-integer array
   // here we use the lo parts since this example is unlikely to go beyond 2^31 nanseconds per event.
   var start_time = cl.getEventProfilingInfo (event, cl.PROFILING_COMMAND_START);
   var end_time=cl.getEventProfilingInfo (event, cl.PROFILING_COMMAND_END);
@@ -39,10 +39,29 @@ function saxpy() {
   }
 
   // create GPU context for this platform
-  var context = cl.createContextFromType(
+  var context;
+  if (cl.createContextFromType !== undefined) {
+    context = cl.createContextFromType(
     [cl.CONTEXT_PLATFORM, cl.getPlatformIDs()[0]],
     cl.DEVICE_TYPE_GPU,
     null, null);
+  }
+  else {
+    var platform=cl.getPlatformIDs()[0];
+    var devices=cl.getDeviceIDs(platform, cl.DEVICE_TYPE_GPU);
+    console.info("Found "+devices.length+" GPUs: ");
+    var device=devices[0];
+    for(var i=0;i<devices.length;i++) {
+      var name=cl.getDeviceInfo(devices[i],cl.DEVICE_NAME);
+      console.info("  Devices "+i+": "+name);
+      if(name.indexOf("Intel")==-1) // prefer discrete GPU
+        device=devices[i];
+    }
+
+    context = cl.createContext(
+      [cl.CONTEXT_PLATFORM, platform],
+      [device]);
+  }
 
   var device = cl.getContextInfo(context, cl.CONTEXT_DEVICES)[0];
   log('using device: '+cl.getDeviceInfo(device, cl.DEVICE_NAME));

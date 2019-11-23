@@ -12,13 +12,13 @@
 #include "types.h"
 #include "svm.h"
 
-#define JS_CL_CONSTANT(name) target->Set(JS_STR( #name ), JS_INT(CL_ ## name))
-#define JS_CL_ERROR(name) target->Set(JS_STR( #name ), Nan::Error(JS_STR(opencl::getExceptionMessage(CL_ ## name))) )
+#define JS_CL_CONSTANT(name) Nan::Set(target, JS_STR( #name ), JS_INT(CL_ ## name))
+#define JS_CL_ERROR(name) Nan::Set(target, JS_STR( #name ), Nan::Error(JS_STR(opencl::getExceptionMessage(CL_ ## name))) )
 
 
-#define NODE_DEFINE_CONSTANT_VALUE(target, name, value)       \
-  (target)->Set(Nan::New<v8::String>(name).ToLocalChecked(),  \
-                Nan::New<v8::Integer>((unsigned int)value))
+#define NODE_DEFINE_CONSTANT_VALUE(target, name, value)          \
+  Nan::Set(target, Nan::New<v8::String>(name).ToLocalChecked(),  \
+                   Nan::New<v8::Integer>((unsigned int)value))
 
 #ifdef _WIN32
 /*-
@@ -81,14 +81,14 @@ extern "C" {
 NAN_MODULE_INIT(init)
 {
 #ifdef CL_VERSION_1_2
-  target->Set(JS_STR("CL_VERSION_1_2" ), Nan::True());
+  Nan::Set(target, JS_STR("CL_VERSION_1_2" ), Nan::True());
 #else
-  target->Set(JS_STR("CL_VERSION_1_2" ), Nan::False());
+  Nan::Set(target, JS_STR("CL_VERSION_1_2" ), Nan::False());
 #endif
 #ifdef CL_VERSION_2_0
-  target->Set(JS_STR("CL_VERSION_2_0" ), Nan::True());
+  Nan::Set(target, JS_STR("CL_VERSION_2_0" ), Nan::True());
 #else
-  target->Set(JS_STR("CL_VERSION_2_0" ), Nan::False());
+  Nan::Set(target, JS_STR("CL_VERSION_2_0" ), Nan::False());
 #endif
 
   // OpenCL methods
@@ -186,6 +186,10 @@ NAN_MODULE_INIT(init)
   JS_CL_CONSTANT(INVALID_PIPE_SIZE);
   JS_CL_CONSTANT(INVALID_DEVICE_QUEUE);
 #endif
+#ifdef CL_VERSION_2_2
+  JS_CL_CONSTANT(INVALID_SPEC_ID);
+  JS_CL_CONSTANT(MAX_SIZE_RESTRICTION_EXCEEDED);
+#endif
 
   /* OpenCL Version */
   JS_CL_CONSTANT(VERSION_1_0);
@@ -195,6 +199,12 @@ NAN_MODULE_INIT(init)
 #endif
 #ifdef CL_VERSION_2_0
   JS_CL_CONSTANT(VERSION_2_0);
+#endif
+#ifdef CL_VERSION_2_1
+  JS_CL_CONSTANT(VERSION_2_1);
+#endif
+#ifdef CL_VERSION_2_2
+  JS_CL_CONSTANT(VERSION_2_2);
 #endif
 
   /* cl_bool */
@@ -211,6 +221,9 @@ NAN_MODULE_INIT(init)
   JS_CL_CONSTANT(PLATFORM_NAME);
   JS_CL_CONSTANT(PLATFORM_VENDOR);
   JS_CL_CONSTANT(PLATFORM_EXTENSIONS);
+#ifdef CL_VERSION_2_1
+    JS_CL_CONSTANT(PLATFORM_HOST_TIMER_RESOLUTION);
+#endif
 
   /* cl_device_type - bitfield */
   JS_CL_CONSTANT(DEVICE_TYPE_DEFAULT);
@@ -321,6 +334,11 @@ NAN_MODULE_INIT(init)
   JS_CL_CONSTANT(DEVICE_PREFERRED_GLOBAL_ATOMIC_ALIGNMENT);
   JS_CL_CONSTANT(DEVICE_PREFERRED_LOCAL_ATOMIC_ALIGNMENT);
 #endif
+#ifdef CL_VERSION_2_1
+  JS_CL_CONSTANT(DEVICE_IL_VERSION);
+  JS_CL_CONSTANT(DEVICE_MAX_NUM_SUB_GROUPS);
+  JS_CL_CONSTANT(DEVICE_SUB_GROUP_INDEPENDENT_FORWARD_PROGRESS);
+#endif
 
   /* cl_device_fp_config - bitfield */
   JS_CL_CONSTANT(FP_DENORM);
@@ -399,6 +417,9 @@ NAN_MODULE_INIT(init)
 #ifdef CL_VERSION_2_0
   JS_CL_CONSTANT(QUEUE_SIZE);
 #endif
+#ifdef CL_VERSION_2_1
+  JS_CL_CONSTANT(QUEUE_DEVICE_DEFAULT);
+#endif
 
   /* cl_mem_flags - bitfield */
   JS_CL_CONSTANT(MEM_READ_WRITE);
@@ -465,6 +486,12 @@ NAN_MODULE_INIT(init)
   JS_CL_CONSTANT(UNSIGNED_INT32);
   JS_CL_CONSTANT(HALF_FLOAT);
   JS_CL_CONSTANT(FLOAT);
+#ifdef CL_VERSION_2_0
+  JS_CL_CONSTANT(UNORM_INT24);
+#endif
+#ifdef CL_VERSION_2_1
+  JS_CL_CONSTANT(UNORM_INT_101010_2);
+#endif
 
   /* cl_mem_object_type */
   JS_CL_CONSTANT(MEM_OBJECT_BUFFER);
@@ -557,8 +584,12 @@ NAN_MODULE_INIT(init)
   JS_CL_CONSTANT(PROGRAM_NUM_KERNELS);
   JS_CL_CONSTANT(PROGRAM_KERNEL_NAMES);
 #endif
-#ifdef CL_VERSION_2_0
-  JS_CL_CONSTANT(PROGRAM_BUILD_GLOBAL_VARIABLE_TOTAL_SIZE);
+#ifdef CL_VERSION_2_1
+  JS_CL_CONSTANT(PROGRAM_IL);
+#endif
+#ifdef CL_VERSION_2_2
+  JS_CL_CONSTANT(PROGRAM_SCOPE_GLOBAL_CTORS_PRESENT);
+  JS_CL_CONSTANT(PROGRAM_SCOPE_GLOBAL_DTORS_PRESENT);
 #endif
 
   /* cl_program_build_info */
@@ -567,6 +598,9 @@ NAN_MODULE_INIT(init)
   JS_CL_CONSTANT(PROGRAM_BUILD_LOG);
 #ifdef CL_VERSION_1_2
   JS_CL_CONSTANT(PROGRAM_BINARY_TYPE);
+#endif
+#ifdef CL_VERSION_2_0
+  JS_CL_CONSTANT(PROGRAM_BUILD_GLOBAL_VARIABLE_TOTAL_SIZE);
 #endif
 
 #ifdef CL_VERSION_1_2
@@ -591,6 +625,10 @@ NAN_MODULE_INIT(init)
   JS_CL_CONSTANT(KERNEL_PROGRAM);
 #ifdef CL_VERSION_1_2
   JS_CL_CONSTANT(KERNEL_ATTRIBUTES);
+#endif
+#ifdef CL_VERSION_2_1
+  JS_CL_CONSTANT(KERNEL_MAX_NUM_SUB_GROUPS);
+  JS_CL_CONSTANT(KERNEL_COMPILE_NUM_SUB_GROUPS);
 #endif
 
 #ifdef CL_VERSION_1_2
@@ -631,6 +669,13 @@ NAN_MODULE_INIT(init)
   JS_CL_CONSTANT(KERNEL_PRIVATE_MEM_SIZE);
 #ifdef CL_VERSION_1_2
   JS_CL_CONSTANT(KERNEL_GLOBAL_WORK_SIZE);
+#endif
+
+#ifdef CL_VERSION_2_1
+/* cl_kernel_sub_group_info */
+  JS_CL_CONSTANT(KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE);
+  JS_CL_CONSTANT(KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE);
+  JS_CL_CONSTANT(KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
 #endif
 
 #ifdef CL_VERSION_2_0

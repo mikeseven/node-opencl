@@ -17,13 +17,13 @@ NAN_METHOD(CreatePipe) {
   NOCL_UNWRAP(context, NoCLContext, info[0]);
 
   // Arg 2
-  cl_mem_flags flags = info[1]->Uint32Value();
+  cl_mem_flags flags = Nan::To<uint32_t>(info[1]).FromJust();
 
   // Arg 2
-  cl_uint size = info[2]->Uint32Value();
+  cl_uint size = Nan::To<uint32_t>(info[2]).FromJust();
 
   // Arg 3
-  cl_uint qty = info[3]->Uint32Value();
+  cl_uint qty = Nan::To<uint32_t>(info[3]).FromJust();
 
   // Arg 4
   if (!info[4]->IsNull()) {
@@ -55,7 +55,7 @@ NAN_METHOD(GetPipeInfo) {
   NOCL_UNWRAP(mem, NoCLMem, info[0]);
 
   // Arg 1
-  cl_pipe_info param_name = info[1]->Uint32Value();
+  cl_pipe_info param_name = Nan::To<uint32_t>(info[1]).FromJust();
 
   switch(param_name) {
     case CL_PIPE_MAX_PACKETS:

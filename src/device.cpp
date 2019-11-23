@@ -1,3 +1,4 @@
+#include "nan.h"
 #include "device.h"
 #include "types.h"
 
@@ -18,7 +19,7 @@ NAN_METHOD(GetDeviceIDs) {
 
   cl_device_type type = CL_DEVICE_TYPE_ALL;
   if(!info[1]->IsUndefined() && !info[1]->IsNull())
-    type=info[1]->Uint32Value();
+    type=Nan::To<uint32_t>(info[1]).FromJust();
 
   cl_uint n = 0;
   CHECK_ERR(::clGetDeviceIDs(platform_id->getRaw(), type, 0, NULL, &n));
@@ -30,7 +31,7 @@ NAN_METHOD(GetDeviceIDs) {
   for (uint32_t i=0; i<n; i++) {
     // This is a noop for root-level devices but properly retains sub-devices.
     CHECK_ERR(::clRetainDevice(devices[i]));
-    deviceArray->Set(i, NOCL_WRAP(NoCLDeviceId, devices[i]));
+    Nan::Set(deviceArray, i, NOCL_WRAP(NoCLDeviceId, devices[i]));
   }
 
   info.GetReturnValue().Set(deviceArray);
@@ -50,7 +51,7 @@ NAN_METHOD(GetDeviceInfo) {
   NOCL_UNWRAP(deviceId, NoCLDeviceId, info[0]);
 
   cl_device_id device_id = deviceId->getRaw();
-  cl_device_info param_name = info[1]->Uint32Value();
+  cl_device_info param_name = Nan::To<uint32_t>(info[1]).FromJust();
 
   switch (param_name) {
   case CL_DEVICE_NAME:
@@ -130,7 +131,7 @@ NAN_METHOD(GetDeviceInfo) {
 
     Local<Array> arr = Nan::New<Array>(max_work_item_dimensions);
     for(cl_uint i=0;i<max_work_item_dimensions;i++)
-      arr->Set(i,JS_INT(uint32_t(param_value[i])));
+      Nan::Set(arr, i,JS_INT(uint32_t(param_value[i])));
 
     info.GetReturnValue().Set(arr);
     return;
@@ -176,7 +177,15 @@ NAN_METHOD(GetDeviceInfo) {
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_DOUBLE:
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_HALF:
   case CL_DEVICE_VENDOR_ID:
-
+#if !defined (__APPLE__) && !defined(MACOSX)
+  case CL_DEVICE_COMPUTE_CAPABILITY_MAJOR_NV:
+  case CL_DEVICE_COMPUTE_CAPABILITY_MINOR_NV:
+  case CL_DEVICE_REGISTERS_PER_BLOCK_NV:
+  case CL_DEVICE_WARP_SIZE_NV:
+  case CL_DEVICE_GPU_OVERLAP_NV:
+  case CL_DEVICE_KERNEL_EXEC_TIMEOUT_NV:
+  case CL_DEVICE_INTEGRATED_MEMORY_NV:
+#endif
   // OpenCL 1.2 constants
 #ifdef CL_VERSION_1_2
   case CL_DEVICE_REFERENCE_COUNT:
@@ -214,8 +223,8 @@ NAN_METHOD(GetDeviceInfo) {
         input_value = ((int64_t) output_values[0]) << 32) | output_values[1];
     */
     Local<Array> arr = Nan::New<Array>(2);
-    arr->Set(0, JS_INT((uint32_t) (param_value>>32))); // hi
-    arr->Set(1, JS_INT((uint32_t) (param_value & 0xffffffff))); // lo
+    Nan::Set(arr, 0, JS_INT((uint32_t) (param_value>>32))); // hi
+    Nan::Set(arr, 1, JS_INT((uint32_t) (param_value & 0xffffffff))); // lo
     info.GetReturnValue().Set(arr);
 
     return;
@@ -270,7 +279,7 @@ NAN_METHOD(CreateSubDevices) {
   std::vector<cl_device_partition_property> cl_properties;
   REQ_ARRAY_ARG(1, js_properties);
   for (unsigned int i = 0; i < js_properties->Length(); ++ i) {
-    cl_properties.push_back(js_properties->Get(i)->Int32Value());
+    cl_properties.push_back(Nan::To<int32_t>(Nan::Get(js_properties, i).ToLocalChecked()).FromJust());
   }
 
   cl_uint capacity = 0;
@@ -284,7 +293,7 @@ NAN_METHOD(CreateSubDevices) {
 
   Local<Array> subDevicesArray = Nan::New<Array>(capacity);
   for (uint32_t i=0; i<capacity; i++) {
-    subDevicesArray->Set(i, NOCL_WRAP(NoCLDeviceId, subDevices[i]));
+    Nan::Set(subDevicesArray, i, NOCL_WRAP(NoCLDeviceId, subDevices[i]));
   }
 
   info.GetReturnValue().Set(subDevicesArray);
@@ -337,6 +346,17 @@ NAN_METHOD(ReleaseDevice) {
 }
 #endif
 
+#ifdef CL_VERSION_2_1
+// extern CL_API_ENTRY cl_int CL_API_CALL
+// clGetDeviceAndHostTimer(cl_device_id    /* device */,
+//                         cl_ulong*       /* device_timestamp */,
+//                         cl_ulong*       /* host_timestamp */) CL_API_SUFFIX__VERSION_2_1;
+
+// extern CL_API_ENTRY cl_int CL_API_CALL
+// clGetHostTimer(cl_device_id /* device */,
+//                cl_ulong *   /* host_timestamp */)  CL_API_SUFFIX__VERSION_2_1;
+#endif
+
 namespace Device {
 NAN_MODULE_INIT(init)
 {
@@ -346,6 +366,10 @@ NAN_MODULE_INIT(init)
   Nan::SetMethod(target, "createSubDevices", CreateSubDevices);
   Nan::SetMethod(target, "retainDevice", RetainDevice);
   Nan::SetMethod(target, "releaseDevice", ReleaseDevice);
+#endif
+#ifdef CL_VERSION_2_1
+  // @TODO Nan::SetMethod(target, "getDeviceAndHostTimer", GetDeviceAndHostTimer);
+  // @TODO Nan::SetMethod(target, "getHostTimer", GetHostTimer);
 #endif
 }
 } // namespace Device

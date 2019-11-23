@@ -54,27 +54,27 @@ namespace {
 }
 
 #define THROW_ERR(code) { cl_int _err=(code); \
-  return Nan::ThrowError(JS_STR(opencl::getExceptionMessage(_err))); \
+  return Nan::ThrowError(JS_STR(opencl::getExceptionMessage(_err)));   \
 }
 
-#define REQ_ARGS(N)                                                     \
-  if (info.Length() < (N)) {                                            \
-    Nan::ThrowTypeError("Expected " #N " arguments");                     \
-    return;                                               \
+#define REQ_ARGS(N)                                                    \
+  if (info.Length() < (N)) {                                           \
+    Nan::ThrowTypeError("Expected " #N " arguments");                  \
+    return;                                                            \
   }
 
-#define REQ_STR_ARG(I, VAR)                                             \
-  if (info.Length() <= (I) || !info[I]->IsString())  {                  \
-    Nan::ThrowTypeError("Argument " #I " must be a string");              \
-    return;                                               \
-  }                                                                     \
-  String::Utf8Value VAR(info[I]->ToString());
+#define REQ_STR_ARG(I, VAR)                                            \
+  if (info.Length() <= (I) || !info[I]->IsString())  {                 \
+    Nan::ThrowTypeError("Argument " #I " must be a string");           \
+    return;                                                            \
+  }                                                                    \
+  Nan::Utf8String VAR(info[I]);
 
 #define REQ_ARRAY_ARG(I, VAR) \
   if (!info[I]->IsArray()) { \
-    Nan::ThrowTypeError("Argument " #I " must be an array");              \
-    return;                                               \
-  }                                                                     \
+    Nan::ThrowTypeError("Argument " #I " must be an array");           \
+    return;                                                            \
+  }                                                                    \
   Local<Array> VAR = Local<Array>::Cast(info[I])
 
 } // namespace

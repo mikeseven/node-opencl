@@ -1,3 +1,4 @@
+#include "nan.h"
 #include "context.h"
 #include <vector>
 
@@ -29,10 +30,10 @@ NAN_METHOD(CreateContext) {
   if(ARG_EXISTS(0)) {
     REQ_ARRAY_ARG(0, properties);
     for (uint32_t i=0; i < properties->Length(); i++) {
-      cl_uint prop_id = properties->Get(i)->Uint32Value();
+      cl_uint prop_id = Nan::To<uint32_t>(Nan::Get(properties, i).ToLocalChecked()).FromJust();
       cl_properties.push_back(prop_id);
       if(prop_id == CL_CONTEXT_PLATFORM) {
-        NOCL_UNWRAP(platform, NoCLPlatformId, properties->Get(++i));
+        NOCL_UNWRAP(platform, NoCLPlatformId, Nan::Get(properties, ++i).ToLocalChecked());
         cl_properties.push_back((cl_context_properties) platform->getRaw());
       }
     }
@@ -43,10 +44,13 @@ NAN_METHOD(CreateContext) {
   if(ARG_EXISTS(1)) {
     REQ_ARRAY_ARG(1, devices);
     for (uint32_t i=0; i<devices->Length(); i++) {
-      NOCL_UNWRAP(device, NoCLDeviceId, devices->Get(i));
+      NOCL_UNWRAP(device, NoCLDeviceId, Nan::Get(devices, i).ToLocalChecked());
       cl_devices.push_back(device->getRaw());
         // printf("Adding device %p\n",device);
     }
+  } else {
+    THROW_ERR(CL_INVALID_VALUE);
+    return;
   }
 
   // Arg 2 -- Callback
@@ -88,10 +92,10 @@ NAN_METHOD(CreateContextFromType) {
   if(!info[0]->IsNull() && !info[0]->IsUndefined()) {
     REQ_ARRAY_ARG(0, properties);
     for (uint32_t i=0; i < properties->Length(); i++) {
-      cl_uint prop_id = properties->Get(i)->Uint32Value();
+      cl_uint prop_id = Nan::To<uint32_t>(Nan::Get(properties, i).ToLocalChecked()).FromJust();
       cl_properties.push_back(prop_id);
       if(prop_id == CL_CONTEXT_PLATFORM) {
-        NOCL_UNWRAP(platform, NoCLPlatformId, properties->Get(++i));
+        NOCL_UNWRAP(platform, NoCLPlatformId, Nan::Get(properties, ++i).ToLocalChecked());
         cl_properties.push_back((cl_context_properties) platform->getRaw());
         // printf("Adding platform %p\n",platform);
       }
@@ -99,7 +103,7 @@ NAN_METHOD(CreateContextFromType) {
     cl_properties.push_back(0);
   }
 
-  cl_device_type device_type=info[1]->Uint32Value();
+  cl_device_type device_type=Nan::To<uint32_t>(info[1]).FromJust();
 
   if(!info[2]->IsNull() && !info[2]->IsUndefined()) {
       callback = Local<Function>::Cast(info[2]);
@@ -153,7 +157,7 @@ NAN_METHOD(GetContextInfo) {
   Nan::HandleScope scope;
 
   NOCL_UNWRAP(context, NoCLContext, info[0]);
-  cl_context_info param_name = info[1]->Uint32Value();
+  cl_context_info param_name = Nan::To<uint32_t>(info[1]).FromJust();
 
   switch (param_name) {
   case CL_CONTEXT_REFERENCE_COUNT:
@@ -174,7 +178,7 @@ NAN_METHOD(GetContextInfo) {
     Local<Array> arr = Nan::New<Array>((int)n);
     for(uint32_t i=0;i<n;i++) {
       CHECK_ERR(::clRetainDevice(devices[i]))
-      arr->Set(i, NOCL_WRAP(NoCLDeviceId, devices[i]));
+      Nan::Set(arr, i, NOCL_WRAP(NoCLDeviceId, devices[i]));
     }
     info.GetReturnValue().Set(arr);
     return;
@@ -187,7 +191,7 @@ NAN_METHOD(GetContextInfo) {
 
     Local<Array> arr = Nan::New<Array>((int)n);
     for(uint32_t i=0;i<n;i++) {
-      arr->Set(i,JS_INT((int32_t)ctx[i]));
+      Nan::Set(arr, i,JS_INT((int32_t)ctx[i]));
     }
 
     info.GetReturnValue().Set(arr);
@@ -227,14 +231,28 @@ NAN_METHOD(GetContextInfo) {
 
 // extern CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED cl_int CL_API_CALL
 // clUnloadCompiler(void) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+
+#ifdef CL_VERSION_2_1
+// extern CL_API_ENTRY cl_int CL_API_CALL
+// clSetDefaultDeviceCommandQueue(cl_context           /* context */,
+//                                cl_device_id         /* device */,
+//                                cl_command_queue     /* command_queue */) CL_API_SUFFIX__VERSION_2_1;
+#endif
+
 namespace Context {
 NAN_MODULE_INIT(init)
 {
-  Nan::SetMethod(target, "createContext", CreateContext);
+#ifdef CL_VERSION_2_0
   Nan::SetMethod(target, "createContextFromType", CreateContextFromType);
+#else
+  Nan::SetMethod(target, "createContext", CreateContext);
+#endif
   Nan::SetMethod(target, "retainContext", RetainContext);
   Nan::SetMethod(target, "releaseContext", ReleaseContext);
   Nan::SetMethod(target, "getContextInfo", GetContextInfo);
+#ifdef CL_VERSION_2_1
+  // @TODO Nan::SetMethod(target, "setDefaultDeviceCommandQueue", SetDefaultDeviceCommandQueue);
+#endif
 }
 } // namespace Context
 

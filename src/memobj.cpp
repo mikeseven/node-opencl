@@ -23,10 +23,10 @@ NAN_METHOD(CreateBuffer) {
   NOCL_UNWRAP(context, NoCLContext, info[0]);
 
   // Arg 1
-  cl_mem_flags flags = info[1]->Uint32Value();
+  cl_mem_flags flags = Nan::To<uint32_t>(info[1]).FromJust();
 
   // Arg 2
-  size_t size = info[2]->Uint32Value();
+  size_t size = Nan::To<uint32_t>(info[2]).FromJust();
 
   // Arg 3
   void *host_ptr = NULL;
@@ -67,16 +67,16 @@ NAN_METHOD(CreateSubBuffer) {
   NOCL_UNWRAP(buffer, NoCLMem, info[0]);
 
   // Arg 1
-  cl_mem_flags flags = info[1]->Uint32Value();
+  cl_mem_flags flags = Nan::To<uint32_t>(info[1]).FromJust();
 
   // Arg 2
-  cl_buffer_create_type buffer_create_type = info[2]->Uint32Value();
+  cl_buffer_create_type buffer_create_type = Nan::To<uint32_t>(info[2]).FromJust();
 
   if(buffer_create_type==CL_BUFFER_CREATE_TYPE_REGION) {
-    Local<Object> obj = info[3]->ToObject();
+    Local<Object> obj = Nan::To<Object>(info[3]).ToLocalChecked();
     cl_buffer_region buffer_create_info;
-    buffer_create_info.origin = obj->Get(JS_STR("origin"))->Uint32Value();
-    buffer_create_info.size = obj->Get(JS_STR("size"))->Uint32Value();
+    buffer_create_info.origin = Nan::To<uint32_t>(Nan::Get(obj, JS_STR("origin")).ToLocalChecked()).FromJust();
+    buffer_create_info.size = Nan::To<uint32_t>(Nan::Get(obj, JS_STR("size")).ToLocalChecked()).FromJust();
 
     cl_int ret=CL_SUCCESS;
     cl_mem mem = ::clCreateSubBuffer(buffer->getRaw(), flags, buffer_create_type, &buffer_create_info, &ret);
@@ -105,28 +105,28 @@ NAN_METHOD(CreateImage) {
   NOCL_UNWRAP(context, NoCLContext, info[0]);
 
   // Arg 1
-  cl_mem_flags flags = info[1]->Uint32Value();
+  cl_mem_flags flags = Nan::To<uint32_t>(info[1]).FromJust();
 
   // Arg 2
-  Local<Object> obj = info[2]->ToObject();
+  Local<Object> obj = Nan::To<Object>(info[2]).ToLocalChecked();
   cl_image_format image_format;
-  image_format.image_channel_order = obj->Get(JS_STR("channel_order"))->IsUndefined() ? 0 : obj->Get(JS_STR("channel_order"))->Uint32Value();
-  image_format.image_channel_data_type = obj->Get(JS_STR("channel_data_type"))->IsUndefined() ? 0 : obj->Get(JS_STR("channel_data_type"))->Uint32Value();
+  image_format.image_channel_order = Nan::Get(obj, JS_STR("channel_order")).ToLocalChecked()->IsUndefined() ? 0 : Nan::To<uint32_t>(Nan::Get(obj, JS_STR("channel_order")).ToLocalChecked()).FromJust();
+  image_format.image_channel_data_type = Nan::Get(obj, JS_STR("channel_data_type")).ToLocalChecked()->IsUndefined() ? 0 : Nan::To<uint32_t>(Nan::Get(obj, JS_STR("channel_data_type")).ToLocalChecked()).FromJust();
 
   // Arg 3
-  obj = info[3]->ToObject();
+  obj = Nan::To<Object>(info[3]).ToLocalChecked();
   cl_image_desc desc;
   memset(&desc,0,sizeof(cl_image_desc));
 
 
-  desc.image_type = obj->Get(JS_STR("type"))->IsUndefined() ? 0 : obj->Get(JS_STR("type"))->Uint32Value();
-  desc.image_width = obj->Get(JS_STR("width"))->IsUndefined() ? 0 : obj->Get(JS_STR("width"))->Uint32Value();
-  desc.image_height = obj->Get(JS_STR("height"))->IsUndefined() ? 0 : obj->Get(JS_STR("height"))->Uint32Value();
-  desc.image_depth = obj->Get(JS_STR("depth"))->IsUndefined() ? 0 : obj->Get(JS_STR("depth"))->Uint32Value();
-  desc.image_array_size = obj->Get(JS_STR("array_size"))->IsUndefined() ? 0 : obj->Get(JS_STR("array_size"))->Uint32Value();
-  desc.image_row_pitch = obj->Get(JS_STR("row_pitch"))->IsUndefined() ? 0 : obj->Get(JS_STR("row_pitch"))->Uint32Value();
-  desc.image_slice_pitch = obj->Get(JS_STR("slice_pitch"))->IsUndefined() ? 0 : obj->Get(JS_STR("slice_pitch"))->Uint32Value();
-  Local<Value> buffer_value = obj->Get(JS_STR("buffer"));
+  desc.image_type = Nan::Get(obj, JS_STR("type")).ToLocalChecked()->IsUndefined() ? 0 : Nan::To<uint32_t>(Nan::Get(obj, JS_STR("type")).ToLocalChecked()).FromJust();
+  desc.image_width = Nan::Get(obj, JS_STR("width")).ToLocalChecked()->IsUndefined() ? 0 : Nan::To<uint32_t>(Nan::Get(obj, JS_STR("width")).ToLocalChecked()).FromJust();
+  desc.image_height = Nan::Get(obj, JS_STR("height")).ToLocalChecked()->IsUndefined() ? 0 : Nan::To<uint32_t>(Nan::Get(obj, JS_STR("height")).ToLocalChecked()).FromJust();
+  desc.image_depth = Nan::Get(obj, JS_STR("depth")).ToLocalChecked()->IsUndefined() ? 0 : Nan::To<uint32_t>(Nan::Get(obj, JS_STR("depth")).ToLocalChecked()).FromJust();
+  desc.image_array_size = Nan::Get(obj, JS_STR("array_size")).ToLocalChecked()->IsUndefined() ? 0 : Nan::To<uint32_t>(Nan::Get(obj, JS_STR("array_size")).ToLocalChecked()).FromJust();
+  desc.image_row_pitch = Nan::Get(obj, JS_STR("row_pitch")).ToLocalChecked()->IsUndefined() ? 0 : Nan::To<uint32_t>(Nan::Get(obj, JS_STR("row_pitch")).ToLocalChecked()).FromJust();
+  desc.image_slice_pitch = Nan::Get(obj, JS_STR("slice_pitch")).ToLocalChecked()->IsUndefined() ? 0 : Nan::To<uint32_t>(Nan::Get(obj, JS_STR("slice_pitch")).ToLocalChecked()).FromJust();
+  Local<Value> buffer_value = Nan::Get(obj, JS_STR("buffer")).ToLocalChecked();
   if (buffer_value->IsObject()) {
     NOCL_UNWRAP(buffer, NoCLMem, buffer_value);
     desc.buffer = buffer->getRaw();
@@ -137,7 +137,7 @@ NAN_METHOD(CreateImage) {
   // Arg 4
   if(ARG_EXISTS(4)) {
     size_t len = 0;
-    getPtrAndLen(info[3], host_ptr, len);
+    getPtrAndLen(info[4], host_ptr, len);
 
     if(!host_ptr || !len)
       return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
@@ -174,17 +174,17 @@ NAN_METHOD(CreateImage2D) {
   NOCL_UNWRAP(context, NoCLContext, info[0]);
 
   // Arg 1
-  cl_mem_flags flags = info[1]->Uint32Value();
+  cl_mem_flags flags = Nan::To<uint32_t>(info[1]).FromJust();
 
   //
-  Local<Object> obj = info[2]->ToObject();
+  Local<Object> obj = Nan::To<Object>(info[2]).ToLocalChecked();
   cl_image_format image_format;
-  image_format.image_channel_order = obj->Get(JS_STR("channel_order"))->IsUndefined() ? 0 : obj->Get(JS_STR("channel_order"))->Uint32Value();
-  image_format.image_channel_data_type = obj->Get(JS_STR("channel_data_type"))->IsUndefined() ? 0 : obj->Get(JS_STR("channel_data_type"))->Uint32Value();
+  image_format.image_channel_order = Nan::Get(obj, JS_STR("channel_order")).ToLocalChecked()->IsUndefined() ? 0 : Nan::To<uint32_t>(Nan::Get(obj, JS_STR("channel_order")).ToLocalChecked()).FromJust();
+  image_format.image_channel_data_type = Nan::Get(obj, JS_STR("channel_data_type")).ToLocalChecked()->IsUndefined() ? 0 : Nan::To<uint32_t>(Nan::Get(obj, JS_STR("channel_data_type")).ToLocalChecked()).FromJust();
 
-  size_t image_width = info[3]->Uint32Value();
-  size_t image_height = info[4]->Uint32Value();
-  size_t image_row_pitch = info[5]->Uint32Value();
+  size_t image_width = Nan::To<uint32_t>(info[3]).FromJust();
+  size_t image_height = Nan::To<uint32_t>(info[4]).FromJust();
+  size_t image_row_pitch = Nan::To<uint32_t>(info[5]).FromJust();
 
   void *host_ptr = NULL;
 
@@ -251,10 +251,10 @@ NAN_METHOD(GetSupportedImageFormats) {
   NOCL_UNWRAP(context, NoCLContext, info[0]);
 
   // Arg 1
-  cl_mem_flags flags = info[1]->Uint32Value();
+  cl_mem_flags flags = Nan::To<uint32_t>(info[1]).FromJust();
 
   // Arg 2
-  cl_mem_object_type image_type = info[2]->Uint32Value();
+  cl_mem_object_type image_type = Nan::To<uint32_t>(info[2]).FromJust();
 
   cl_uint numEntries=0;
   CHECK_ERR(::clGetSupportedImageFormats(context->getRaw(), flags, image_type, 0, NULL, &numEntries));
@@ -265,9 +265,9 @@ NAN_METHOD(GetSupportedImageFormats) {
   Local<Array> imageFormats = Nan::New<Array>();
   for (uint32_t i=0; i<numEntries; i++) {
     Local<Object> format = Nan::New<Object>();
-    format->Set(JS_STR("channel_order"), JS_INT(image_formats[i].image_channel_order));
-    format->Set(JS_STR("channel_data_type"), JS_INT(image_formats[i].image_channel_data_type));
-    imageFormats->Set(i, format);
+    Nan::Set(format, JS_STR("channel_order"), JS_INT(image_formats[i].image_channel_order));
+    Nan::Set(format, JS_STR("channel_data_type"), JS_INT(image_formats[i].image_channel_data_type));
+    Nan::Set(imageFormats, i, format);
   }
 
   info.GetReturnValue().Set(imageFormats);
@@ -287,7 +287,7 @@ NAN_METHOD(GetMemObjectInfo) {
   NOCL_UNWRAP(mem, NoCLMem, info[0]);
 
   // Arg 1
-  cl_mem_info param_name = info[1]->Uint32Value();
+  cl_mem_info param_name = Nan::To<uint32_t>(info[1]).FromJust();
 
   switch(param_name) {
     case CL_MEM_TYPE: {
@@ -357,15 +357,15 @@ NAN_METHOD(GetImageInfo) {
   NOCL_UNWRAP(mem, NoCLMem, info[0]);
 
   // Arg 1
-  cl_image_info param_name = info[1]->Uint32Value();
+  cl_image_info param_name = Nan::To<uint32_t>(info[1]).FromJust();
 
   switch(param_name) {
     case CL_IMAGE_FORMAT: {
       cl_image_format val;
       CHECK_ERR(::clGetImageInfo(mem->getRaw(),param_name,sizeof(cl_image_format), &val, NULL))
       Local<Array> arr=Nan::New<Array>(2);
-      arr->Set(JS_STR("channel_order"), JS_INT(val.image_channel_order));
-      arr->Set(JS_STR("channel_data_type"), JS_INT(val.image_channel_data_type));
+      Nan::Set(arr, JS_STR("channel_order"), JS_INT(val.image_channel_order));
+      Nan::Set(arr, JS_STR("channel_data_type"), JS_INT(val.image_channel_data_type));
       info.GetReturnValue().Set(arr);
       return;
     }

@@ -98,6 +98,7 @@ describe("CommandQueue", function() {
           cl.retainCommandQueue(cq);
           var after = cl.getCommandQueueInfo(cq, cl.QUEUE_REFERENCE_COUNT);
           assert(before + 1 == after);
+          cl.releaseCommandQueue(cq);
         });
       });
     });
@@ -172,7 +173,7 @@ describe("CommandQueue", function() {
           var buffer = cl.createBuffer(ctx, cl.MEM_READ_ONLY, 8, null);
           var nbuffer = new Buffer(8);
           var ret = cl.enqueueReadBuffer(cq, buffer, true, 0, 8, nbuffer);
-
+          cl.releaseMemObject(buffer);
           assert(ret == cl.SUCCESS);
         });
       });
@@ -195,6 +196,7 @@ describe("CommandQueue", function() {
           var buffer = cl.createBuffer(ctx, cl.MEM_WRITE_ONLY, 8, null);
           U.bind(cl.enqueueReadBuffer, cq, buffer, true, 0, 8, null)
             .should.throw(cl.INVALID_VALUE.message);
+          cl.releaseMemObject(buffer);
         });
       });
     });
@@ -208,6 +210,7 @@ describe("CommandQueue", function() {
 
           U.bind(cl.enqueueReadBuffer,cq, buffer, true, 16, 1, nbuffer)
             .should.throw(cl.INVALID_VALUE.message);
+          cl.releaseMemObject(buffer);
         });
       });
     });
@@ -218,8 +221,9 @@ describe("CommandQueue", function() {
           var buffer = cl.createBuffer(ctx, cl.MEM_READ_ONLY, 8, null);
           var nbuffer = new Buffer(8);
           var ret = cl.enqueueReadBuffer(cq, buffer, true, 0, 8, nbuffer, null, true);
-
           assert.isObject(ret);
+          cl.releaseEvent(ret);
+          cl.releaseMemObject(buffer);
         });
       });
     });
@@ -233,6 +237,8 @@ describe("CommandQueue", function() {
         var ret = cl.enqueueReadBuffer(cq, buffer, true, 0, 8, nbuffer, null, true);
 
         cl.setEventCallback(ret, cl.COMPLETE, function(){
+          cl.releaseEvent(ret);
+          cl.releaseMemObject(buffer);
           ctxDone();
           done();
         }, {});
@@ -254,6 +260,8 @@ describe("CommandQueue", function() {
             [0, 0, 0], [0, 0, 0], [1, 1, 1],
             2 * 4, 0, 8 * 4, 0, nbuffer);
 
+          cl.releaseMemObject(buffer);
+  
           assert(ret == cl.SUCCESS);
         });
       });
@@ -280,6 +288,8 @@ describe("CommandQueue", function() {
             [0, 0, 0], [0, 0, 0], [4, 4, 1],
             2 * 4, 0, 8 * 4, 0, null)
             .should.throw(cl.INVALID_VALUE.message);
+
+          cl.releaseMemObject(buffer);
         });
       });
     });
@@ -295,6 +305,8 @@ describe("CommandQueue", function() {
           var buffer = cl.createBuffer(ctx, cl.MEM_READ_ONLY, 8, null);
           var nbuffer = new Buffer(8);
           var ret = cl.enqueueWriteBuffer(cq, buffer, true, 0, 8, nbuffer);
+
+          cl.releaseMemObject(buffer);
 
           assert(ret == cl.SUCCESS);
         });
@@ -318,6 +330,8 @@ describe("CommandQueue", function() {
           var buffer = cl.createBuffer(ctx, cl.MEM_WRITE_ONLY, 8, null);
           U.bind(cl.enqueueWriteBuffer, cq, buffer, true, 0, 8, null)
             .should.throw(cl.INVALID_VALUE.message);
+
+          cl.releaseMemObject(buffer);
         });
       });
     });
@@ -335,6 +349,8 @@ describe("CommandQueue", function() {
           var ret = cl.enqueueWriteBufferRect(cq, buffer, true,
             [0, 0, 0], [0, 0, 0], [1, 1, 1],
             2 * 4, 0, 8 * 4, 0, nbuffer);
+
+          cl.releaseMemObject(buffer);
 
           assert(ret == cl.SUCCESS);
         });
@@ -362,6 +378,8 @@ describe("CommandQueue", function() {
             [0, 0, 0], [0, 0, 0], [4, 4, 1],
             2 * 4, 0, 8 * 4, 0, null)
             .should.throw(cl.INVALID_VALUE.message);
+
+          cl.releaseMemObject(buffer);
         });
       });
     });
@@ -379,6 +397,8 @@ describe("CommandQueue", function() {
 
           var buffer = cl.createBuffer(ctx, cl.MEM_USE_HOST_PTR, 32, array);
           var ret = cl.enqueueFillBuffer(cq, buffer, 2, 0, 16);
+
+          cl.releaseMemObject(buffer);
           assert.strictEqual(ret, cl.SUCCESS);
         });
       });
@@ -394,6 +414,7 @@ describe("CommandQueue", function() {
 
           var buffer = cl.createBuffer(ctx, cl.MEM_USE_HOST_PTR, 32, array);
           var ret = cl.enqueueFillBuffer(cq, buffer, 2.5, 0, 16);
+          cl.releaseMemObject(buffer);
           assert.strictEqual(ret, cl.SUCCESS);
         });
       });
@@ -409,6 +430,7 @@ describe("CommandQueue", function() {
 
           var buffer = cl.createBuffer(ctx, cl.MEM_USE_HOST_PTR, 32, array);
           var ret = cl.enqueueFillBuffer(cq, buffer, pattern, 0, 16);
+          cl.releaseMemObject(buffer);
           assert.strictEqual(ret, cl.SUCCESS);
         });
       });
@@ -424,6 +446,7 @@ describe("CommandQueue", function() {
 
           var buffer = cl.createBuffer(ctx, cl.MEM_USE_HOST_PTR, 32, array);
           var ret = cl.enqueueFillBuffer(cq, buffer, pattern, 0, 16);
+          cl.releaseMemObject(buffer);
           assert.strictEqual(ret, cl.SUCCESS);
         });
       });
@@ -438,6 +461,8 @@ describe("CommandQueue", function() {
           var dst = cl.createBuffer(ctx, cl.MEM_READ_ONLY, 8, null);
           var ret = cl.enqueueCopyBuffer(cq, buffer, dst, 0, 0, 8);
 
+          cl.releaseMemObject(buffer);
+
           assert.strictEqual(ret, cl.SUCCESS);
         });
       });
@@ -449,6 +474,8 @@ describe("CommandQueue", function() {
           var buffer = cl.createBuffer(ctx, cl.MEM_COPY_HOST_PTR, 32, new Buffer(32));
           var dst = cl.createBuffer(ctx, cl.MEM_WRITE_ONLY, 8, null);
           var ret = cl.enqueueCopyBuffer(cq, buffer, dst, 0, 0, 8);
+
+          cl.releaseMemObject(buffer);
 
           assert.strictEqual(ret, cl.SUCCESS);
         });
@@ -469,6 +496,8 @@ describe("CommandQueue", function() {
             0, 0,
             0, 0);
 
+          cl.releaseMemObject(buffer);
+  
           assert.strictEqual(ret, cl.SUCCESS);
         });
       });
@@ -484,12 +513,15 @@ describe("CommandQueue", function() {
             0, 0,
             0, 0);
 
+
+          cl.releaseMemObject(buffer);
+  
           assert.strictEqual(ret, cl.SUCCESS);
         });
       });
     });
 
-    it("should throw cl.MEM_COPY_OVERLAP on overlapping copies", function () {
+    skip().vendor('nVidia').it("should throw cl.MEM_COPY_OVERLAP on overlapping copies", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           var buffer = cl.createBuffer(ctx, cl.MEM_COPY_HOST_PTR, 64, new Buffer(64));
@@ -498,6 +530,8 @@ describe("CommandQueue", function() {
             0, 0,
             0, 0)
           .should.throw(cl.MEM_COPY_OVERLAP.message);
+
+          cl.releaseMemObject(buffer);
         });
       });
     });
@@ -519,6 +553,8 @@ describe("CommandQueue", function() {
             0, 0,
             0, 0);
 
+          cl.releaseMemObject(buffer);
+  
           assert.strictEqual(ret, cl.SUCCESS);
         });
       });
@@ -548,6 +584,8 @@ describe("CommandQueue", function() {
             0, 0,
             0, 0);
 
+          cl.releaseMemObject(buffer);
+  
           assert.strictEqual(ret, cl.SUCCESS);
         });
       });
@@ -577,6 +615,8 @@ describe("CommandQueue", function() {
             0, 0,
             0, 0);
 
+          cl.releaseMemObject(buffer);
+  
           assert.strictEqual(ret, cl.SUCCESS);
         });
       });
@@ -600,6 +640,8 @@ describe("CommandQueue", function() {
             2, 0,
             0, 0);
 
+          cl.releaseMemObject(buffer);
+  
           assert.strictEqual(ret, cl.SUCCESS);
         });
       });
@@ -622,6 +664,8 @@ describe("CommandQueue", function() {
             2, 2*4,
             0, 0);
 
+          cl.releaseMemObject(buffer);
+  
           assert.strictEqual(ret, cl.SUCCESS);
         });
       });
@@ -646,6 +690,9 @@ describe("CommandQueue", function() {
             0, 0,
             0, 0);
 
+          cl.releaseMemObject(buffer1);
+          cl.releaseMemObject(dst);
+  
           assert.strictEqual(ret, cl.SUCCESS);
         });
       });
@@ -661,7 +708,7 @@ describe("CommandQueue", function() {
     }
   };
 
-  describe("#enqueueReadImage", function() {
+  describe.skip("#enqueueReadImage", function() {
 
     var imageFormat = {"channel_order": cl.RGBA, "channel_data_type": cl.UNSIGNED_INT8};
     var imageDesc = {
@@ -686,7 +733,7 @@ describe("CommandQueue", function() {
       });
     });
 
-    it("should fail with bad parameters", function () {
+    skip().device("AMD").os("darwin").it("should fail with bad parameters", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           U.bind(cl.enqueueReadImage, cq, null, true, [0,0,0], [8,8,1], 0, 0, new Buffer(64))
@@ -695,7 +742,7 @@ describe("CommandQueue", function() {
       });
     });
 
-    it("should throw cl.INVALID_OPERATION if image was created with cl.MEM_HOST_WRITE_ONLY", function () {
+    skip().device("AMD").os("darwin").it("should throw cl.INVALID_OPERATION if image was created with cl.MEM_HOST_WRITE_ONLY", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           var image = createImageWrapper(ctx, cl.MEM_HOST_WRITE_ONLY, imageFormat, imageDesc);
@@ -708,7 +755,7 @@ describe("CommandQueue", function() {
       });
     });
 
-    it("should work if image was created with cl.MEM_HOST_READ_ONLY", function () {
+    skip().device("AMD").os("darwin").it("should work if image was created with cl.MEM_HOST_READ_ONLY", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           var image = createImageWrapper(ctx, cl.MEM_HOST_READ_ONLY, imageFormat, imageDesc);
@@ -722,7 +769,7 @@ describe("CommandQueue", function() {
       });
     });
 
-    it("should throw cl.INVALID_VALUE if origin has an invalid value", function () {
+    skip().device("AMD").device("Intel").os("darwin").it("should throw cl.INVALID_VALUE if origin has an invalid value", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           var image = createImageWrapper(ctx, 0, imageFormat, imageDesc);
@@ -735,7 +782,7 @@ describe("CommandQueue", function() {
       });
     });
 
-    it("should throw cl.INVALID_VALUE if region is out of bound", function () {
+    skip().device("AMD").device("Intel").os("darwin").it("should throw cl.INVALID_VALUE if region is out of bound", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           var image = createImageWrapper(ctx, 0, imageFormat, imageDesc);
@@ -748,7 +795,7 @@ describe("CommandQueue", function() {
       });
     });
 
-    it("should throw cl.INVALID_VALUE if region is invalid", function () {
+    skip().device("AMD").os("darwin").it("should throw cl.INVALID_VALUE if region is invalid", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           var image = createImageWrapper(ctx, 0, imageFormat, imageDesc);
@@ -789,7 +836,8 @@ describe("CommandQueue", function() {
       });
     });
 
-    it("should work with cl.MEM_HOST_WRITE_ONLY images", function () {
+    skip().device("AMD").os("darwin").it("should work with cl.MEM_HOST_WRITE_ONLY images", function () {
+      this.skip();
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           var image = createImageWrapper(ctx, cl.MEM_HOST_WRITE_ONLY, imageFormat, imageDesc, null);
@@ -801,18 +849,19 @@ describe("CommandQueue", function() {
       });
     });
 
-    it("should throw cl.INVALID_OPERATION with cl.MEM_HOST_READ_ONLY images", function () {
+    skip().device("AMD").os("darwin").it("should throw cl.INVALID_OPERATION with cl.MEM_HOST_READ_ONLY images", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           var image = createImageWrapper(ctx, cl.MEM_HOST_READ_ONLY, imageFormat, imageDesc, null);
 
           U.bind(cl.enqueueWriteImage, cq, image, true, [0,0,0], [8,8,1], 0, 0, new Buffer(32))
             .should.throw(cl.INVALID_OPERATION.message)
+          cl.releaseMemObject(image);
         });
       });
     });
 
-    it("should throw cl.INVALID_VALUE with an invalid origin", function () {
+    skip().device("AMD").os("darwin").it("should throw cl.INVALID_VALUE with an invalid origin", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           var image = createImageWrapper(ctx, 0, imageFormat, imageDesc);
@@ -822,11 +871,12 @@ describe("CommandQueue", function() {
           var invalidOrigin = [1,1,1];
           U.bind(cl.enqueueWriteImage, cq, image, true, invalidOrigin, [8,8,1], 0, 0, new Buffer(32))
             .should.throw(cl.INVALID_VALUE.message)
+          cl.releaseMemObject(image);
         });
       });
     });
 
-    it("should throw cl.INVALID_VALUE with an invalid region", function () {
+    skip().device("AMD").os("darwin").it("should throw cl.INVALID_VALUE with an invalid region", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           var image = createImageWrapper(ctx, 0, imageFormat, imageDesc);
@@ -836,11 +886,12 @@ describe("CommandQueue", function() {
           var invalidRegion = [8,8,2];
           U.bind(cl.enqueueWriteImage, cq, image, true, [0, 0, 0], invalidRegion, 0, 0, new Buffer(32))
             .should.throw(cl.INVALID_VALUE.message)
+          cl.releaseMemObject(image);
         });
       });
     });
 
-    it("should throw cl.INVALID_VALUE if region is out of bound", function () {
+    skip().device("AMD").os("darwin").it("should throw cl.INVALID_VALUE if region is out of bound", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           var image = createImageWrapper(ctx, 0, imageFormat, imageDesc);
@@ -850,6 +901,7 @@ describe("CommandQueue", function() {
           var outOfBoundRegion = [9,9,1];
           U.bind(cl.enqueueWriteImage, cq, image, true, [0, 0, 0], outOfBoundRegion, 0, 0, new Buffer(32))
             .should.throw(cl.INVALID_VALUE.message)
+          cl.releaseMemObject(image);
         });
       });
     });
@@ -877,6 +929,7 @@ describe("CommandQueue", function() {
 
           var ret = cl.enqueueFillImage(cq, image, color, [0,0,0], [8,8,1]);
 
+          cl.releaseMemObject(image);
           assert.strictEqual(ret, cl.SUCCESS);
         });
       });
@@ -890,6 +943,7 @@ describe("CommandQueue", function() {
 
           U.bind(cl.enqueueFillImage, cq, image, color, [0,0,0], [8,8,1])
             .should.throw(cl.INVALID_VALUE.message);
+          cl.releaseMemObject(image);
         });
       });
     });
@@ -903,6 +957,7 @@ describe("CommandQueue", function() {
 
           U.bind(cl.enqueueFillImage, cq, image, color, [0,0,0], outOfBoundsRegion)
             .should.throw(cl.INVALID_VALUE.message);
+          cl.releaseMemObject(image);
         });
       });
     });
@@ -918,6 +973,7 @@ describe("CommandQueue", function() {
 
           U.bind(cl.enqueueFillImage, cq, image, color, invalidOrigin, [8,8,1])
             .should.throw(cl.INVALID_VALUE.message);
+          cl.releaseMemObject(image);
         });
       });
     });
@@ -933,6 +989,7 @@ describe("CommandQueue", function() {
 
           U.bind(cl.enqueueFillImage, cq, image, color, [0,0,0], invalidRegion)
             .should.throw(cl.INVALID_VALUE.message);
+          cl.releaseMemObject(image);
         });
       });
     });
@@ -1190,21 +1247,23 @@ describe("CommandQueue", function() {
         U.withCQ(ctx, device, function (cq) {
           var buf = cl.createBuffer(ctx, cl.MEM_READ_WRITE, 8, null);
           var ret = cl.enqueueMapBuffer(cq, buf, true, cl.MAP_READ, 0, 8,[],false);
-          assert.isObject(ret.buffer);
-          assert.equal(8,ret.buffer.length);
-          assert.isNumber(ret.buffer[0]);
+          var u8s = new Uint8Array(ret);
+          assert.instanceOf(u8s.buffer, ArrayBuffer);
+          assert.equal(u8s.buffer.byteLength, 8);
+          assert.isNumber(u8s[0]);
         });
       });
     });
-    
+
 
     it("should not be able to read from a not already allocated pointer", function () {
       U.withContext(function (ctx, device, _) {
         U.withCQ(ctx, device, function (cq) {
           var buf = cl.createBuffer(ctx, 0, 8, null);
           var ret = cl.enqueueMapBuffer(cq, buf, false, cl.MAP_READ, 0, 8, [], true);
-          assert.isUndefined(ret.buffer[0]);
-          assert.equal(8,ret.buffer.length);
+          var u8s = new Uint8Array(ret);
+          assert.isNumber(u8s[0]);
+          assert.equal(u8s.buffer.byteLength, 8);
         });
       });
     });
@@ -1216,18 +1275,19 @@ describe("CommandQueue", function() {
           var ret = cl.enqueueMapBuffer(cq, buf, false, 0, 0, 8, [], true);
 
           cl.setEventCallback(ret.event, cl.COMPLETE, function(){
-            assert.isObject(ret.buffer);
-            assert.equal(8,ret.buffer.length);
-            assert.isNumber(ret.buffer[0]);
-            ctxDone();
+            var u8s = new Uint8Array(ret);
+            assert.instanceOf(u8s.buffer, ArrayBuffer);
+            assert.equal(u8s.buffer.byteLength, 8);
+            assert.isNumber(u8s[0]);
+            cl.releaseMemObject(buf);
+            cl.releaseEvent(ret.event);
             cqDone();
+            ctxDone();
             done();
           });
         });
       });
-
     });
-
   });
 
   describe("# enqueueMapImage", function() {
@@ -1240,13 +1300,16 @@ describe("CommandQueue", function() {
       "depth": 1,
       "image_array_size": 1
     };
-    
+
     it("should return a valid buffer", function () {
       U.withContext(function (ctx, device) {
         U.withCQ(ctx, device, function (cq) {
           var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
           var ret = cl.enqueueMapImage(cq, image, true, cl.MAP_READ, [0,0,0], [2,2,1]);
-          assert.isNumber(ret.buffer[0]);
+          var u8s = new Uint8Array(ret);
+          assert.instanceOf(u8s.buffer, ArrayBuffer);
+          assert.isNumber(u8s[0]);
+          cl.releaseMemObject(image);
         });
       });
     });
@@ -1256,7 +1319,10 @@ describe("CommandQueue", function() {
         U.withCQ(ctx, device, function (cq) {
           var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
           var ret = cl.enqueueMapImage(cq, image, true, cl.MAP_WRITE, [0,0,0], [2,2,1]);
-          assert.isNumber(ret.buffer[0]);
+          var u8s = new Uint8Array(ret);
+          assert.instanceOf(u8s.buffer, ArrayBuffer);
+          assert.isNumber(u8s[0]);
+          cl.releaseMemObject(image);
         });
       });
     });
@@ -1266,18 +1332,24 @@ describe("CommandQueue", function() {
         U.withCQ(ctx, device, function (cq) {
           var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
           var ret = cl.enqueueMapImage(cq, image, true, cl.MAP_WRITE_INVALIDATE_REGION, [0,0,0], [2,2,1]);
-          assert.isNumber(ret.buffer[0]);
+          var u8s = new Uint8Array(ret);
+          assert.instanceOf(u8s.buffer, ArrayBuffer);
+          assert.isNumber(u8s[0]);
+          cl.releaseMemObject(image);
         });
       });
     });
-    
+
 
     it("should not be able to read from a not already allocated pointer", function () {
       U.withContext(function (ctx, device, _) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);          
+          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
           var ret = cl.enqueueMapImage(cq, image, false, cl.MAP_READ, [0,0,0], [2,2,1], [], true);
-          assert.isUndefined(ret.buffer[0]);
+          var u8s = new Uint8Array(ret);
+          assert.instanceOf(u8s.buffer, ArrayBuffer);
+          assert.isNumber(u8s[0]);
+          cl.releaseMemObject(image);
         });
       });
     });
@@ -1285,9 +1357,12 @@ describe("CommandQueue", function() {
     it("should not be able to read from a not already allocated pointer", function () {
       U.withContext(function (ctx, device, _) {
         U.withCQ(ctx, device, function (cq) {
-          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);          
+          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
           var ret = cl.enqueueMapImage(cq, image, false, cl.MAP_WRITE, [0,0,0], [2,2,1], [], true);
-          assert.isUndefined(ret.buffer[0]);
+          var u8s = new Uint8Array(ret);
+          assert.instanceOf(u8s.buffer, ArrayBuffer);
+          assert.isNumber(u8s[0]);
+          cl.releaseMemObject(image);
         });
       });
     });
@@ -1295,14 +1370,17 @@ describe("CommandQueue", function() {
     it("should not throw as we are using the pointer from an event", function (done) {
       U.withAsyncContext(function (ctx, device, _, ctxDone) {
         U.withAsyncCQ(ctx, device, function (cq, cqDone) {
-          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);                    
-          var ret = cl.enqueueMapImage(cq, image, false, cl.MAP_READ, [0,0,0], [2,2,1], [], true);          
+          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var ret = cl.enqueueMapImage(cq, image, false, cl.MAP_READ, [0,0,0], [2,2,1], [], true);
 
           cl.setEventCallback(ret.event, cl.COMPLETE, function(){
-            assert.isObject(ret.buffer);
-            assert.isNumber(ret.buffer[0]);
-            ctxDone();
+            var u8s = new Uint8Array(ret);
+            assert.instanceOf(u8s.buffer, ArrayBuffer);
+            assert.isNumber(u8s[0]);
+            cl.releaseMemObject(image);
+            cl.releaseEvent(ret.event);
             cqDone();
+            ctxDone();
             done();
           });
         });
@@ -1312,12 +1390,15 @@ describe("CommandQueue", function() {
     it("should not throw as we are using the pointer from an event", function (done) {
       U.withAsyncContext(function (ctx, device, _, ctxDone) {
         U.withAsyncCQ(ctx, device, function (cq, cqDone) {
-          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);                    
-          var ret = cl.enqueueMapImage(cq, image, false, cl.MAP_WRITE, [0,0,0], [2,2,1], [], true);          
+          var image = cl.createImage(ctx, 0, imageFormat, imageDesc, null);
+          var ret = cl.enqueueMapImage(cq, image, false, cl.MAP_WRITE, [0,0,0], [2,2,1], [], true);
 
           cl.setEventCallback(ret.event, cl.COMPLETE, function(){
-            assert.isObject(ret.buffer);
-            assert.isNumber(ret.buffer[0]);
+            var u8s = new Uint8Array(ret);
+            assert.instanceOf(u8s.buffer, ArrayBuffer);
+            assert.isNumber(u8s[0]);
+            cl.releaseMemObject(image);
+            cl.releaseEvent(ret.event);
             ctxDone();
             cqDone();
             done();
@@ -1335,6 +1416,7 @@ describe("CommandQueue", function() {
         U.withCQ(ctx, device, function (cq) {
           var buf = cl.createBuffer(ctx, 0, 8, null);
           U.bind(cl.enqueueUnmapMemObject, cq, buf, new Buffer(8)).should.throw(/*...*/);
+          cl.releaseMemObject(buf);
         });
       });
     });
@@ -1344,8 +1426,11 @@ describe("CommandQueue", function() {
         U.withCQ(ctx, device, function (cq) {
           var buf = cl.createBuffer(ctx, 0, 8, null);
           var ret = cl.enqueueMapBuffer(cq, buf, true, cl.MAP_READ, 0, 8,[],false);
-          cl.enqueueUnmapMemObject(cq, buf, ret.buffer);
-          assert.isUndefined(ret.buffer[0]);
+          var u8s = new Uint8Array(ret);
+          assert.instanceOf(u8s.buffer, ArrayBuffer);
+          var res = cl.enqueueUnmapMemObject(cq, buf, u8s.buffer);
+          assert.equal(res, cl.SUCCESS);
+          cl.releaseMemObject(buf);
         });
       });
     });
@@ -1373,6 +1458,8 @@ describe("CommandQueue", function() {
           var ret = cl.enqueueMigrateMemObjects(cq, [image, buffer], cl.MIGRATE_MEM_OBJECT_HOST);
 
           assert.strictEqual(ret, cl.SUCCESS);
+          cl.releaseMemObject(image);
+          cl.releaseMemObject(buffer);
         });
       });
     });
@@ -1387,6 +1474,8 @@ describe("CommandQueue", function() {
           var ret = cl.enqueueMigrateMemObjects(cq, [image, buffer], cl.MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED);
 
           assert.strictEqual(ret, cl.SUCCESS);
+          cl.releaseMemObject(image);
+          cl.releaseMemObject(buffer);
         });
       });
     });
@@ -1409,6 +1498,7 @@ describe("CommandQueue", function() {
 
           U.bind(cl.enqueueMigrateMemObjects, cq, [image, buffer], cl.MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED)
             .should.throw(cl.INVALID_MEM_OBJECT.message);
+          cl.releaseMemObject(image);
         });
       });
     });
@@ -1444,38 +1534,41 @@ describe("CommandQueue", function() {
             cl.enqueueNDRangeKernel(
               cq, kern, 1, null, [100], null);
 
+            cl.releaseMemObject(inputsMem);
+            cl.releaseMemObject(outputsMem);
+            cl.releaseKernel(kern);
           });
         })
       })
     });
 
     // AMD : It returns invalid value ...
-    skip().vendor("AMD").it("should fail with null global size", function () {
-      U.withContext(function (ctx, device) {
-        U.withProgram(ctx, fs.readFileSync(__dirname  + "/kernels/square.cl").toString(),
-          function (prg) {
-            cl.buildProgram(prg);
-            var kern = cl.createKernel(prg, "square");
+    // skip().vendor("AMD").it("should fail with null global size", function () {
+    //   U.withContext(function (ctx, device) {
+    //     U.withProgram(ctx, fs.readFileSync(__dirname  + "/kernels/square.cl").toString(),
+    //       function (prg) {
+    //         cl.buildProgram(prg);
+    //         var kern = cl.createKernel(prg, "square");
 
-            var inputsMem = cl.createBuffer(
-              ctx, cl.MEM_COPY_HOST_PTR, 10000 * 4, inputs);
-            var outputsMem = cl.createBuffer(
-              ctx, cl.MEM_COPY_HOST_PTR, 10000 * 4, outputs);
+    //         var inputsMem = cl.createBuffer(
+    //           ctx, cl.MEM_COPY_HOST_PTR, 10000 * 4, inputs);
+    //         var outputsMem = cl.createBuffer(
+    //           ctx, cl.MEM_COPY_HOST_PTR, 10000 * 4, outputs);
 
-            cl.setKernelArg(kern, 0, "uint*", inputsMem);
-            cl.setKernelArg(kern, 1, "uint*", outputsMem);
-            cl.setKernelArg(kern, 2, "uint", 10000);
+    //         cl.setKernelArg(kern, 0, "uint*", inputsMem);
+    //         cl.setKernelArg(kern, 1, "uint*", outputsMem);
+    //         cl.setKernelArg(kern, 2, "uint", 10000);
 
-            U.withCQ(ctx, device, function (cq) {
+    //         U.withCQ(ctx, device, function (cq) {
 
-              U.bind(cl.enqueueNDRangeKernel,
-                cq, kern, 1, null, null, null)
-                .should.throw(cl.INVALID_GLOBAL_WORK_SIZE.message);
+    //           U.bind(cl.enqueueNDRangeKernel,
+    //             cq, kern, 1, null, null, null)
+    //             .should.throw(cl.INVALID_GLOBAL_WORK_SIZE.message);
 
-            });
-          })
-      })
-    });
+    //         });
+    //       })
+    //   })
+    // });
 
     it("should fail if kern is invalid", function () {
       U.withContext(function (ctx, device) {
@@ -1499,6 +1592,9 @@ describe("CommandQueue", function() {
                 cq, null, 1, null, [100], null)
                 .should.throw(cl.INVALID_KERNEL.message);
 
+              cl.releaseMemObject(inputsMem);
+              cl.releaseMemObject(outputsMem);
+              cl.releaseKernel(kern);
             });
           })
       })
@@ -1526,6 +1622,9 @@ describe("CommandQueue", function() {
                 cq, kern, 1, null, [100, 200], null)
                 .should.throw(cl.INVALID_GLOBAL_WORK_SIZE.message);
 
+              cl.releaseMemObject(inputsMem);
+              cl.releaseMemObject(outputsMem);
+              cl.releaseKernel(kern);
             });
           })
       })
@@ -1557,6 +1656,7 @@ describe("CommandQueue", function() {
 
             U.withCQ(ctx, device, function (cq) {
               cl.enqueueTask(cq, kern);
+              cl.releaseKernel(kern);
             });
           })
       })
@@ -1604,6 +1704,12 @@ describe("CommandQueue", function() {
           var ret = cl.enqueueMarkerWithWaitList(cq, [event], true);
 
           assert.isObject(ret);
+
+          cl.setEventCallback(ret, cl.COMPLETE, function() {
+            cl.releaseMemObject(buffer);
+            cl.releaseEvent(ret);
+            cl.releaseEvent(event);
+          });
         });
       });
     });
@@ -1625,6 +1731,12 @@ describe("CommandQueue", function() {
           var ret = cl.enqueueBarrierWithWaitList(cq, [event], true);
 
           assert.isObject(ret);
+
+          cl.setEventCallback(ret, cl.COMPLETE, function() {
+            cl.releaseMemObject(buffer);
+            cl.releaseEvent(ret);
+            cl.releaseEvent(event);
+          });
         });
       });
     });
@@ -1654,9 +1766,12 @@ describe("CommandQueue", function() {
           var ret = cl.enqueueMarker(cq,true);
 
           assert.isObject(ret);
+
+          cl.setEventCallback(ret, cl.COMPLETE, function() {
+            cl.releaseEvent(ret);
+          });
         });
       });
     });
   });
-
 });

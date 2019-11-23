@@ -58,7 +58,7 @@ NAN_METHOD(CreateKernelsInProgram) {
     // This should not be needed. clCreateKernelsInProgram implicitly does clRetainKernel
     // on each kernel
     // CHECK_ERR(::clRetainKernel(kernels[i]))
-    karr->Set(i,NOCL_WRAP(NoCLKernel, kernels[i]));
+    Nan::Set(karr, i,NOCL_WRAP(NoCLKernel, kernels[i]));
   }
 
   delete[] kernels;
@@ -119,56 +119,55 @@ public:
         }                                                                       \
         void* ptr_data = new TYPE;                                              \
         size_t ptr_size = sizeof(TYPE);                                         \
-        *((TYPE *)ptr_data) = (TYPE) val->CONV();                                      \
+        *((TYPE *)ptr_data) = (TYPE) Nan::To<CONV>(val).FromJust();            \
         return std::tuple<size_t, void*,cl_int>(ptr_size, ptr_data, 0);         \
       };                                                                        \
       m_converters[NAME] = f;                                                   \
      }
 
-    CONVERT_NUMBER("char", cl_char, IsInt32, ToInt32()->Value);
-    CONVERT_NUMBER("uchar", cl_uchar, IsInt32, ToUint32()->Value);
-    CONVERT_NUMBER("short", cl_short, IsInt32, ToInt32()->Value);
-    CONVERT_NUMBER("ushort", cl_ushort, IsInt32, ToUint32()->Value);
-    CONVERT_NUMBER("int", cl_int , IsInt32, ToInt32()->Value);
-    CONVERT_NUMBER("uint", cl_uint, IsUint32, ToUint32()->Value);
-    CONVERT_NUMBER("long", cl_long, IsNumber, ToInteger()->Value);
-    CONVERT_NUMBER("ulong", cl_ulong, IsNumber, ToInteger()->Value);
-    CONVERT_NUMBER("float", cl_float, IsNumber, NumberValue);
-    CONVERT_NUMBER("double", cl_double, IsNumber, NumberValue);
-    CONVERT_NUMBER("half", cl_half, IsNumber, NumberValue);
+    CONVERT_NUMBER("char", cl_char, IsInt32, int32_t);
+    CONVERT_NUMBER("uchar", cl_uchar, IsInt32, uint32_t);
+    CONVERT_NUMBER("short", cl_short, IsInt32, int32_t);
+    CONVERT_NUMBER("ushort", cl_ushort, IsInt32, uint32_t);
+    CONVERT_NUMBER("int", cl_int , IsInt32, int32_t);
+    CONVERT_NUMBER("uint", cl_uint, IsUint32, uint32_t);
+    CONVERT_NUMBER("long", cl_long, IsNumber, int64_t);
+    CONVERT_NUMBER("ulong", cl_ulong, IsNumber, int64_t);
+    CONVERT_NUMBER("float", cl_float, IsNumber, double);
+    CONVERT_NUMBER("double", cl_double, IsNumber, double);
+    CONVERT_NUMBER("half", cl_half, IsNumber, double);
 
     #undef CONVERT_NUMBER
 
-
     /* convert vector types (e.g. float4, int16, etc) */
 
-    #define CONVERT_VECT(NAME, TYPE, I, PRED, COND)                             \
-      {                                                                         \
-       func_t f = [](const Local<Value>& val)                                   \
-          -> std::tuple<size_t, void*, cl_int> {                                \
-        if (!val->IsArray()) {                                                  \
-          /*THROW_ERR(CL_INVALID_ARG_VALUE);  */                                \
-          return std::tuple<size_t,void*,cl_int>(0, NULL, CL_INVALID_ARG_VALUE);\
-        }                                                                       \
-        Local<Array> arr = Local<Array>::Cast(val);                             \
-        if (arr->Length() != I) {                                               \
-          /*THROW_ERR(CL_INVALID_ARG_SIZE);*/                                   \
-          return std::tuple<size_t,void*,cl_int>(0, NULL, CL_INVALID_ARG_SIZE); \
-        }                                                                       \
-        TYPE * vvc = new TYPE[I];                                               \
-        size_t ptr_size = sizeof(TYPE) * I;                                     \
-        void* ptr_data = vvc;                                                   \
-        for (unsigned int i = 0; i < I; ++ i) {                                 \
-          if (!arr->Get(i)->PRED()) {                                           \
-            /*THROW_ERR(CL_INVALID_ARG_VALUE);*/                                \
-            /*THROW_ERR(CL_INVALID_ARG_VALUE);*/                                \
-          return std::tuple<size_t,void*,cl_int>(0, NULL, CL_INVALID_ARG_VALUE);\
-          }                                                                     \
-          vvc[i] = (TYPE) arr->Get(i)->COND();                                  \
-        }                                                                       \
-        return std::tuple<size_t,void*,cl_int>(ptr_size, ptr_data, 0);          \
-      };                                                                        \
-      m_converters[NAME #I ] = f;                                            \
+    #define CONVERT_VECT(NAME, TYPE, I, PRED, COND)                                     \
+      {                                                                                 \
+       func_t f = [](const Local<Value>& val)                                           \
+          -> std::tuple<size_t, void*, cl_int> {                                        \
+        if (!val->IsArray()) {                                                          \
+          /*THROW_ERR(CL_INVALID_ARG_VALUE);  */                                        \
+          return std::tuple<size_t,void*,cl_int>(0, NULL, CL_INVALID_ARG_VALUE);        \
+        }                                                                               \
+        Local<Array> arr = Local<Array>::Cast(val);                                     \
+        if (arr->Length() != I) {                                                       \
+          /*THROW_ERR(CL_INVALID_ARG_SIZE);*/                                           \
+          return std::tuple<size_t,void*,cl_int>(0, NULL, CL_INVALID_ARG_SIZE);         \
+        }                                                                               \
+        TYPE * vvc = new TYPE[I];                                                       \
+        size_t ptr_size = sizeof(TYPE) * I;                                             \
+        void* ptr_data = vvc;                                                           \
+        for (unsigned int i = 0; i < I; ++ i) {                                         \
+          if (!Nan::Get(arr, i).ToLocalChecked()->PRED()) {                             \
+            /*THROW_ERR(CL_INVALID_ARG_VALUE);*/                                        \
+            /*THROW_ERR(CL_INVALID_ARG_VALUE);*/                                        \
+          return std::tuple<size_t,void*,cl_int>(0, NULL, CL_INVALID_ARG_VALUE);        \
+          }                                                                             \
+          vvc[i] = (TYPE) Nan::To<COND>(Nan::Get(arr, i).ToLocalChecked()).FromJust(); \
+        }                                                                               \
+        return std::tuple<size_t,void*,cl_int>(ptr_size, ptr_data, 0);                  \
+      };                                                                                \
+      m_converters[NAME #I ] = f;                                                       \
       }
 
     #define CONVERT_VECTS(NAME, TYPE, PRED, COND) \
@@ -178,17 +177,17 @@ public:
       CONVERT_VECT(NAME, TYPE, 8, PRED, COND);\
       CONVERT_VECT(NAME, TYPE, 16, PRED, COND);
 
-    CONVERT_VECTS("char", cl_char, IsInt32, ToInt32()->Value);
-    CONVERT_VECTS("uchar", cl_uchar, IsInt32, ToUint32()->Value);
-    CONVERT_VECTS("short", cl_short, IsInt32, ToInt32()->Value);
-    CONVERT_VECTS("ushort", cl_ushort, IsInt32, ToUint32()->Value);
-    CONVERT_VECTS("int", cl_int, IsInt32, ToInt32()->Value);
-    CONVERT_VECTS("uint", cl_uint, IsUint32, ToUint32()->Value);
-    CONVERT_VECTS("long", cl_long, IsNumber, ToInteger()->Value);
-    CONVERT_VECTS("ulong", cl_ulong, IsNumber, ToInteger()->Value);
-    CONVERT_VECTS("float", cl_float, IsNumber, NumberValue);
-    CONVERT_VECTS("double", cl_double, IsNumber, NumberValue);
-    CONVERT_VECTS("half", cl_half, IsNumber, NumberValue);
+    CONVERT_VECTS("char", cl_char, IsInt32, int32_t);
+    CONVERT_VECTS("uchar", cl_uchar, IsInt32, int32_t);
+    CONVERT_VECTS("short", cl_short, IsInt32, int32_t);
+    CONVERT_VECTS("ushort", cl_ushort, IsInt32, int32_t);
+    CONVERT_VECTS("int", cl_int, IsInt32, int32_t);
+    CONVERT_VECTS("uint", cl_uint, IsUint32, uint32_t);
+    CONVERT_VECTS("long", cl_long, IsNumber, int64_t);
+    CONVERT_VECTS("ulong", cl_ulong, IsNumber, int64_t);
+    CONVERT_VECTS("float", cl_float, IsNumber, double);
+    CONVERT_VECTS("double", cl_double, IsNumber, double);
+    CONVERT_VECTS("half", cl_half, IsNumber, double);
 
     #undef CONVERT_VECT
     #undef CONVERT_VECTS
@@ -197,7 +196,7 @@ public:
     m_converters["bool"] = [](const Local<Value>& val) {
         size_t ptr_size = sizeof(cl_bool);
         void* ptr_data = new cl_bool;
-        *((cl_bool *)ptr_data) = val->BooleanValue() ? 1 : 0;
+        *((cl_bool *)ptr_data) = Nan::To<bool>(val).FromJust() ? 1 : 0;
         return std::tuple<size_t,void*,cl_int>(ptr_size, ptr_data, 0);
     };
   }
@@ -245,7 +244,7 @@ NAN_METHOD(SetKernelArg) {
   NOCL_UNWRAP(k, NoCLKernel, info[0]);
 
   // Arg 1
-  unsigned int arg_idx = info[1]->Uint32Value();
+  unsigned int arg_idx = Nan::To<uint32_t>(info[1]).FromJust();
 
   // get type and qualifier of kernel parameter with this index
   // using OpenCL, and then try to convert arg[2] to the type the kernel
@@ -278,8 +277,8 @@ NAN_METHOD(SetKernelArg) {
   { // behaviour when type is given
     // read argument 2 as the name of the data type
     if (info[2]->IsString()) {
-      Local<String> s = info[2]->ToString();
-      String::Utf8Value tname(s);
+      Local<String> s = Nan::To<String>(info[2]).ToLocalChecked();
+      Nan::Utf8String tname(s);
       const char* tname_c = *tname;
       // cout<<"setKernelArg[3]="<<tname_c<<endl;
       size_t len = tname.length();
@@ -300,7 +299,7 @@ NAN_METHOD(SetKernelArg) {
     if (!info[3]->IsNumber())
       THROW_ERR(CL_INVALID_ARG_VALUE);
     // local buffers are intialized with their size (data = NULL)
-    size_t local_size = info[3]->ToInteger()->Value();
+    size_t local_size = Nan::To<int32_t>(info[3]).FromJust();
     err = ::clSetKernelArg(k->getRaw(), arg_idx, local_size, NULL);
   } else if ('*' == type_name[type_name.length() - 1] || type_name == "cl_mem"){
     // type must be a buffer (CLMem object)
@@ -347,7 +346,7 @@ NAN_METHOD(GetKernelInfo) {
   REQ_ARGS(2);
 
   NOCL_UNWRAP(k, NoCLKernel, info[0]);
-  cl_kernel_info param_name = info[1]->Uint32Value();
+  cl_kernel_info param_name = Nan::To<uint32_t>(info[1]).FromJust();
 
   switch(param_name) {
 #ifdef CL_VERSION_1_2
@@ -400,8 +399,8 @@ NAN_METHOD(GetKernelArgInfo) {
   REQ_ARGS(3);
 
   NOCL_UNWRAP(k, NoCLKernel, info[0]);
-  cl_uint arg_idx = info[1]->Uint32Value();
-  cl_kernel_arg_info param_name = info[2]->Uint32Value();
+  cl_uint arg_idx = Nan::To<uint32_t>(info[1]).FromJust();
+  cl_kernel_arg_info param_name = Nan::To<uint32_t>(info[2]).FromJust();
 
   switch(param_name) {
     case CL_KERNEL_ARG_ADDRESS_QUALIFIER: {
@@ -451,7 +450,7 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
   NOCL_UNWRAP(k, NoCLKernel, info[0]);
   NOCL_UNWRAP(d, NoCLDeviceId, info[1]);
 
-  cl_kernel_work_group_info param_name = info[2]->Uint32Value();
+  cl_kernel_work_group_info param_name = Nan::To<uint32_t>(info[2]).FromJust();
 
   switch(param_name) {
 #ifdef CL_VERSION_1_2
@@ -461,9 +460,9 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
       size_t sz[3] = {0,0,0};
       CHECK_ERR(::clGetKernelWorkGroupInfo(k->getRaw(),d->getRaw(),param_name,3*sizeof(size_t),sz, NULL));
       Local<Array> szarr = Nan::New<Array>();
-      szarr->Set(0,JS_INT(sz[0]));
-      szarr->Set(1,JS_INT(sz[1]));
-      szarr->Set(2,JS_INT(sz[2]));
+      Nan::Set(szarr, 0,JS_INT(sz[0]));
+      Nan::Set(szarr, 1,JS_INT(sz[1]));
+      Nan::Set(szarr, 2,JS_INT(sz[2]));
       info.GetReturnValue().Set(szarr);
       return;
     }
@@ -489,8 +488,8 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
           input_value = ((int64_t) output_values[0]) << 32) | output_values[1];
       */
       Local<Array> arr = Nan::New<Array>(2);
-      arr->Set(0, JS_INT((uint32_t) (sz>>32))); // hi
-      arr->Set(1, JS_INT((uint32_t) (sz & 0xffffffff))); // lo
+      Nan::Set(arr, 0, JS_INT((uint32_t) (sz>>32))); // hi
+      Nan::Set(arr, 1, JS_INT((uint32_t) (sz & 0xffffffff))); // lo
       info.GetReturnValue().Set(arr);
       return;
     }
@@ -512,6 +511,22 @@ NAN_METHOD(GetKernelWorkGroupInfo) {
 //                     const void *         /* param_value */) CL_API_SUFFIX__VERSION_2_0;
 #endif
 
+#ifdef CL_VERSION_2_1
+// extern CL_API_ENTRY cl_kernel CL_API_CALL
+// clCloneKernel(cl_kernel      source_kernel ,
+//               cl_int*       /* errcode_ret */) CL_API_SUFFIX__VERSION_2_1;
+
+// extern CL_API_ENTRY cl_int CL_API_CALL
+// clGetKernelSubGroupInfo(cl_kernel                   /* kernel */,
+//                         cl_device_id                /* device */,
+//                         cl_kernel_sub_group_info    /* param_name */,
+//                         size_t                      /* input_value_size */,
+//                         const void*                 /*input_value */,
+//                         size_t                      /* param_value_size */,
+//                         void*                       /* param_value */,
+//                         size_t*                     /* param_value_size_ret */ ) CL_API_SUFFIX__VERSION_2_1;
+#endif
+
 namespace Kernel {
 NAN_MODULE_INIT(init)
 {
@@ -521,10 +536,16 @@ NAN_MODULE_INIT(init)
   Nan::SetMethod(target, "releaseKernel", ReleaseKernel);
   Nan::SetMethod(target, "setKernelArg", SetKernelArg);
   Nan::SetMethod(target, "getKernelInfo", GetKernelInfo);
-#ifdef CL_VERSION_1_2
   Nan::SetMethod(target, "getKernelArgInfo", GetKernelArgInfo);
-#endif
   Nan::SetMethod(target, "getKernelWorkGroupInfo", GetKernelWorkGroupInfo);
+#ifdef CL_VERSION_2_0
+  // @TODO Nan::SetMethod(target, "setKernelArgSVMPointer", SetKernelArgSVMPointer);
+  // @TODO Nan::SetMethod(target, "setKernelExecInfo", SetKernelExecInfo);
+#endif
+#ifdef CL_VERSION_2_1
+  // @TODO Nan::SetMethod(target, "cloneKernel", CloneKernel);
+  // @TODO Nan::SetMethod(target, "getKernelSubGroupInfo", GetKernelSubGroupInfo);
+#endif
 }
 } //namespace Kernel
 

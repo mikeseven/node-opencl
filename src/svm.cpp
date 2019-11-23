@@ -19,13 +19,13 @@ NAN_METHOD(SVMAlloc) {
   NOCL_UNWRAP(context, NoCLContext, info[0]);
 
   // Arg 2
-  cl_svm_mem_flags flags = info[1]->Uint32Value();
+  cl_svm_mem_flags flags = Nan::To<uint32_t>(info[1]).FromJust();
 
   // Arg 2
-  cl_uint size = info[2]->Uint32Value();
+  cl_uint size = Nan::To<uint32_t>(info[2]).FromJust();
 
   // Arg 3
-  cl_uint alignment = info[3]->Uint32Value();
+  cl_uint alignment = Nan::To<uint32_t>(info[3]).FromJust();
 
   void* mPtr = ::clSVMAlloc (
     context->getRaw(),
@@ -93,7 +93,7 @@ public:
       GetFromPersistent(kIndex),  // CommandQueue
       GetFromPersistent(kIndex+1) // userData
     };
-    callback->Call(2,argv);
+    Nan::Call(*callback, 2, argv);
   }
 
 protected:
@@ -121,7 +121,7 @@ NAN_METHOD(enqueueSVMFree) {
   for(cl_uint i=0;i<length;++i){
     size_t len=0;
     void* ptr=nullptr;
-    getPtrAndLen(arr->Get(i),ptr,len);
+    getPtrAndLen(Nan::Get(arr, i).ToLocalChecked(),ptr,len);
     if(!ptr || !len) {
       return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
     }
@@ -136,7 +136,7 @@ NAN_METHOD(enqueueSVMFree) {
   cl_event* eventPtr = nullptr;
   cl_event event;
 
-  if(ARG_EXISTS(5) && info[5]->BooleanValue())
+  if(ARG_EXISTS(5) && Nan::To<bool>(info[5]).FromJust())
       eventPtr = &event;
 
   if (ARG_EXISTS(2)) {
@@ -177,7 +177,7 @@ NAN_METHOD(enqueueSVMMemcpy) {
   cl_int err;
 
   NOCL_UNWRAP(cq, NoCLCommandQueue, info[0]);
-  cl_bool blocking_copy = info[1]->BooleanValue() ? CL_TRUE : CL_FALSE;
+  cl_bool blocking_copy = Nan::To<bool>(info[1]).FromJust() ? CL_TRUE : CL_FALSE;
 
   void* dst=nullptr;
   size_t len=0;
@@ -193,7 +193,7 @@ NAN_METHOD(enqueueSVMMemcpy) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  size_t size = info[4]->Uint32Value();
+  size_t size = Nan::To<uint32_t>(info[4]).FromJust();
 
   if(size>static_cast<size_t>(len) || size>static_cast<size_t>(len2))
     THROW_ERR(CL_INVALID_VALUE);
@@ -206,7 +206,7 @@ NAN_METHOD(enqueueSVMMemcpy) {
   cl_event* eventPtr = nullptr;
   cl_event event;
 
-  if(ARG_EXISTS(6) && info[6]->BooleanValue())
+  if(ARG_EXISTS(6) && Nan::To<bool>(info[6]).FromJust())
       eventPtr = &event;
 
   err = clEnqueueSVMMemcpy(cq->getRaw(),blocking_copy,
@@ -245,7 +245,7 @@ NAN_METHOD(enqueueSVMMemFill) {
   if(!pattern || !len) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
-  size_t size = info[3]->Uint32Value();
+  size_t size = Nan::To<uint32_t>(info[3]).FromJust();
 
   if(size>static_cast<size_t>(len) ||
      size >static_cast<size_t>(length) ||
@@ -260,7 +260,7 @@ NAN_METHOD(enqueueSVMMemFill) {
   cl_event* eventPtr = nullptr;
   cl_event event;
 
-  if(ARG_EXISTS(5) && info[5]->BooleanValue())
+  if(ARG_EXISTS(5) && Nan::To<bool>(info[5]).FromJust())
       eventPtr = &event;
 
   err =  clEnqueueSVMMemFill(cq->getRaw(),ptr,pattern,static_cast<size_t>(len),size,
@@ -284,8 +284,8 @@ NAN_METHOD(enqueueSVMMap) {
   // Arg 0
   NOCL_UNWRAP(cq, NoCLCommandQueue, info[0]);
 
-  cl_bool blocking_map = info[1]->BooleanValue() ? CL_TRUE : CL_FALSE;
-  cl_map_flags map_flags = info[2]->Uint32Value();
+  cl_bool blocking_map = Nan::To<bool>(info[1]).FromJust() ? CL_TRUE : CL_FALSE;
+  cl_map_flags map_flags = Nan::To<uint32_t>(info[2]).FromJust();
 
   void* ptr=nullptr;
   size_t len=0;
@@ -294,7 +294,7 @@ NAN_METHOD(enqueueSVMMap) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
-  size_t size = info[4]->Uint32Value();
+  size_t size = Nan::To<uint32_t>(info[4]).FromJust();
 
   std::vector<NoCLEvent*> cl_events;
   if(ARG_EXISTS(5)) {
@@ -304,7 +304,7 @@ NAN_METHOD(enqueueSVMMap) {
   cl_event* eventPtr = nullptr;
   cl_event event;
 
-  if(ARG_EXISTS(6) && info[6]->BooleanValue())
+  if(ARG_EXISTS(6) && Nan::To<bool>(info[6]).FromJust())
       eventPtr = &event;
 
   err = clEnqueueSVMMap(cq->getRaw(),blocking_map,map_flags,
@@ -343,7 +343,7 @@ NAN_METHOD(enqueueSVMUnmap) {
   cl_event* eventPtr = nullptr;
   cl_event event;
 
-  if(ARG_EXISTS(3) && info[3]->BooleanValue())
+  if(ARG_EXISTS(3) && Nan::To<bool>(info[3]).FromJust())
       eventPtr = &event;
 
   err = clEnqueueSVMUnmap(cq->getRaw(),ptr, (cl_uint)cl_events.size(),
@@ -368,7 +368,7 @@ NAN_METHOD(setKernelArgSVMPointer) {
   NOCL_UNWRAP(k, NoCLKernel, info[0]);
 
   // Arg 1
-  unsigned int idx = info[1]->Uint32Value();
+  unsigned int idx = Nan::To<uint32_t>(info[1]).FromJust();
   void* ptr=nullptr;
   size_t len=0;
   getPtrAndLen(info[2], ptr, len);
@@ -385,6 +385,18 @@ NAN_METHOD(setKernelArgSVMPointer) {
 
 #endif
 
+#ifdef CL_VERSION_2_1
+// extern CL_API_ENTRY cl_int CL_API_CALL
+// clEnqueueSVMMigrateMem(cl_command_queue         /* command_queue */,
+//                        cl_uint                  /* num_svm_pointers */,
+//                        const void **            /* svm_pointers */,
+//                        const size_t *           /* sizes */,
+//                        cl_mem_migration_flags   /* flags */,
+//                        cl_uint                  /* num_events_in_wait_list */,
+//                        const cl_event *         /* event_wait_list */,
+//                        cl_event *               /* event */) CL_API_SUFFIX__VERSION_2_1;
+#endif
+
 namespace SVM {
 NAN_MODULE_INIT(init)
 {
@@ -397,6 +409,9 @@ NAN_MODULE_INIT(init)
   Nan::SetMethod(target, "enqueueSVMMemFill", enqueueSVMMemFill);
   Nan::SetMethod(target, "enqueueSVMUnmap", enqueueSVMUnmap);
   Nan::SetMethod(target, "setKernelArgSVMPointer", setKernelArgSVMPointer);
+#endif
+#ifdef CL_VERSION_2_1
+  // @TODO Nan::SetMethod(target, "enqueueSVMMigrateMem", EnqueueSVMMigrateMem);
 #endif
 }
 } // namespace Pipe
