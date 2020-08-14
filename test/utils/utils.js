@@ -49,7 +49,7 @@ var Utils = {
       exec(ctx, defaultDeviceId, defaultPlatformId, function() {
         cl.releaseContext(ctx);
       });
-    } catch { cl.releaseContext(ctx); }
+    } catch (e) { cl.releaseContext(ctx); }
   },
 
   withProgram: function (ctx, source, exec) {
