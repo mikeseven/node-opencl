@@ -197,6 +197,8 @@ NAN_METHOD(GetDeviceInfo) {
   case CL_DEVICE_PIPE_MAX_ACTIVE_RESERVATIONS:
   case CL_DEVICE_PIPE_MAX_PACKET_SIZE:
 #endif
+  case 0x4008:
+  case 0x4009:
   {
     cl_uint param_value;
     CHECK_ERR(::clGetDeviceInfo(device_id, param_name, sizeof(cl_uint), &param_value, NULL));
