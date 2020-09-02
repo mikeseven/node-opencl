@@ -568,7 +568,7 @@ NAN_METHOD(GetProgramInfo) {
       }
 
       CHECK_ERR(::clGetProgramInfo(
-        prog->getRaw(), CL_PROGRAM_BINARIES, sizeof(unsigned char*)*nsizes, bn, sizes.get()));
+        prog->getRaw(), CL_PROGRAM_BINARIES, nsizes * sizeof(size_t), bn, NULL));
 
       Local<Array> arr = Nan::New<Array>(nsizes);
 
