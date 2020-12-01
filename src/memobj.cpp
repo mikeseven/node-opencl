@@ -26,7 +26,7 @@ NAN_METHOD(CreateBuffer) {
   cl_mem_flags flags = Nan::To<uint32_t>(info[1]).FromJust();
 
   // Arg 2
-  size_t size = Nan::To<uint32_t>(info[2]).FromJust();
+  size_t size = (size_t)Nan::To<int64_t>(info[2]).FromJust();
 
   // Arg 3
   void *host_ptr = NULL;
