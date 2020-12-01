@@ -80,15 +80,76 @@ extern "C" {
 
 NAN_MODULE_INIT(init)
 {
-#ifdef CL_VERSION_1_2
-  Nan::Set(target, JS_STR("CL_VERSION_1_2" ), Nan::True());
+#ifdef _WIN32
+  Nan::Set(target, JS_STR("WIN"), Nan::True());
+  Nan::Set(target, JS_STR("UNIX"), Nan::False());
+  Nan::Set(target, JS_STR("POSIX"), Nan::False());
+  Nan::Set(target, JS_STR("LINUX"), Nan::False());
+  Nan::Set(target, JS_STR("APPLE"), Nan::False());
+
+#elif defined(__APPLE__) || defined(MACOSX)
+  Nan::Set(target, JS_STR("WIN"), Nan::False());
+  Nan::Set(target, JS_STR("UNIX"), Nan::False());
+  Nan::Set(target, JS_STR("POSIX"), Nan::False());
+  Nan::Set(target, JS_STR("LINUX"), Nan::False());
+  Nan::Set(target, JS_STR("APPLE"), Nan::True());
+#elif __linux__
+  // linux
+  Nan::Set(target, JS_STR("WIN"), Nan::False());
+  Nan::Set(target, JS_STR("UNIX"), Nan::False());
+  Nan::Set(target, JS_STR("POSIX"), Nan::False());
+  Nan::Set(target, JS_STR("LINUX"), Nan::True());
+  Nan::Set(target, JS_STR("APPLE"), Nan::False());
+#elif __unix__ // all unices not caught above
+  // Unix
+  Nan::Set(target, JS_STR("WIN"), Nan::False());
+  Nan::Set(target, JS_STR("UNIX"), Nan::True());
+  Nan::Set(target, JS_STR("POSIX"), Nan::False());
+  Nan::Set(target, JS_STR("LINUX"), Nan::False());
+  Nan::Set(target, JS_STR("APPLE"), Nan::False());
+#elif defined(_POSIX_VERSION)
+  Nan::Set(target, JS_STR("WIN"), Nan::False());
+  Nan::Set(target, JS_STR("UNIX"), Nan::False());
+  Nan::Set(target, JS_STR("POSIX"), Nan::True());
+  Nan::Set(target, JS_STR("LINUX"), Nan::False());
+  Nan::Set(target, JS_STR("APPLE"), Nan::False());
 #else
-  Nan::Set(target, JS_STR("CL_VERSION_1_2" ), Nan::False());
+#  error "Unknown compiler"
+#endif
+
+
+Nan::Set(target, JS_STR("version"), JS_STR("1.0"));
+Nan::Set(target, JS_STR("v10"), Nan::True());
+
+#ifdef CL_VERSION_1_1
+  Nan::Set(target, JS_STR("version"), JS_STR("1.1"));
+  Nan::Set(target, JS_STR("v11"), Nan::True());
+#else
+  Nan::Set(target, JS_STR("v11"), Nan::False());
+#endif
+#ifdef CL_VERSION_1_2
+  Nan::Set(target, JS_STR("version"), JS_STR("1.2"));
+  Nan::Set(target, JS_STR("v12"), Nan::True());
+#else
+  Nan::Set(target, JS_STR("v12"), Nan::False());
 #endif
 #ifdef CL_VERSION_2_0
-  Nan::Set(target, JS_STR("CL_VERSION_2_0" ), Nan::True());
+  Nan::Set(target, JS_STR("version"), JS_STR("2.0"));
+  Nan::Set(target, JS_STR("v20"), Nan::True());
 #else
-  Nan::Set(target, JS_STR("CL_VERSION_2_0" ), Nan::False());
+  Nan::Set(target, JS_STR("v20"), Nan::False());
+#endif
+#ifdef CL_VERSION_2_1
+  Nan::Set(target, JS_STR("version"), JS_STR("2.1"));
+  Nan::Set(target, JS_STR("v21"), Nan::True());
+#else
+  Nan::Set(target, JS_STR("v21"), Nan::False());
+#endif
+#ifdef CL_VERSION_2_2
+  Nan::Set(target, JS_STR("version"), JS_STR("2.2"));
+  Nan::Set(target, JS_STR("v22"), Nan::True());
+#else
+  Nan::Set(target, JS_STR("v22"), Nan::False());
 #endif
 
   // OpenCL methods
@@ -108,13 +169,14 @@ NAN_MODULE_INIT(init)
   /**
    * Platform-dependent byte sizes
    */
-  NODE_DEFINE_CONSTANT_VALUE(target, "size_CHAR", sizeof(char));
-  NODE_DEFINE_CONSTANT_VALUE(target, "size_SHORT", sizeof(short));
-  NODE_DEFINE_CONSTANT_VALUE(target, "size_INT", sizeof(int));
-  NODE_DEFINE_CONSTANT_VALUE(target, "size_LONG", sizeof(long));
-  NODE_DEFINE_CONSTANT_VALUE(target, "size_FLOAT", sizeof(float));
-  NODE_DEFINE_CONSTANT_VALUE(target, "size_DOUBLE", sizeof(double));
-  NODE_DEFINE_CONSTANT_VALUE(target, "size_HALF", sizeof(float) >> 1);
+  NODE_DEFINE_CONSTANT_VALUE(target, "PTR_SIZE", sizeof(void*));
+  NODE_DEFINE_CONSTANT_VALUE(target, "CHAR_SIZE", sizeof(char));
+  NODE_DEFINE_CONSTANT_VALUE(target, "SHORT_SIZE", sizeof(short));
+  NODE_DEFINE_CONSTANT_VALUE(target, "INT_SIZE", sizeof(int));
+  NODE_DEFINE_CONSTANT_VALUE(target, "LONG_SIZE", sizeof(long));
+  NODE_DEFINE_CONSTANT_VALUE(target, "FLOAT_SIZE", sizeof(float));
+  NODE_DEFINE_CONSTANT_VALUE(target, "DOUBLE_SIZE", sizeof(double));
+  NODE_DEFINE_CONSTANT_VALUE(target, "HALF_SIZE", sizeof(float) >> 1);
 
   // OpenCL 1.x constants
 
@@ -191,22 +253,6 @@ NAN_MODULE_INIT(init)
   JS_CL_CONSTANT(MAX_SIZE_RESTRICTION_EXCEEDED);
 #endif
 
-  /* OpenCL Version */
-  JS_CL_CONSTANT(VERSION_1_0);
-  JS_CL_CONSTANT(VERSION_1_1);
-#ifdef CL_VERSION_1_2
-  JS_CL_CONSTANT(VERSION_1_2);
-#endif
-#ifdef CL_VERSION_2_0
-  JS_CL_CONSTANT(VERSION_2_0);
-#endif
-#ifdef CL_VERSION_2_1
-  JS_CL_CONSTANT(VERSION_2_1);
-#endif
-#ifdef CL_VERSION_2_2
-  JS_CL_CONSTANT(VERSION_2_2);
-#endif
-
   /* cl_bool */
   JS_CL_CONSTANT(FALSE);
   JS_CL_CONSTANT(TRUE);
@@ -278,7 +324,7 @@ NAN_MODULE_INIT(init)
   JS_CL_CONSTANT(DEVICE_AVAILABLE);
   JS_CL_CONSTANT(DEVICE_COMPILER_AVAILABLE);
   JS_CL_CONSTANT(DEVICE_EXECUTION_CAPABILITIES);
-  JS_CL_CONSTANT(DEVICE_QUEUE_PROPERTIES); //deprecated in 2.0
+  JS_CL_CONSTANT(DEVICE_QUEUE_PROPERTIES); // deprecated in 2.0
 #ifdef CL_VERSION_2_0
   JS_CL_CONSTANT(DEVICE_QUEUE_ON_HOST_PROPERTIES);
 #endif
@@ -458,7 +504,7 @@ NAN_MODULE_INIT(init)
   JS_CL_CONSTANT(Rx);
   JS_CL_CONSTANT(RGx);
   JS_CL_CONSTANT(RGBx);
-#ifdef  CL_VERSION_1_2
+#ifdef  v12
   JS_CL_CONSTANT(DEPTH);
   JS_CL_CONSTANT(DEPTH_STENCIL);
 #endif

@@ -133,11 +133,8 @@ NAN_METHOD(enqueueSVMFree) {
     Local<Array> js_events = Local<Array>::Cast(info[4]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
-  cl_event* eventPtr = nullptr;
   cl_event event;
-
-  if(ARG_EXISTS(5) && Nan::To<bool>(info[5]).FromJust())
-      eventPtr = &event;
+  cl_event* eventPtr = &event;
 
   if (ARG_EXISTS(2)) {
     Nan::Callback *callback = new Nan::Callback(info[2].As<v8::Function>());
@@ -162,11 +159,7 @@ NAN_METHOD(enqueueSVMFree) {
   }
 
   CHECK_ERR(err);
-  if (eventPtr != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-  }
+  info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
 }
 
 
@@ -203,11 +196,8 @@ NAN_METHOD(enqueueSVMMemcpy) {
     Local<Array> js_events = Local<Array>::Cast(info[5]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
-  cl_event* eventPtr = nullptr;
   cl_event event;
-
-  if(ARG_EXISTS(6) && Nan::To<bool>(info[6]).FromJust())
-      eventPtr = &event;
+  cl_event* eventPtr = &event;
 
   err = clEnqueueSVMMemcpy(cq->getRaw(),blocking_copy,
                            dst,src,size,
@@ -217,11 +207,7 @@ NAN_METHOD(enqueueSVMMemcpy) {
                            eventPtr);
 
   CHECK_ERR(err);
-  if (eventPtr != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-  }
+  info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
 }
 
 NAN_METHOD(enqueueSVMMemFill) {
@@ -257,11 +243,9 @@ NAN_METHOD(enqueueSVMMemFill) {
     Local<Array> js_events = Local<Array>::Cast(info[4]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
-  cl_event* eventPtr = nullptr;
-  cl_event event;
 
-  if(ARG_EXISTS(5) && Nan::To<bool>(info[5]).FromJust())
-      eventPtr = &event;
+  cl_event event;
+  cl_event* eventPtr = &event;
 
   err =  clEnqueueSVMMemFill(cq->getRaw(),ptr,pattern,static_cast<size_t>(len),size,
                              (cl_uint) cl_events.size(),
@@ -269,11 +253,8 @@ NAN_METHOD(enqueueSVMMemFill) {
                              cl_events, NoCLEvent),
                              eventPtr);
   CHECK_ERR(err);
-  if (eventPtr != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-  }
+
+  info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
 }
 
 NAN_METHOD(enqueueSVMMap) {
@@ -301,11 +282,9 @@ NAN_METHOD(enqueueSVMMap) {
     Local<Array> js_events = Local<Array>::Cast(info[5]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
-  cl_event* eventPtr = nullptr;
-  cl_event event;
 
-  if(ARG_EXISTS(6) && Nan::To<bool>(info[6]).FromJust())
-      eventPtr = &event;
+  cl_event event;
+  cl_event* eventPtr = &event;
 
   err = clEnqueueSVMMap(cq->getRaw(),blocking_map,map_flags,
                         ptr,size, (cl_uint)cl_events.size(),
@@ -314,11 +293,8 @@ NAN_METHOD(enqueueSVMMap) {
                         eventPtr);
 
   CHECK_ERR(err);
-  if (eventPtr != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-  }
+  
+  info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
 }
 
 NAN_METHOD(enqueueSVMUnmap) {
@@ -330,21 +306,22 @@ NAN_METHOD(enqueueSVMUnmap) {
   NOCL_UNWRAP(cq, NoCLCommandQueue, info[0]);
   void* ptr=nullptr;
   size_t len=0;
+  
   getPtrAndLen(info[1], ptr, len);
+
   if(!ptr || !len) {
     return Nan::ThrowTypeError("Unsupported type of buffer. Use node's Buffer or JS' ArrayBuffer");
   }
 
   std::vector<NoCLEvent*> cl_events;
+
   if(ARG_EXISTS(2)) {
     Local<Array> js_events = Local<Array>::Cast(info[2]);
     NOCL_TO_ARRAY(cl_events, js_events, NoCLEvent);
   }
-  cl_event* eventPtr = nullptr;
-  cl_event event;
 
-  if(ARG_EXISTS(3) && Nan::To<bool>(info[3]).FromJust())
-      eventPtr = &event;
+  cl_event event;
+  cl_event* eventPtr = &event;
 
   err = clEnqueueSVMUnmap(cq->getRaw(),ptr, (cl_uint)cl_events.size(),
                        NOCL_TO_CL_ARRAY(
@@ -352,11 +329,8 @@ NAN_METHOD(enqueueSVMUnmap) {
                        eventPtr);
 
   CHECK_ERR(err)
-  if (eventPtr != nullptr) {
-    info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
-  } else {
-    info.GetReturnValue().Set(JS_INT(CL_SUCCESS));
-  }
+
+  info.GetReturnValue().Set(NOCL_WRAP(NoCLEvent, event));
 }
 
 NAN_METHOD(setKernelArgSVMPointer) {

@@ -154,7 +154,8 @@ NAN_METHOD(CreateImage) {
 
   info.GetReturnValue().Set(NOCL_WRAP(NoCLMem, mem));
 }
-#elif CL_VERSION_1_1
+#endif
+#ifdef CL_VERSION_1_1
 //TODO createImage2D/3D from 1.1 spec
 /*
  *  cl_mem clCreateImage2D (
@@ -190,7 +191,7 @@ NAN_METHOD(CreateImage2D) {
 
   // Arg 4
   if(ARG_EXISTS(6)) {
-    int len =0;
+    size_t len = 0;
     getPtrAndLen(info[6], host_ptr, len);
 
     if(!host_ptr || !len)
@@ -418,7 +419,8 @@ NAN_MODULE_INIT(init)
   Nan::SetMethod(target, "createSubBuffer", CreateSubBuffer);
 #ifdef CL_VERSION_1_2
   Nan::SetMethod(target, "createImage", CreateImage);
-#elif CL_VERSION_1_1
+#endif
+#ifdef CL_VERSION_1_1
   Nan::SetMethod(target, "createImage2D", CreateImage2D);
 #endif
   Nan::SetMethod(target, "retainMemObject", RetainMemObject);

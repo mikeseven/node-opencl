@@ -114,15 +114,15 @@ var Utils = {
 
   checkVersion : function(v) {
     if (v == "1.1") {
-      return cl.VERSION_1_1 && !cl.VERSION_1_2 && !cl.VERSION_2_0;
+      return cl.v11 && !cl.v12 && !cl.v20;
     } else if (v == "1.2") {
-      return cl.VERSION_1_1 && cl.VERSION_1_2 && !cl.VERSION_2_0
+      return cl.v11 && cl.v12 && !cl.v20
     } else if (v == "1.x") {
-      return (cl.VERSION_1_1 || cl.VERSION_1_2) && !cl.VERSION_2_0;
+      return (cl.v11 || cl.v12) && !cl.v20;
     } else if (v == "2.0") {
-      return cl.VERSION_1_1 && cl.VERSION_1_2 && cl.VERSION_2_0;
+      return cl.v11 && cl.v12 && cl.v20;
     } else if (v == "2.x") {
-      return cl.VERSION_1_1 && cl.VERSION_1_2 && cl.VERSION_2_0;
+      return cl.v11 && cl.v12 && cl.v20;
     } else {
       console.error("Unknown version : '" + v + "'");
       return false;
